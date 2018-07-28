@@ -40,7 +40,7 @@ int main (int argc, char **argv)
 			    CDKparamValue (&params, 'X', CENTER),
 			    CDKparamValue (&params, 'Y', CENTER),
 			    title, label, A_NORMAL, '.', vMIXED,
-			    40, 0, 256,
+			    5, 0, 256,
 			    CDKparamValue (&params, 'N', TRUE),
 			    CDKparamValue (&params, 'S', FALSE));
    bindCDKObject (vENTRY, directory, '?', XXXCB, 0);
