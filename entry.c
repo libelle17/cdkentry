@@ -279,101 +279,85 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 //		printf("sonstiges Zeichen: %i\n",inpint);
 		umlaut[1]=*umlaut=0;
 	}
-
 	/* Set the exit type. */
 	setExitType (widget, 0);
-
 	/* Refresh the widget field. */
 	widget->zeichneFeld();
-
 	/* Check if there is a pre-process function to be called. */
-	if (PreProcessFuncOf (widget) != 0)
-	{
+	if (PreProcessFuncOf (widget) != 0) {
 		ppReturn = PreProcessFuncOf (widget) (vENTRY,
 				widget,
 				PreProcessDataOf (widget),
 				input);
 	}
-
 	/* Should we continue? */
-	if (ppReturn != 0)
-	{
+	if (ppReturn != 0) {
 		/* Check a predefined binding... */
-		if (checkCDKObjectBind (vENTRY, widget, input) != 0)
-		{
+		if (checkCDKObjectBind (vENTRY, widget, input) != 0) {
 			checkEarlyExit (widget);
 			complete = TRUE;
-		}
-		else
-		{
+		} else {
 			int infoLength = (int)strlen (widget->info);
 			int currPos = widget->screenCol + widget->leftChar;
-      int currbuch=widget->sbuch+widget->lbuch;
-
-			switch (input)
-			{
+			int currbuch=widget->sbuch+widget->lbuch;
+			switch (input) {
 				case KEY_UP:
 				case KEY_DOWN:
 					Beep ();
 					break;
-
 				case KEY_HOME:
 					widget->leftChar = 0;
-          widget->lbuch=0;
+					widget->lbuch=0;
 					widget->screenCol = 0;
-          widget->sbuch=0;
+					widget->sbuch=0;
 					widget->zeichneFeld();
 					break;
-
 				case CDK_TRANSPOSE:
-					if (currbuch >= infoLength - 1)
-					{
+					if (currbuch >= infoLength - 1) {
 						Beep ();
-					}
-					else
-					{
+					} else {
 						char holder = widget->info[currPos];
 						widget->info[currPos] = widget->info[currPos + 1];
 						widget->info[currPos + 1] = holder;
 						widget->zeichneFeld();
 					}
 					break;
-
 				case KEY_END:
-          widget->settoend();
+					widget->settoend();
 					widget->zeichneFeld();
 					break;
-
 				case KEY_LEFT:
 					if (currPos <= 0) {
 						Beep ();
 					} else if (widget->screenCol == 0) {
 						/* Scroll left.  */
 						widget->leftChar--;
-            if (currPos>1) if (widget->info[currPos-2]==-61 || widget->info[currPos-2]==-62) widget->leftChar--;
-            widget->lbuch--;
+						if (currPos>1) if (widget->info[currPos-2]==-61 || widget->info[currPos-2]==-62) widget->leftChar--;
+						widget->lbuch--;
 						widget->zeichneFeld();
 					} else {
 						/* Move left. */
 						wmove (widget->fieldWin, 0, --widget->sbuch);
-            widget->screenCol--;
-            if (currPos>1) if (widget->info[currPos-2]==-61 || widget->info[currPos-2]==-62) widget->screenCol--;
+						widget->screenCol--;
+						if (currPos>1) if (widget->info[currPos-2]==-61 || widget->info[currPos-2]==-62) widget->screenCol--;
 					}
 					break;
 				case KEY_RIGHT:
 					if (currPos >= infoLength) {
 						Beep ();
-					} else if (widget->screenCol == widget->fieldWidth - 1) {
+					} else if (widget->sbuch == widget->fieldWidth - 1) {
+						mvwprintw(widget->parent,1,100,"!!!!!!!!!!!!!!!!!!!!");
+						wrefresh(widget->parent);
 						/* Scroll to the right. */
 						widget->leftChar++;
-            widget->screenCol++;
-            if (widget->info[currPos]==-61 || widget->info[currPos]==-62) widget->leftChar++;
+						widget->lbuch++;
+						if (widget->info[currPos]==-61 || widget->info[currPos]==-62) widget->leftChar++;
 						widget->zeichneFeld();
 					} else {
 						/* Move right. */
 						wmove (widget->fieldWin, 0, ++widget->sbuch);
-            widget->screenCol++;
-            if (widget->info[currPos]==-61 || widget->info[currPos]==-62) widget->screenCol++;
+						widget->screenCol++;
+						if (widget->info[currPos]==-61 || widget->info[currPos]==-62) widget->screenCol++;
 					}
 					break;
 				case KEY_BACKSPACE:
@@ -386,15 +370,13 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 							--currPos;
 						if (currPos >= 0 && infoLength > 0) {
 							if (currPos < infoLength) {
-                int x;
+								int x;
 								for (x = currPos; x < infoLength; x++) {
 									widget->info[x] = widget->info[x + 1];
 								}
                 if (x>1) if (widget->info[x-2]==-61 || widget->info[x-2]==-62) widget->info[x-2]=0; 
 								success = TRUE;
 							} else if (input == KEY_BACKSPACE) {
-				mvwprintw(widget->parent,1,100,"!!!!!!!!!!!!!!!!!!!!");
-        wrefresh(widget->parent);
 								widget->info[infoLength - 1] = '\0';
 								success = TRUE;
                 if (infoLength>1)
@@ -402,11 +384,8 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
                   widget->info[infoLength-2]=0;
               }
 						}
-
-						if (success)
-						{
-							if (input == KEY_BACKSPACE)
-							{
+						if (success) {
+							if (input == KEY_BACKSPACE) {
 								if (widget->screenCol > 0) {
 									widget->screenCol--;
                   if (widget->info[widget->leftChar+widget->screenCol-1]==-61 || widget->info[widget->leftChar+widget->screenCol-1]==-62)
@@ -420,65 +399,47 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
                 }
 							}
 							widget->zeichneFeld();
-						}
-						else
-						{
+						} else {
 							Beep ();
 						}
 					}
 					break;
-
 				case KEY_ESC:
 					setExitType (widget, input);
 					complete = TRUE;
 					break;
-
 				case CDK_ERASE:
-					if (infoLength != 0)
-					{
+					if (infoLength != 0) {
 						cleanCDKEntry (widget);
 						widget->zeichneFeld();
 					}
 					break;
-
 				case CDK_CUT:
-					if (infoLength != 0)
-					{
+					if (infoLength != 0) {
 						freeChar (GPasteBuffer);
 						GPasteBuffer = copyChar (widget->info);
 						cleanCDKEntry (widget);
 						widget->zeichneFeld();
-					}
-					else
-					{
+					} else {
 						Beep ();
 					}
 					break;
-
 				case CDK_COPY:
-					if (infoLength != 0)
-					{
+					if (infoLength != 0) {
 						freeChar (GPasteBuffer);
 						GPasteBuffer = copyChar (widget->info);
-					}
-					else
-					{
+					} else {
 						Beep ();
 					}
 					break;
-
 				case CDK_PASTE:
-					if (GPasteBuffer != 0)
-					{
+					if (GPasteBuffer != 0) {
 						setCDKEntryValue (widget, GPasteBuffer);
 						widget->zeichneFeld();
-					}
-					else
-					{
+					} else {
 						Beep ();
 					}
 					break;
-
 				case KEY_TAB:
 				case KEY_ENTER:
 					if (infoLength >= widget->min)
@@ -486,23 +447,18 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 						setExitType (widget, input);
 						ret = (widget->info);
 						complete = TRUE;
-					}
-					else
-					{
+					} else {
 						Beep ();
 					}
 					break;
-
 				case KEY_ERROR:
 					setExitType (widget, input);
 					complete = TRUE;
 					break;
-
 				case CDK_REFRESH:
 					eraseCDKScreen (ScreenOf (widget));
 					refreshCDKScreen (ScreenOf (widget));
 					break;
-
 				default:
 					// printf("%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
 					if (umlaut[1]) {
@@ -522,7 +478,6 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					break;
 			}
 		}
-
 		/* Should we do a post-process? */
 		if (!complete && (PostProcessFuncOf (widget) != 0))
 		{
@@ -532,10 +487,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					input);
 		}
 	}
-
-	if (!complete)
-		setExitType (widget, 0);
-
+	if (!complete) setExitType (widget, 0);
 	ResultOf (widget).valueString = ret;
 	return (ret != unknownString);
 }
@@ -642,7 +594,7 @@ void SEntry::schreibl(chtype character)
   static bool altobuml=0;
   bool obuml=character==-61||character==-62;
   int plainchar;
-  if (obuml||altobuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
+  if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
   if (plainchar == ERR || ((int)strlen (info) >= max)) {
     Beep ();
   } else {
@@ -659,11 +611,16 @@ void SEntry::schreibl(chtype character)
       size_t temp = strlen (info);
       info[temp] = (char)plainchar;
       info[temp + 1] = '\0';
-      if (!obuml) {
+			if (obuml) {
+				screenCol++;
+			} else {
         /* Do not update the pointer if it's the last character */
         if ((int)(temp + 1) < max) {
           lbuch++;
-          if (info[leftChar]==-61||info[leftChar]==-62) leftChar++;
+          if (info[leftChar]==-61||info[leftChar]==-62) {
+						leftChar++;
+						screenCol--;
+					}
           leftChar++;
         }
       }
