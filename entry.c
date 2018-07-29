@@ -176,14 +176,10 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions)
 	chtype input = 0;
 	boolean functionKey;
 	char *ret = 0;
-
 	/* Draw the widget. */
 	drawCDKEntry (entry, ObjOf (entry)->box);
-
-	if (actions == 0)
-	{
-		for (;;)
-		{
+	if (actions == 0) {
+		for (;;) {
 			static int y=2;
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
@@ -204,35 +200,25 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions)
       drawCDKEntry (entry, ObjOf (entry)->box);
       // GSchade Ende
 
-			if (entry->exitType != vEARLY_EXIT)
-			{
+			if (entry->exitType != vEARLY_EXIT) {
 				return ret;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		int length = chlen (actions);
 		int x;
-
 		/* Inject each character one at a time. */
-		for (x = 0; x < length; x++)
-		{
+		for (x = 0; x < length; x++) {
 			ret = injectCDKEntry (entry, actions[x]);
-			if (entry->exitType != vEARLY_EXIT)
-			{
+			if (entry->exitType != vEARLY_EXIT) {
 				return ret;
 			}
 		}
 	}
-
 	/* Make sure we return the correct info. */
-	if (entry->exitType == vNORMAL)
-	{
+	if (entry->exitType == vNORMAL) {
 		return entry->info;
-	}
-	else
-	{
+	} else {
 		return 0;
 	}
 }
@@ -250,7 +236,7 @@ void SEntry::settoend()
       if (info[i]!=-61 && info[i]!=-62) lbuch++;
     }
   }
-  if (leftChar && (sbuch+lbuch<max)) {
+  if (sbuch>=fieldWidth && (sbuch+lbuch<max)) {
     leftChar++;
 		lbuch++;
     screenCol--;
@@ -345,8 +331,6 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					break;
 				case KEY_RIGHT:
 					if (currPos >= infoLength || currPos>widget->max) {
-						mvwprintw(widget->parent,1,100,"!!!!!!!!!!!!!!!!!!!!");
-						wrefresh(widget->parent);
 						Beep ();
 					} else if (widget->sbuch == widget->fieldWidth - 1) {
 						/* Scroll to the right. */
@@ -370,34 +354,45 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					if (widget->dispType == vVIEWONLY) {
 						Beep ();
 					} else {
+						mvwprintw(widget->parent,1,100,"!!!!!!!!!, currPos: %i  ",currPos);
 						bool success = FALSE;
-						if (input == KEY_BACKSPACE)
+						if (input == KEY_BACKSPACE) {
 							--currPos;
+							if (widget->info[currPos-1]==-61||widget->info[currPos-1]==-62) --currPos;
+						}
+						// .. und jetzt fuer den zu loeschenden
+						const int obuml=(widget->info[currPos]==-61||widget->info[currPos]==-62);
 						if (currPos >= 0 && infoLength > 0) {
 							if (currPos < infoLength) {
+						mvwprintw(widget->parent,2,100,"!!!!!!!!!, currPos: %i, obuml: %i",currPos,obuml);
+						wrefresh(widget->parent);
 								int x;
-								const int obuml=(widget->info[currPos-1]==-61||widget->info[currPos-1]==-62);
-								for (x = currPos-obuml; x < infoLength; x++) {
-									widget->info[x] = widget->info[x + 1+obuml];
+								for (x = currPos; x < infoLength; x++) {
+									if (x+1+obuml>widget->max-1) widget->info[x]=0;
+									else 												 widget->info[x]=widget->info[x+1+obuml];
 								}
 								if (obuml) if (infoLength>1) widget->info[infoLength-2]=0;
 								success = TRUE;
 							} else if (input == KEY_BACKSPACE) {
 								widget->info[infoLength - 1] = '\0';
 								success = TRUE;
-                if (infoLength>1) if (widget->info[infoLength-2]==-61 || widget->info[infoLength-2]==-62) widget->info[infoLength-2]=0;
+                if (infoLength>1) if (obuml) widget->info[infoLength-2]=0;
               }
 						}
 						if (success) {
 							if (input == KEY_BACKSPACE) {
-								if (widget->screenCol > 0) {
+								if (widget->screenCol > 0 && !widget->lbuch) {
 									widget->screenCol--;
-                  if (widget->info[currPos-1]==-61 || widget->info[currPos-1]==-62) widget->screenCol--;
+                  if (obuml) widget->screenCol--;
                   widget->sbuch--;
                 } else {
 									widget->leftChar--;
-                  if (widget->info[currPos]==-61 || widget->info[currPos]==-62) widget->leftChar--;
+                  if (widget->info[widget->leftChar-1]==-61||widget->info[widget->leftChar-1]==-62) {
+										widget->leftChar--;
+										widget->screenCol++;
+									}
                   widget->lbuch--;
+									if (obuml) widget->screenCol--;
                 }
 							}
 							widget->zeichneFeld();
@@ -549,42 +544,6 @@ static void CDKEntryCallBack (CDKENTRY* entry, chtype character)
   entry->schreibl(character);
 }
 
-void SEntry::schreibUml(chtype character)
-{
-	int plainchar = character/*filterByDisplayType (entry->dispType, character)*/;
-	if (0&&(plainchar == ERR || ((int)strlen (info) >= max))) {
-		printf("Fehler!");
-		Beep ();
-	} else {
-		/* Update the screen and pointer. */
-		if (sbuch != fieldWidth - 1) {
-			for (int x=strlen(info);x>screenCol+leftChar;x--) {
-				info[x] = info[x - 1];
-			}
-			info[screenCol + leftChar] = (char)plainchar;
-			screenCol++;
-      if (character!=-61 && character!=-62) sbuch++;
-		} else {
-			/* Update the character pointer. */
-			size_t temp = strlen (info);
-			info[temp] = (char)plainchar;
-			info[temp + 1] = '\0';
-      if (character!=-61 && character!=-62) {
-        /* Do not update the pointer if it's the last character */
-        if ((int)(temp + 1) < max) {
-          lbuch++;
-          if (info[leftChar]==-61||info[leftChar]==-62) {
-            leftChar++;
-          }
-          leftChar++;
-        }
-      }
-		}
-
-		/* Update the entry field. */
-//		entry->zeichneFeld();
-	}
-}
 /*
  * This is a generic character parser for the entry field. It is used as a
  * callback function, so any personal modifications can be made by creating
@@ -593,15 +552,17 @@ void SEntry::schreibUml(chtype character)
 void SEntry::schreibl(chtype character)
 {
   static bool altobuml=0;
-  bool obuml=character==-61||character==-62;
+  const bool obuml=character==-61||character==-62;
   int plainchar;
   if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
-  if (plainchar == ERR || ((int)strlen (info) >= max)) {
+	// wenn Ende erreicht wuerde, dann von 2-Buchstabenlaengen langen Buchstaben keinen schreiben
+	const int slen=strlen(info);
+  if (plainchar == ERR ||(obuml&&slen>max-2)||(altobuml&&slen>max-2&&info[slen-1]!=-61&&info[slen-1]!=-62)||(slen >= max)) {
     Beep ();
   } else {
     /* Update the screen and pointer. */
     if (sbuch != fieldWidth - 1) {
-      for (int x = (int)strlen (info); x > (screenCol + leftChar); x--) {
+      for (int x = slen; x > (screenCol + leftChar); x--) {
         info[x] = info[x - 1];
       }
       info[screenCol + leftChar] = (char)plainchar;
@@ -609,7 +570,7 @@ void SEntry::schreibl(chtype character)
       if (!obuml) sbuch++;
     } else {
       /* Update the character pointer. */
-      size_t temp = strlen (info);
+      size_t temp = slen;
       info[temp] = (char)plainchar;
       info[temp + 1] = '\0';
 			if (obuml) {
@@ -719,7 +680,7 @@ void SEntry::zeichneFeld()
 				memcpy(ausgabe,info+leftChar,infoLength-leftChar);
 				ausgabe[infoLength-leftChar]=0;
 			} else {
-        mvwprintw(parent,1,1,"x:%i,len:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s",x,infoLength,max,leftChar,lbuch,screenCol,sbuch,info);
+        mvwprintw(parent,1,1,"x:%i,len:%i,fwidth:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s   ",x,infoLength,fieldWidth,max,leftChar,lbuch,screenCol,sbuch,info);
         for (x = leftChar; x < infoLength; x++) {
 					mvwprintw(parent,2+x,2,"x:%i, info[x]:%i  ",x,info[x]);
 				}
@@ -810,11 +771,9 @@ void setCDKEntry (CDKENTRY *entry,
 void setCDKEntryValue (CDKENTRY *entry, const char *newValue)
 {
 	/* If the pointer sent in is the same pointer as before, do nothing. */
-	if (entry->info != newValue)
-	{
+	if (entry->info != newValue) {
 		/* Just to be sure, if lets make sure the new value isn't null. */
-		if (newValue == 0)
-		{
+		if (newValue == 0) {
 			/* Then we want to just erase the old value. */
 			cleanChar (entry->info, entry->infoWidth, '\0');
 
@@ -823,9 +782,7 @@ void setCDKEntryValue (CDKENTRY *entry, const char *newValue)
       entry->lbuch=0;
 			entry->screenCol = 0;
       entry->sbuch=0;
-		}
-		else
-		{
+		} else {
 			/* Determine how many characters we need to copy. */
 			int copychars = MINIMUM ((int)strlen (newValue), entry->max);
 
@@ -837,6 +794,7 @@ void setCDKEntryValue (CDKENTRY *entry, const char *newValue)
 		}
 	}
 }
+
 char *getCDKEntryValue (CDKENTRY *entry)
 {
 	return entry->info;

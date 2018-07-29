@@ -83,7 +83,6 @@ struct SEntry {
    int		boxWidth;
    int		boxHeight;
    void settoend(); // GSchade
-   void schreibUml(chtype); // GSchade
    void schreibl(chtype); // GSchade, callbackfn
    void zeichneFeld(); // GSchade
    EExitType	exitType;
