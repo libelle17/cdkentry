@@ -35,12 +35,13 @@ int main (int argc, char **argv)
    initCDKColor ();
 
 		mvwprintw(cdkscreen->window,1,1,"%s","weltoffen");
+		const int max=10;
    /* Create the entry field widget. */
    directory = newCDKEntry (cdkscreen,
 			    CDKparamValue (&params, 'X', CENTER),
 			    CDKparamValue (&params, 'Y', CENTER),
 			    title, label, A_NORMAL, '.', vMIXED,
-			    5, 0, 256,
+			    5, 0, max,
 			    CDKparamValue (&params, 'N', TRUE),
 			    CDKparamValue (&params, 'S', FALSE));
    bindCDKObject (vENTRY, directory, '?', XXXCB, 0);
@@ -64,7 +65,7 @@ int main (int argc, char **argv)
     * don't check if argv[1] is null or not. The function setCDKEntry
     * already performs any needed checks.
     */
-   setCDKEntry (directory, argv[optind], 0, 256, TRUE);
+   setCDKEntry (directory, argv[optind], 0, max, TRUE);
 
    /* Activate the entry field. */
    info = activateCDKEntry (directory, 0);
