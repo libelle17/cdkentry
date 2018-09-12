@@ -18,10 +18,11 @@ int main (int argc, char **argv)
 	 setlocale(LC_ALL,"");
    /* *INDENT-EQLS* */
    CDKSCREEN *cdkscreen = 0;
-   CDKENTRY *directory  = 0;
-   const char *title    = "<C>Enter a\n<C>directory name.";
-   const char *label    = "</U/5>Directory:<!U!5>";
-   char *info;
+   CDKENTRY *directory  = 0,*file=0;
+   const char *title    = "<C>Gib a\n<C>directory name.";
+   const char *ftit    = "<C>Da<C>teiname.";
+   const char *label    = "</U/6>Directory:<!U!6>";
+   char *info,*infdat;
    const char *mesg[10];
    char temp[256];
 
@@ -34,7 +35,7 @@ int main (int argc, char **argv)
    /* Start CDK colors. */
    initCDKColor ();
 
-		mvwprintw(cdkscreen->window,1,1,"%s","weltoffen");
+		mvwprintw(cdkscreen->window,3,60,"%s","weltoffen");
 		const int max=10;
    /* Create the entry field widget. */
    directory = newCDKEntry (cdkscreen,
@@ -45,6 +46,14 @@ int main (int argc, char **argv)
 			    CDKparamValue (&params, 'N', TRUE),
 			    CDKparamValue (&params, 'S', FALSE));
    bindCDKObject (vENTRY, directory, '?', XXXCB, 0);
+   file = newCDKEntry (cdkscreen,
+			    50,
+			    14,
+			    ftit, label, A_NORMAL, '.', vMIXED,
+			    30, 0, max,
+			    CDKparamValue (&params, 'N', TRUE),
+			    CDKparamValue (&params, 'S', FALSE));
+   bindCDKObject (vENTRY, file, '?', XXXCB, 0);
 
    /* Is the widget null? */
    if (directory == 0)
@@ -68,6 +77,8 @@ int main (int argc, char **argv)
    setCDKEntry (directory, argv[optind], 0, max, TRUE);
 
    /* Activate the entry field. */
+   info = activateCDKEntry (directory, 0);
+   infdat= activateCDKEntry (file, 0);
    info = activateCDKEntry (directory, 0);
 
    /* Tell them what they typed. */

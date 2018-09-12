@@ -5,5 +5,5 @@ VZ=$VZ/examples
 VZ=$PWD
 LISTE="cdk_display.c cdk_params.c cdk.c draw.c cdk_objs.c label.c popup_label.c binding.c traverse.c cdkscreen.c entry.c"
 for d in $LISTE; do PAR="$PAR $VZ/$d"; done
-vi entry_ex.c entry.h $VZI/cdk.h $VZI/cdk_int.h $PAR -p
+vi entry_ex.c entry.h $VZI/cdk.h $VZI/cdk_int.h $PAR mach.sh $0 -p
 
