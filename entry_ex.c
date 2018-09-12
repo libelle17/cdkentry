@@ -20,8 +20,8 @@ int main (int argc, char **argv)
    CDKSCREEN *cdkscreen = 0;
    CDKENTRY *directory  = 0,*file=0;
    const char *title    = "<C>Gib a\n<C>directory name.";
-   const char *ftit    = "<C>Da<C>teiname.";
-   const char *label    = "</U/6>Directory:<!U!6>";
+   const char *ftit    = "<C>Dateiname.";
+   const char *label    = "</R/6>Directory:<!R!6>";
    char *info,*infdat;
    const char *mesg[10];
    char temp[256];
