@@ -414,6 +414,9 @@ static unsigned decodeAttribute (char *string,
 	return (from + (unsigned)(result - base));
 }
 
+// GSchade 25.9.18
+extern CDKSCREEN *allgscr;
+
 /*
  * This function takes a character string, full of format markers
  * and translates them into a chtype * array. This is better suited
@@ -526,7 +529,8 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 
 			/* Set the format marker boolean to false.  */
 			insideMarker = FALSE;
-
+// GSchade 25.9.18
+			size_t pos=0;
 			/* Start parsing the character string.  */
 			for (from = start; from < len; from++)
 			{
@@ -557,7 +561,23 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 							used++;
 						}
 						while (used & 7);
+					} // else if (result && !strchr("ö",string[from])) { result[used++]=CharOf('o')|attrib;
+					// GSchade 25.9.18
+					/*
+					else if (strchr("äöüÄÖÜß",string[from])) {
+						printf("from: %i, string[from]: %i\n",from,(int)string[from]+256);
+						//if (result) result[used]=CharOf('z')|attrib; used++;
+						if (result) result[used]=CharOf(-61)|attrib; used++;
+						if (!strchr("ä",string[from])) { if (result) result[used]=CharOf(164-256)|attrib; used++; }
+						else if (!strchr("ö",string[from])) { if (result) result[used]=CharOf(182-256)|attrib; used++; }
+						else if (!strchr("ü",string[from])) { if (result) result[used]=CharOf(188-256)|attrib; used++; }
+						else if (!strchr("Ä",string[from])) { if (result) result[used]=CharOf(132)|attrib; used++; }
+						else if (!strchr("Ö",string[from])) { if (result) result[used]=CharOf(150)|attrib; used++; }
+						else if (!strchr("Ü",string[from])) { if (result) result[used]=CharOf(156)|attrib; used++; }
+						else if (!strchr("ß",string[from])) { if (result) result[used]=CharOf(159)|attrib; used++; }
 					}
+				*/
+					// Ende GSchade 25.9.18
 					else
 					{
 						if (result != 0)

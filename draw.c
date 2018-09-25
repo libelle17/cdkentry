@@ -343,9 +343,26 @@ void writeChtypeAttrib (WINDOW *window,
 	{
 		/* Draw the message on a horizontal axis. */
 		display = MINIMUM (diff, getmaxx (window) - xpos);
+		int altumlz=0;
 		for (x = 0; x < display; x++)
 		{
-			(void)mvwaddch (window, ypos, xpos + x, string[x + start] | attr);
+			// GSchade 25.9.18
+			if ((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195) {
+				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
+				char ausg[3];
+				*ausg=string[x+start];
+				ausg[1]=string[x+start+1];
+				ausg[2]=0;
+//				ausg[0]='o';
+//				ausg[1]=0;
+				wattron(window,COLOR_PAIR(A_REVERSE)); // wirkt nicht
+				mvwprintw(window,ypos,xpos+x-altumlz,"%s",ausg);
+				wattroff(window,COLOR_PAIR(A_REVERSE)); // wirkt nicht
+				x++;
+				altumlz++;
+			} else {
+				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] | attr);
+			}
 		}
 	}
 	else

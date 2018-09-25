@@ -171,11 +171,12 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char *activateCDKEntry (CDKENTRY *entry, chtype *actions)
+char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen)
 {
 	chtype input = 0;
 	boolean functionKey;
 	char *ret = 0;
+	*Zweitzeichen=0;
 	/* Draw the widget. */
 	drawCDKEntry (entry, ObjOf (entry)->box);
 	if (actions == 0) {
@@ -183,7 +184,8 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions)
 			static int y=2;
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
-			mvwprintw(entry->parent,y++,30,"<R>input:%i",input);
+			if (input==27) *Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+			mvwprintw(entry->parent,y++,30,"<R>eingeb:%i %i %i",functionKey,input,*Zweitzeichen);
 
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
 			// GSchade Ende
