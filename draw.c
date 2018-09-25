@@ -347,7 +347,7 @@ void writeChtypeAttrib (WINDOW *window,
 		for (x = 0; x < display; x++)
 		{
 			// GSchade 25.9.18
-			if ((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195) {
+			if (1&&((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195)) {
 				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
 				char ausg[3];
 				*ausg=string[x+start];
@@ -355,13 +355,15 @@ void writeChtypeAttrib (WINDOW *window,
 				ausg[2]=0;
 //				ausg[0]='o';
 //				ausg[1]=0;
-				wattron(window,COLOR_PAIR(A_REVERSE)); // wirkt nicht
+				printf("String: %s, Farbe: %lu\n\r",ausg,attr);
+				wattron(window,COLOR_PAIR(COLOR_GREEN)); // wirkt nicht
 				mvwprintw(window,ypos,xpos+x-altumlz,"%s",ausg);
-				wattroff(window,COLOR_PAIR(A_REVERSE)); // wirkt nicht
+				wattroff(window,COLOR_PAIR(COLOR_GREEN)); // wirkt nicht
 				x++;
 				altumlz++;
 			} else {
-				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] | attr);
+				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
+				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] | COLOR_PAIR(COLOR_GREEN));
 			}
 		}
 	}

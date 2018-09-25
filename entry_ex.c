@@ -40,7 +40,9 @@ int main (int argc, char **argv)
    /* Start CDK colors. */
    initCDKColor ();
 
+				wattron(cdkscreen->window,A_UNDERLINE); // wirkt nicht
 		mvwprintw(cdkscreen->window,3,60,"%s","weltoffen");
+				wattroff(cdkscreen->window,A_UNDERLINE); // wirkt nicht
 		const int max=10;
    /* Create the entry field widget. */
    directory = newCDKEntry (cdkscreen,
