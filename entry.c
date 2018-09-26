@@ -645,6 +645,7 @@ static void _drawCDKEntry (CDKOBJS *object, boolean Box)
 	/* Draw in the label to the widget. */
 	if (entry->labelWin != 0)
 	{
+		int f1,f2;
 		writeChtype (entry->labelWin, 0, 0, entry->label, HORIZONTAL, 0, entry->labelLen);
 		wrefresh (entry->labelWin);
 	}

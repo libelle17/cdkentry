@@ -23,7 +23,7 @@ int main (int argc, char **argv)
    CDKENTRY *directory  = 0,*file=0;
    const char *title    = "<C>Gib aößä\n<C>dürectory name.";
    const char *ftit    = "<C>Dateiname.";
-   const char *label    = "</R/6>Dürectory:<!R!6>";
+   const char *label    = "</R/U/6>Dürectory:<!R!6>";
    char *info,*infdat;
    const char *mesg[10];
 	 const char *m0[1];
@@ -40,9 +40,10 @@ int main (int argc, char **argv)
    /* Start CDK colors. */
    initCDKColor ();
 
-				wattron(cdkscreen->window,A_UNDERLINE); // wirkt nicht
+	 chtype wcol=COLOR_PAIR(23)|A_BLINK;
+				wattron(cdkscreen->window,wcol); // wirkt nicht
 		mvwprintw(cdkscreen->window,3,60,"%s","weltoffen");
-				wattroff(cdkscreen->window,A_UNDERLINE); // wirkt nicht
+				wattroff(cdkscreen->window,wcol); // wirkt nicht
 		const int max=10;
    /* Create the entry field widget. */
    directory = newCDKEntry (cdkscreen,
