@@ -6,5 +6,5 @@ VZ=$PWD
 LISTE="cdk_display.c cdk_params.c cdk.c draw.c cdk_objs.c label.c popup_label.c binding.c traverse.c cdkscreen.c entry.c"
 for d in $LISTE; do PAR="$PAR $VZ/$d"; done
 ctags -R . ~/cdk /usr/include/cdk /usr/local/include/cdk /usr/include/ncursesw ~/ncurses
-vi entry_ex.c entry.h $VZI/cdk.h $VZI/cdk_int.h $PAR mach.sh $0 -p
+vi entry_ex.c entry.h cdk.h cdk_util.h $VZI/cdk_int.h $PAR mach.sh $0 -pNu .exrc
 

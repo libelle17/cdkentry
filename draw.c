@@ -344,10 +344,8 @@ void writeChtypeAttrib (WINDOW *window,
 		/* Draw the message on a horizontal axis. */
 		display = MINIMUM (diff, getmaxx (window) - xpos);
 		int altumlz=0;
-		chtype lcht;
 		for (x = 0; x < display; x++)
 		{
-			if(!x) lcht=string[x+start];
 			// GSchade 25.9.18
 			if (1&&((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195)) {
 				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
@@ -360,15 +358,14 @@ void writeChtypeAttrib (WINDOW *window,
 //				chtype testa;
 //				wattr_get(window)
 				const chtype attrib=COLOR_PAIR(2)|A_REVERSE;//A_REVERSE|COLOR_GREEN;
-				printf("String: %s, Farbe: %lu\n\r",ausg,attrib/*window->_attrs*/);
-				wattron(window,lcht); 
+//				printf("String: %s, Farbe: %lu\n\r",ausg,attrib/*window->_attrs*/);
+				wattron(window,string[x+start]); 
 				mvwprintw(window,ypos,xpos+x-altumlz,"%s",ausg);
-				wattroff(window,lcht); 
+				wattroff(window,string[x+start]); 
 				x++;
 				altumlz++;
 			} else {
-				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
-				lcht=string[x+start];
+//				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
 				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] |attr);
 			}
 		}

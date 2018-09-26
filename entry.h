@@ -117,7 +117,8 @@ CDKENTRY *newCDKEntry (
 		int		/* min */,
 		int		/* max */,
 		boolean		/* Box */,
-		boolean		/* shadow */);
+		boolean		/* shadow */,
+		int highnr=0);
 
 /*
  * This activates the entry widget.

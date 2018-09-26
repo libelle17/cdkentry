@@ -30,7 +30,8 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 		int min,
 		int max,
 		boolean Box,
-		boolean shadow)
+		boolean shadow,
+		int highnr/*=0*/)
 {
 	/* *INDENT-EQLS* */
 	CDKENTRY *entry      = 0;
@@ -66,7 +67,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label != 0)
 	{
-		entry->label = char2Chtype (label, &entry->labelLen, &junk);
+		entry->label = char2Chtype (label, &entry->labelLen, &junk,highnr);
 		boxWidth += entry->labelLen;
 	}
 
@@ -176,16 +177,22 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen)
 	chtype input = 0;
 	boolean functionKey;
 	char *ret = 0;
-	*Zweitzeichen=0;
 	/* Draw the widget. */
 	drawCDKEntry (entry, ObjOf (entry)->box);
 	if (actions == 0) {
 		for (;;) {
 			static int y=2;
+			*Zweitzeichen=0;
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
 			if (input==27) *Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
-			mvwprintw(entry->parent,y++,30,"<R>eingeb:%i %i %i",functionKey,input,*Zweitzeichen);
+			else if (input==9||input==258) {
+				*Zweitzeichen=-9;
+			}
+			else if (input==353||input==259) {
+				*Zweitzeichen=-8;
+			}
+			mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
 
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
 			// GSchade Ende
@@ -202,7 +209,7 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen)
       drawCDKEntry (entry, ObjOf (entry)->box);
       // GSchade Ende
 
-			if (entry->exitType != vEARLY_EXIT) {
+			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9) {
 				return ret;
 			}
 		}

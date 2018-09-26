@@ -422,7 +422,8 @@ extern CDKSCREEN *allgscr;
  * and translates them into a chtype * array. This is better suited
  * to curses, because curses uses chtype almost exclusively
  */
-chtype *char2Chtype (const char *string, int *to, int *align)
+// highnr G.Schade 26.9.18
+chtype *char2Chtype (const char *string, int *to, int *align, int highnr)
 {
 	chtype *result = 0;
 	chtype attrib;
@@ -580,8 +581,14 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 					// Ende GSchade 25.9.18
 					else
 					{
-						if (result != 0)
+						if (result != 0) {
+							// GSchade 26.9.18
+							if (used==highnr-1) {
+							result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
+							} else {
 							result[used] = CharOf (string[from]) | attrib;
+							}
+						}
 						used++;
 					}
 				}
