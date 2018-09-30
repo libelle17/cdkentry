@@ -252,10 +252,10 @@ int main (int argc, char **argv)
 		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
 		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
 		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
-		 {4,'h',"</R/U/6>Alphalist:<!R!6>",1}
+		 {4,'h',"</R/U/6>Alphalist:<!R!6>",1},
 	 };
 	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
-		 if (!hk[aktent].obalph) {
+		 if (hk[aktent].obalph) {
 			 hk[aktent].entry=(CDKENTRY*)newCDKAlphalist(cdkscreen,50,12+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
 		 } else {
 			 hk[aktent].entry=newCDKEntry(cdkscreen,50,12+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,max,0,0,hk[aktent].nr);
