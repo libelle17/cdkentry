@@ -125,7 +125,12 @@ CDKENTRY *newCDKEntry (
  */
 char *activateCDKEntry (
 		CDKENTRY *	/* entry */,
-		chtype *	/* actions */,int *Zweitzeichen);
+		chtype *	/* actions */
+		// G.Schade Anfang
+		,int *Zweitzeichen
+		,int obpfeil/*=0*/
+		// G.Schade Ende
+		);
 
 /*
  * This injects a single character into the widget.

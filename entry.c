@@ -31,7 +31,10 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 		int max,
 		boolean Box,
 		boolean shadow,
-		int highnr/*=0*/)
+		// GSchade Anfang
+		int highnr/*=0*/
+		// GSchade Ende
+		)
 {
 	/* *INDENT-EQLS* */
 	CDKENTRY *entry      = 0;
@@ -67,7 +70,11 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label != 0)
 	{
-		entry->label = char2Chtype (label, &entry->labelLen, &junk,highnr);
+		entry->label = char2Chtype (label, &entry->labelLen, &junk
+				// GSchade Anfang
+				,highnr
+				// GSchade Ende
+				);
 		boxWidth += entry->labelLen;
 	}
 
@@ -172,11 +179,13 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen)
+char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/,int obpfeil/*=0*/)
 {
 	chtype input = 0;
 	boolean functionKey;
 	char *ret = 0;
+	int zweit;
+	if (!Zweitzeichen) Zweitzeichen=&zweit;
 	/* Draw the widget. */
 	drawCDKEntry (entry, ObjOf (entry)->box);
 	if (actions == 0) {
@@ -186,13 +195,19 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen)
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
 			if (input==27) *Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
-			else if (input==9||input==258) {
+			else if (input==9||(obpfeil && input==KEY_DOWN)) {
 				*Zweitzeichen=-9;
 			}
-			else if (input==353||input==259) {
+			else if (input==KEY_BTAB||(obpfeil && input==KEY_UP)) {
 				*Zweitzeichen=-8;
 			}
-			mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
+			if (0) {
+				static boolean afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
+				if (afk!=functionKey||ai!=input||aZz!=*Zweitzeichen||aex!=entry->exitType)
+					mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
+				afk=functionKey; ai=input; aZz=*Zweitzeichen; aex=entry->exitType;
+			}
+			
 
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
 			// GSchade Ende
@@ -689,26 +704,26 @@ void SEntry::zeichneFeld()
 				char ausgabe[infoLength-leftChar+1];
 				memcpy(ausgabe,info+leftChar,infoLength-leftChar);
 				ausgabe[infoLength-leftChar]=0;
-			} else {
-        mvwprintw(parent,1,1,"x:%i,len:%i,fwidth:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s   ",x,infoLength,fieldWidth,max,leftChar,lbuch,screenCol,sbuch,info);
-        for (x = leftChar; x < infoLength; x++) {
+			} else if (0) {
+				mvwprintw(parent,1,1,"x:%i,len:%i,fwidth:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s   ",x,infoLength,fieldWidth,max,leftChar,lbuch,screenCol,sbuch,info);
+				for (x = leftChar; x < infoLength; x++) {
 					mvwprintw(parent,2+x,2,"x:%i, info[x]:%i  ",x,info[x]);
 				}
-        mvwprintw(parent,2+infoLength,2,"                            ");
-        mvwprintw(parent,2+infoLength+1,2,"                            ");
-        wrefresh(parent); // gleichbedeutend: wrefresh(obj.screen->window);
-				size_t aktumlz=0;
-				for (x = leftChar; x < infoLength; x++) {
-					if (info[x]==-61 || info[x]==-62) {
-						char ausgb[3]={0};
-						ausgb[0]=info[x];
-						ausgb[1]=info[x+1];
-						mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
-						x++;
-						aktumlz++;
-					} else {
-						(void)mvwaddch (fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
-					}
+				mvwprintw(parent,2+infoLength,2,"                            ");
+				mvwprintw(parent,2+infoLength+1,2,"                            ");
+				wrefresh(parent); // gleichbedeutend: wrefresh(obj.screen->window);
+			}
+			size_t aktumlz=0;
+			for (x = leftChar; x < infoLength; x++) {
+				if (info[x]==-61 || info[x]==-62) {
+					char ausgb[3]={0};
+					ausgb[0]=info[x];
+					ausgb[1]=info[x+1];
+					mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
+					x++;
+					aktumlz++;
+				} else {
+					(void)mvwaddch (fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
 				}
 			}
 		}

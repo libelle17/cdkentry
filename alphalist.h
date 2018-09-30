@@ -98,15 +98,23 @@ CDKALPHALIST *newCDKAlphalist (
 		chtype		/* fillerChar */,
 		chtype		/* highlight */,
 		boolean		/* Box */,
-		boolean		/* shadow */,
-    int highnr=0);
+		boolean		/* shadow */
+		// GSchade Anfang
+    ,int highnr=0
+		// GSchade Ende
+		);
 
 /*
  * This allows the user to interact with the widget.
  */
 char *activateCDKAlphalist (
 		CDKALPHALIST *	/* alphalist */,
-		chtype *	/* actions */);
+		chtype *	/* actions */
+		// G.Schade Anfang 30.9.18
+    ,int* Zweitzeichen=0
+		,int obpfeil=0
+// G.Schade Ende
+);
 
 /*
  * This injects a single character into the widget.

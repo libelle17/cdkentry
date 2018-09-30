@@ -249,9 +249,11 @@ int main (int argc, char **argv)
 		 u_char obalph;
 		 CDKENTRY *entry;
 	 } hk[]={
+		 /*
 		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
 		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
 		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 */
 		 {4,'h',"</R/U/6>Alphalist:<!R!6>",1},
 	 };
 	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
@@ -293,14 +295,18 @@ int main (int argc, char **argv)
    EExitType	exitType;
 	 while (1) {
 	//		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
-		 info = activateCDKEntry (hk[Znr].entry, 0,&Zweitzeichen);
+		 if (hk[Znr].obalph)
+			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/0);
+		 else
+			 info = activateCDKEntry(hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/1);
 		 mesg[0] = "<C>Letzte Eingabe:";
-		 sprintf (temp, "<C>(%.*s|%s|%i)", (int)(sizeof (temp) - 10), info,hk[Znr].entry->info,Zweitzeichen);
+		 sprintf (temp, "<C>(%.*s|%s|%i)", (int)(sizeof (temp) - 10), info?info:"",info&&hk[Znr].entry&&hk[Znr].entry->info?hk[Znr].entry->info:"",Zweitzeichen);
 		 mesg[1] = temp;
 		 mesg[2] = "<C>Press any key to continue.";
 		 exitType=hk[Znr].entry->exitType;
 //		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		 // Tab
+//#ifdef richtig		 
 		 if (Zweitzeichen==-9) {
 			 Znr++;
 			 if (Znr==sizeof hk/sizeof *hk) Znr=0;
@@ -318,7 +324,9 @@ int main (int argc, char **argv)
 				 }
 			 }
 			 if (Znr==-1) break;
-		 } else break;
+		 } else 
+			 break;
+//#endif 
 	 }  // while (1)
 	 destroyCDKScreen (cdkscreen); endCDK (); return EXIT_SUCCESS;
 
