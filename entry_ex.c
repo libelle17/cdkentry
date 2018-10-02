@@ -249,12 +249,13 @@ int main (int argc, char **argv)
 		 u_char obalph;
 		 CDKENTRY *entry;
 	 } hk[]={
-		 /*
+//		 /*
 		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
 		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
 		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
-		 */
+//		 */
 		 {4,'h',"</R/U/6>Alphalist:<!R!6>",1},
+		 {3,'t',"</R/U/6>Betalist:<!R!6>",1},
 	 };
 	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
 		 if (hk[aktent].obalph) {
@@ -299,10 +300,14 @@ int main (int argc, char **argv)
 			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/0);
 		 else
 			 info = activateCDKEntry(hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/1);
+//#ifdef mdebug
 		 mesg[0] = "<C>Letzte Eingabe:";
-		 sprintf (temp, "<C>(%.*s|%s|%i)", (int)(sizeof (temp) - 10), info?info:"",info&&hk[Znr].entry&&hk[Znr].entry->info?hk[Znr].entry->info:"",Zweitzeichen);
+			 snprintf (temp, sizeof temp-1,"<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info?info:"",Zweitzeichen);
+//		 if (info) if (hk[Znr].entry) if (hk[Znr].entry->info)
+			 //snprintf (temp, sizeof temp-1,"<C>(%.*s|%s|%i)", (int)(sizeof (temp) - 10), info?info:"",info&&hk[Znr].entry&&hk[Znr].entry->info?hk[Znr].entry->info:"",Zweitzeichen);
 		 mesg[1] = temp;
 		 mesg[2] = "<C>Press any key to continue.";
+//#endif
 		 exitType=hk[Znr].entry->exitType;
 //		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		 // Tab
@@ -315,7 +320,8 @@ int main (int argc, char **argv)
 			 Znr--;
 			 if (Znr<0) Znr=sizeof hk/sizeof *hk-1;
 			 // Alt- +Buchstabe
-		 } else if (Zweitzeichen) /*(info && *info==27)*/ {
+		 } else 
+			 if (Zweitzeichen) /*(info && *info==27)*/ {
 			 Znr=-1;
 			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
 				 if (Zweitzeichen==hk[aktent].buch) {
@@ -324,8 +330,9 @@ int main (int argc, char **argv)
 				 }
 			 }
 			 if (Znr==-1) break;
-		 } else 
+		 } else {
 			 break;
+		 }
 //#endif 
 	 }  // while (1)
 	 destroyCDKScreen (cdkscreen); endCDK (); return EXIT_SUCCESS;
