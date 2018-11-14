@@ -376,51 +376,40 @@ void refreshCDKWindow (WINDOW *win)
  */
 void refreshCDKScreen (CDKSCREEN *cdkscreen)
 {
-   int objectCount = cdkscreen->objectCount;
-   int x;
-   int focused = -1;
-   int visible = -1;
+	int objectCount = cdkscreen->objectCount;
+	int x;
+	int focused = -1;
+	int visible = -1;
 
-   refreshCDKWindow (cdkscreen->window);
+	refreshCDKWindow (cdkscreen->window);
 
-   /* We erase all the invisible objects, then only
-    * draw it all back, so that the objects
-    * can overlap, and the visible ones will always
-    * be drawn after all the invisible ones are erased */
-   for (x = 0; x < objectCount; x++)
-   {
-      CDKOBJS *obj = cdkscreen->object[x];
-
-      if (validObjType (obj, ObjTypeOf (obj)))
-      {
-	 if (obj->isVisible)
-	 {
-	    if (visible < 0)
-	       visible = x;
-	    if (obj->hasFocus && focused < 0)
-	       focused = x;
-	 }
-	 else
-	 {
-	    obj->fn->eraseObj (obj);
-	 }
-      }
-   }
-
-   for (x = 0; x < objectCount; x++)
-   {
-      CDKOBJS *obj = cdkscreen->object[x];
-
-      if (validObjType (obj, ObjTypeOf (obj)))
-      {
-	 obj->hasFocus = (x == focused);
-
-	 if (obj->isVisible)
-	 {
-	    obj->fn->drawObj (obj, obj->box);
-	 }
-      }
-   }
+	/* We erase all the invisible objects, then only
+	 * draw it all back, so that the objects
+	 * can overlap, and the visible ones will always
+	 * be drawn after all the invisible ones are erased */
+	for (x = 0; x < objectCount; x++) {
+		CDKOBJS *obj = cdkscreen->object[x];
+		if (validObjType (obj, ObjTypeOf (obj))) {
+			if (obj->isVisible) {
+				if (visible < 0)
+					visible = x;
+				if (obj->hasFocus && focused < 0)
+					focused = x;
+			} else {
+				obj->fn->eraseObj (obj);
+			}
+		}
+	}
+	for (x = 0; x < objectCount; x++) {
+		CDKOBJS *obj = cdkscreen->object[x];
+		if (validObjType (obj, ObjTypeOf (obj))) {
+			obj->hasFocus = (x == focused);
+			if (obj->isVisible) {
+				// GSchade 13.11.18 hier gehts vorbei
+				obj->fn->drawObj (obj, obj->box);
+			}
+		}
+	}
 }
 
 /*

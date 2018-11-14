@@ -32,7 +32,7 @@ void popupLabel (CDKSCREEN *screen, CDK_CSTRING2 mesg, int count)
    /* Clean the screen. */
    curs_set (oldCursState);
    eraseCDKScreen (screen);
-   refreshCDKScreen (screen);
+   refreshCDKScreen(screen);
 }
 
 /*
@@ -62,5 +62,5 @@ void popupLabelAttrib (CDKSCREEN *screen, CDK_CSTRING2 mesg, int count, chtype a
    /* Clean the screen. */
    curs_set (oldCursState);
    eraseCDKScreen (screen);
-   refreshCDKScreen (screen);
+   refreshCDKScreen(screen);
 }
