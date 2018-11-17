@@ -48,6 +48,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	int junk             = 0;
 	int horizontalAdjust, oldWidth;
 
+	// GSchade 17.11.18 3.Parameter
 	if ((entry = newCDKObject (CDKENTRY, &my_funcs)) == 0)
 		return (0);
 
@@ -640,7 +641,8 @@ void cleanCDKEntry (CDKENTRY *entry)
 	/* Refresh the entry field. */
 	wrefresh (entry->fieldWin);
 }
-
+// GSchade 17.11.18; s. cdk.h
+einbauart akteinbart;
 /*
  * This draws the entry field.
  */
@@ -671,8 +673,8 @@ static void _drawCDKEntry (CDKOBJS *object, boolean Box)
 		writeChtype (entry->labelWin, 0, 0, entry->label, HORIZONTAL, 0, entry->labelLen);
 		wrefresh (entry->labelWin);
 	}
-
 	entry->zeichneFeld();
+
 }
 
 /*
@@ -929,7 +931,6 @@ void setCDKEntryCB (CDKENTRY *entry, ENTRYCB callback)
 static void _focusCDKEntry (CDKOBJS *object)
 {
 	CDKENTRY *entry = (CDKENTRY *)object;
-
 	wmove (entry->fieldWin, 0, entry->sbuch);
 	wrefresh (entry->fieldWin);
 }

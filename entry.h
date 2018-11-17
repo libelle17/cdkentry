@@ -118,7 +118,10 @@ CDKENTRY *newCDKEntry (
 		int		/* max */,
 		boolean		/* Box */,
 		boolean		/* shadow */,
-		int highnr=0);
+		// GSchade 17.11.18
+		int highnr/*=0*/
+		// Ende GSchade 17.11.18
+		);
 
 /*
  * This activates the entry widget.

@@ -497,9 +497,10 @@ static void _drawCDKScroll(CDKOBJS *object, boolean Box)
    drawCdkTitle (scrollp->win, object);
 
    /* Draw in the scolling list items. */
-	 // Kommentar GSchade 11.11.18
+	 // Kommentar GSchade 0 11.11.18
 	 // GSchade: auskommentieren und dann noch vor dem Wechsel zu anderem alle übrigen zeichnen
-   drawCDKScrollList(scrollp, Box);
+	 if (akteinbart==einb_alphalist)
+		 drawCDKScrollList(scrollp, Box);
 }
 
 static void drawCDKScrollCurrent(CDKSCROLL *s)

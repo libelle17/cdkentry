@@ -281,8 +281,6 @@ int main (int argc, char **argv)
 //	 file = newCDKEntry (cdkscreen, 50, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
 
 
-   /* Draw the screen. */
-   refreshCDKScreen (cdkscreen);
 
    /*
     * Pass in whatever was given off of the command line. Notice we
@@ -295,12 +293,18 @@ int main (int argc, char **argv)
 	 int Znr=0,Zweitzeichen=0;
    EExitType	exitType;
 	 while (1) {
-	//		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
-		 if (hk[Znr].obalph)
+		 akteinbart=einb_direkt;
+		 /* Draw the screen. */
+		 refreshCDKScreen (cdkscreen);
+		 //		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
+		 if (hk[Znr].obalph) {
+			 akteinbart=einb_alphalist;
 			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/0);
-		 else
+			 eraseCDKScroll (((CDKALPHALIST*)hk[Znr].entry)->scrollField);
+		 } else {
 			 info = activateCDKEntry(hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/1);
-//#ifdef mdebug
+		 }
+		 //#ifdef mdebug
 		 mesg[0] = "<C>Letzte Eingabe:";
 			 snprintf (temp, sizeof temp-1,"<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info?info:"",Zweitzeichen);
 //		 if (info) if (hk[Znr].entry) if (hk[Znr].entry->info)

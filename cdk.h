@@ -259,6 +259,14 @@ typedef int boolean;
 #define	COLOR_PAIR(a)	A_NORMAL
 #endif
 
+// GSchade 17.11.18
+enum einbauart {
+	einb_direkt,
+	einb_alphalist,
+	einb_sonst
+};
+extern einbauart akteinbart; // GSchade 17.11.18, in entry.c
+
 #define CONTROL(c)	((c) & 0x1f)	/* obsolete: use CTRL() */
 
 /* Define the 'GLOBAL DEBUG FILEHANDLE'	*/

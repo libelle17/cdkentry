@@ -694,8 +694,10 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
 			}
 			drawMyScroller(alphalist);
 		} else {
+			/* Kommentar G.Schade 17.11.18, erlaubt nicht in der Liste vertretene Eingaben
 			Beep ();
 			result = 0;
+			*/
 		}
 		if (pattern != 0)
 			free (pattern);

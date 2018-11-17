@@ -1,4 +1,4 @@
-g++ -std=c++14 -g -I. -I$HOME/cdk/include -I/usr/include/ncursesw -o entry entry_ex.c cdkscreen.c traverse.c binding.c popup_label.c label.c cdk_objs.c -lncursesw draw.c cdk.c alphalist.c entry.c cdk_display.c cdk_params.c scroll.c scroller.c
+g++-7 -ggdb -I. -I$HOME/cdk/include -I/usr/include/ncursesw -o entry entry_ex.c cdkscreen.c traverse.c binding.c popup_label.c label.c cdk_objs.c -lncursesw draw.c cdk.c alphalist.c entry.c cdk_display.c cdk_params.c scroll.c scroller.c
 exit
 
 cdk_display.c
