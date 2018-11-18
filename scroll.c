@@ -233,7 +233,6 @@ static void fixCursorPosition (CDKSCROLL *widget)
 int activateCDKScroll(CDKSCROLL *scrollp, chtype *actions)
 {
 	/* Draw the scrolling list */
-	// GSchade 1 Kommentar 13.11.18
 	drawCDKScroll(scrollp, ObjOf (scrollp)->box);
 
 	if (actions == 0) {
@@ -478,7 +477,6 @@ static void _moveCDKScroll (CDKOBJS *object,
    refreshCDKWindow (WindowOf (scrollp));
    /* Redraw the window, if they asked for it. */
    if (refresh_flag) {
-	// GSchade 3 Kommentar 13.11.18
       drawCDKScroll(scrollp, ObjOf (scrollp)->box);
    }
 }

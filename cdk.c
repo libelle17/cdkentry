@@ -414,9 +414,6 @@ static unsigned decodeAttribute (char *string,
 	return (from + (unsigned)(result - base));
 }
 
-// GSchade 25.9.18
-extern CDKSCREEN *allgscr;
-
 /*
  * This function takes a character string, full of format markers
  * and translates them into a chtype * array. This is better suited

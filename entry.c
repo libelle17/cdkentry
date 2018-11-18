@@ -48,7 +48,6 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	int junk             = 0;
 	int horizontalAdjust, oldWidth;
 
-	// GSchade 17.11.18 3.Parameter
 	if ((entry = newCDKObject (CDKENTRY, &my_funcs)) == 0)
 		return (0);
 
@@ -204,8 +203,10 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 			}
 			if (0) {
 				static boolean afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
+				/*
 				if (afk!=functionKey||ai!=input||aZz!=*Zweitzeichen||aex!=entry->exitType)
 					mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
+				 */
 				afk=functionKey; ai=input; aZz=*Zweitzeichen; aex=entry->exitType;
 			}
 			
@@ -379,7 +380,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					if (widget->dispType == vVIEWONLY) {
 						Beep ();
 					} else {
-						mvwprintw(widget->parent,1,100,"!!!!!!!!!, currPos: %i  ",currPos);
+						// mvwprintw(widget->parent,1,100,"!!!!!!!!!, currPos: %i  ",currPos);
 						bool success = FALSE;
 						if (input == KEY_BACKSPACE) {
 							--currPos;
@@ -389,7 +390,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 						const int obuml=(widget->info[currPos]==-61||widget->info[currPos]==-62);
 						if (currPos >= 0 && infoLength > 0) {
 							if (currPos < infoLength) {
-						mvwprintw(widget->parent,2,100,"!!!!!!!!!, currPos: %i, obuml: %i",currPos,obuml);
+						// mvwprintw(widget->parent,2,100,"!!!!!!!!!, currPos: %i, obuml: %i",currPos,obuml);
 						wrefresh(widget->parent);
 								int x;
 								for (x = currPos; x < infoLength; x++) {
@@ -707,12 +708,14 @@ void SEntry::zeichneFeld()
 				memcpy(ausgabe,info+leftChar,infoLength-leftChar);
 				ausgabe[infoLength-leftChar]=0;
 			} else if (0) {
+				/*
 				mvwprintw(parent,1,1,"x:%i,len:%i,fwidth:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s   ",x,infoLength,fieldWidth,max,leftChar,lbuch,screenCol,sbuch,info);
 				for (x = leftChar; x < infoLength; x++) {
 					mvwprintw(parent,2+x,2,"x:%i, info[x]:%i  ",x,info[x]);
 				}
 				mvwprintw(parent,2+infoLength,2,"                            ");
 				mvwprintw(parent,2+infoLength+1,2,"                            ");
+				*/
 				wrefresh(parent); // gleichbedeutend: wrefresh(obj.screen->window);
 			}
 			size_t aktumlz=0;
@@ -721,7 +724,7 @@ void SEntry::zeichneFeld()
 					char ausgb[3]={0};
 					ausgb[0]=info[x];
 					ausgb[1]=info[x+1];
-					mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
+					// mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
 					x++;
 					aktumlz++;
 				} else {

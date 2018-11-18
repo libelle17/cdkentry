@@ -293,7 +293,6 @@ static void _moveCDKAlphalist (CDKOBJS *object,
 static void drawMyScroller(CDKALPHALIST *widget)
 {
    SaveFocus (widget);
-	// GSchade 2 Kommentar 13.11.18
    drawCDKScroll(widget->scrollField, ObjOf (widget->scrollField)->box);
    RestoreFocus (widget);
 }
@@ -877,8 +876,6 @@ static int createList (CDKALPHALIST *alphalist, CDK_CSTRING *list, int listSize)
 static void _focusCDKAlphalist (CDKOBJS *object)
 {
    CDKALPHALIST *widget = (CDKALPHALIST *)object;
-	 // zusätzlich eingefügt GSchade 13.11.18
-   //drawMyScroller(widget);
    FocusObj (ObjOf (widget->entryField));
 }
 

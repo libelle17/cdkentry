@@ -110,7 +110,6 @@ bool validCDKObject (CDKOBJS *obj)
  * Create a new object beginning with a CDKOBJS struct.  The whole object is
  * initialized to zeroes except for special cases which have known values.
  */
-// GSchade 17.11.18 letzter Parameter
 void *_newCDKObject (unsigned size, const CDKFUNCS * funcs)
 {
    ALL_OBJECTS *item;

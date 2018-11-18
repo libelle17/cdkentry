@@ -8,6 +8,10 @@ CDKSCREEN *allgscr;
 #ifdef HAVE_XCURSES
 char *XCursesProgramName = "entry_ex";
 #endif
+#include <vector>
+#include <string>
+using namespace std;
+vector<string> erg;
 
 static BINDFN_PROTO (XXXCB);
 
@@ -234,6 +238,8 @@ int main (int argc, char **argv)
 
    /* Start CDK colors. */
    initCDKColor ();
+	 cdkscreen->window->_maxx=300;
+	 cdkscreen->window->_scroll=1;
 //	 for(int i=0;i<64;i++) mvwaddch (cdkscreen->window, 20+(i/8), 20+i, 'a'|COLOR_PAIR(i));
 	 /*
 	 chtype wcol=COLOR_PAIR(11)|A_BLINK;
@@ -247,7 +253,7 @@ int main (int argc, char **argv)
 		 char buch;
 		 const char *label;
 		 u_char obalph;
-		 CDKENTRY *entry;
+		 CDKENTRY *eingabef;
 	 } hk[]={
 //		 /*
 		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
@@ -256,16 +262,292 @@ int main (int argc, char **argv)
 //		 */
 		 {4,'h',"</R/U/6>Alphalist:<!R!6>",1},
 		 {3,'t',"</R/U/6>Betalist:<!R!6>",1},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'r',"</R/U/6>Dürectory:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
+		 {4,'t',"</R/U/6>Dätei:<!R!6>"},
+		 {4,'n',"</R/U/6>Ordner:<!R!6>"},
 	 };
 	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
 		 if (hk[aktent].obalph) {
-			 hk[aktent].entry=(CDKENTRY*)newCDKAlphalist(cdkscreen,50,12+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
+			 hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,50,12+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
 		 } else {
-			 hk[aktent].entry=newCDKEntry(cdkscreen,50,12+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,max,0,0,hk[aktent].nr);
-			 bindCDKObject (vENTRY, hk[aktent].entry, '?', XXXCB, 0);
+			 hk[aktent].eingabef=newCDKEntry(cdkscreen,50,12+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,max,0,0,hk[aktent].nr);
+			 bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
 		 }
 		 /* Is the widget null? */
-		 if (hk[aktent].entry == 0)
+		 if (hk[aktent].eingabef == 0)
 		 {
 			 /* Clean up. */
 			 destroyCDKScreen (cdkscreen);
@@ -287,7 +569,7 @@ int main (int argc, char **argv)
     * don't check if argv[1] is null or not. The function setCDKEntry
     * already performs any needed checks.
     */
-   //setCDKEntry (hk[0].entry, argv[optind], 0, max, TRUE);
+   //setCDKEntry (hk[0].eingabef, argv[optind], 0, max, TRUE);
 
    /* Activate the entry field. */
 	 int Znr=0,Zweitzeichen=0;
@@ -299,20 +581,20 @@ int main (int argc, char **argv)
 		 //		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
 		 if (hk[Znr].obalph) {
 			 akteinbart=einb_alphalist;
-			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/0);
-			 eraseCDKScroll (((CDKALPHALIST*)hk[Znr].entry)->scrollField);
+			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/0);
+			 eraseCDKScroll (((CDKALPHALIST*)hk[Znr].eingabef)->scrollField);
 		 } else {
-			 info = activateCDKEntry(hk[Znr].entry, 0,&Zweitzeichen, /*obpfeil*/1);
+			 info = activateCDKEntry(hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/1);
 		 }
 		 //#ifdef mdebug
 		 mesg[0] = "<C>Letzte Eingabe:";
 			 snprintf (temp, sizeof temp-1,"<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info?info:"",Zweitzeichen);
-//		 if (info) if (hk[Znr].entry) if (hk[Znr].entry->info)
-			 //snprintf (temp, sizeof temp-1,"<C>(%.*s|%s|%i)", (int)(sizeof (temp) - 10), info?info:"",info&&hk[Znr].entry&&hk[Znr].entry->info?hk[Znr].entry->info:"",Zweitzeichen);
+//		 if (info) if (hk[Znr].eingabef) if (hk[Znr].eingabef->info)
+			 //snprintf(temp,sizeof temp-1,"<C>(%.*s|%s|%i)",(int)(sizeof(temp)-10),info?info:"",info&&hk[Znr].eingabef&&hk[Znr].eingabef->info?hk[Znr].eingabef->info:"",Zweitzeichen);
 		 mesg[1] = temp;
 		 mesg[2] = "<C>Press any key to continue.";
 //#endif
-		 exitType=hk[Znr].entry->exitType;
+		 exitType=hk[Znr].eingabef->exitType;
 //		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		 // Tab
 //#ifdef richtig		 
@@ -339,36 +621,47 @@ int main (int argc, char **argv)
 		 }
 //#endif 
 	 }  // while (1)
-	 destroyCDKScreen (cdkscreen); endCDK (); return EXIT_SUCCESS;
-
-	 /* Tell them what they typed. */
-	 if (exitType == vESCAPE_HIT && !Zweitzeichen) {
-		 mesg[0] = "<C>Sie schlügen escape. No information passed back.";
-		 mesg[1] = temp;
-		 mesg[2] = "<C>Press any key to continue.";
-		 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].entry);
-		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
-	 } else if (exitType == vNORMAL) {
-		 mesg[0] = "<C>Sie gaben folgendes ein";
-		 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
-		 mesg[1] = temp;
-		 mesg[2] = "<C>Press any key to continue.";
-		 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].entry);
-		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
-	 } else {
-		 sprintf(temp0,"Exit-type: %i",exitType);
-		 mesg[0]=temp0;
-		 mesg[1] = "<C>Sie gaben folgendes ein: ";
-		 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
-		 mesg[2] = temp;
-		 mesg[3] = "<C>Eine Taste drücken zum Fortfahren.";
-		 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].entry);
-		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 4);
+	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
+//		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
+		 const char *ueb=
+			 hk[aktent].obalph?
+			 ueb=((CDKALPHALIST*)hk[aktent].eingabef)->entryField->info:
+			 ueb=hk[aktent].eingabef->info;
+		 erg.push_back(ueb);
+	 }
+	 if (0) {
+		 /* Tell them what they typed. */
+		 if (exitType == vESCAPE_HIT && !Zweitzeichen) {
+			 mesg[0] = "<C>Sie schlügen escape. No information passed back.";
+			 mesg[1] = temp;
+			 mesg[2] = "<C>Press any key to continue.";
+			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
+		 } else if (exitType == vNORMAL) {
+			 mesg[0] = "<C>Sie gaben folgendes ein";
+			 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
+			 mesg[1] = temp;
+			 mesg[2] = "<C>Press any key to continue.";
+			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
+		 } else {
+			 sprintf(temp0,"Exit-type: %i",exitType);
+			 mesg[0]=temp0;
+			 mesg[1] = "<C>Sie gaben folgendes ein: ";
+			 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
+			 mesg[2] = temp;
+			 mesg[3] = "<C>Eine Taste drücken zum Fortfahren.";
+			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 4);
+		 }
 	 }
 
 	 /* Clean up and exit. */
 	 destroyCDKScreen (cdkscreen);
 	 endCDK ();
+	 for(int aktent=0;aktent<erg.size();aktent++) {
+		 printf("%s\n",erg[aktent].c_str());
+	 }
 	 return EXIT_SUCCESS;
 }
 
