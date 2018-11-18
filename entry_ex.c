@@ -506,6 +506,7 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 		 obverschiebe=1;
 	 } 
 	 if (obverschiebe) {
+	 mvwprintw(cdkscreen->window,1,50,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		 for(int aktent=0;aktent<maxhk;aktent++) {
 			 if (aktent>=ymin && aktent<ymax) {
 				 hk[aktent].eingabef->obj.isVisible=1;
@@ -517,8 +518,10 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 				 hk[aktent].eingabef->obj.isVisible=0;
 			 }
 		 }
+	 }else {
+	 mvwprintw(cdkscreen->window,1,50,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+
 	 }
-	 mvwprintw(cdkscreen->window,1,50,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 	 refreshCDKScreen (cdkscreen);
 }
 
