@@ -487,15 +487,17 @@ struct hotkst {
 	{4,'t',"</R/U/6>Dätei:<!R!6>"},
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 };
-size_t maxhk=sizeof hk/sizeof *hk;
-size_t yabst=2;
+const size_t maxhk=sizeof hk/sizeof *hk;
+const size_t yabst=2;
+const int xpos=11;
 
 void zeichne(CDKSCREEN *cdkscreen,int Znr)
 {
 	static size_t maxy=getmaxy(cdkscreen->window)-yabst-3;
 	static size_t maxh=maxy>maxhk?maxhk:maxy;
 	static size_t ymin=0,ymax=maxh;
-	bool obverschiebe=0;
+	static bool erstmals=1;
+	bool obverschiebe=erstmals;
 	 if (Znr<ymin) {
 		 ymin--;
 		 ymax--;
@@ -506,23 +508,23 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 		 obverschiebe=1;
 	 } 
 	 if (obverschiebe) {
-	 mvwprintw(cdkscreen->window,1,50,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+		 mvwprintw(cdkscreen->window,1,xpos,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		 for(int aktent=0;aktent<maxhk;aktent++) {
 			 if (aktent>=ymin && aktent<ymax) {
 				 hk[aktent].eingabef->obj.isVisible=1;
 				 if (hk[aktent].obalph)
-					 moveCDKAlphalist(hk[aktent].eingabef,50,yabst+aktent-ymin,0,0);
+					 moveCDKAlphalist(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,0);
 				 else
-					 moveCDKEntry(hk[aktent].eingabef,50,yabst+aktent-ymin,0,0);
+					 moveCDKEntry(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,0);
 			 } else {
 				 hk[aktent].eingabef->obj.isVisible=0;
 			 }
 		 }
 	 }else {
-	 mvwprintw(cdkscreen->window,1,50,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
-
+		 mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 	 }
 	 refreshCDKScreen (cdkscreen);
+	 erstmals=0;
 }
 
 /*
@@ -574,8 +576,8 @@ int main (int argc, char **argv)
 				*/
 
 	 /* Create the entry field widget. */
-//	 directory = newCDKEntry (cdkscreen,/*xplace*/50,/*yplace*/12, /*title*/"", label, A_UNDERLINE, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/2);
-//	 file = newCDKEntry (cdkscreen, 50, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
+//	 directory = newCDKEntry (cdkscreen,/*xplace*/xpos,/*yplace*/12, /*title*/"", label, A_UNDERLINE, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/2);
+//	 file = newCDKEntry (cdkscreen, xpos, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
 
 		 allgscr=cdkscreen=initCDKScreen(0);
 		 /* Start CDK colors. */
@@ -583,9 +585,9 @@ int main (int argc, char **argv)
 		 const int maxlen=100;
 		 for(size_t aktent=0;aktent<maxhk;aktent++) {
 			 if (hk[aktent].obalph) {
-				 hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,50,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
+				 hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
 			 } else {
-				 hk[aktent].eingabef=newCDKEntry(cdkscreen,50,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].nr);
+				 hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].nr);
 				 bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
 			 }
 			 /* Is the widget null? */
