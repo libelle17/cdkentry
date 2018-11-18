@@ -488,23 +488,24 @@ struct hotkst {
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 };
 const size_t maxhk=sizeof hk/sizeof *hk;
-const size_t yabst=2;
+const size_t yabst=7;
 const int xpos=11;
 
 void zeichne(CDKSCREEN *cdkscreen,int Znr)
 {
-	static size_t maxy=getmaxy(cdkscreen->window)-yabst-3;
+	static size_t maxy=getmaxy(cdkscreen->window)-yabst;
 	static size_t maxh=maxy>maxhk?maxhk:maxy;
-	static size_t ymin=0,ymax=maxh;
+	static size_t ymin=0;
+	static size_t ymax=maxh;
 	static bool erstmals=1;
 	bool obverschiebe=erstmals;
 	 if (Znr<ymin) {
-		 ymin--;
-		 ymax--;
+		 ymin-=(ymin-Znr);
+		 ymax-=(ymin-Znr);
 		 obverschiebe=1;
 	 } else if (Znr>=ymax) {
-		 ymin++;
-		 ymax++;
+		 ymin+=(Znr-ymax+1);
+		 ymax+=(Znr-ymax+1);
 		 obverschiebe=1;
 	 } 
 	 if (obverschiebe) {
@@ -513,9 +514,9 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 			 if (aktent>=ymin && aktent<ymax) {
 				 hk[aktent].eingabef->obj.isVisible=1;
 				 if (hk[aktent].obalph)
-					 moveCDKAlphalist(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,0);
+					 moveCDKAlphalist(((CDKALPHALIST*)hk[aktent].eingabef),xpos,yabst+aktent-ymin,0,1);
 				 else
-					 moveCDKEntry(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,0);
+					 moveCDKEntry(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,1);
 			 } else {
 				 hk[aktent].eingabef->obj.isVisible=0;
 			 }
@@ -523,7 +524,7 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 	 }else {
 		 mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 	 }
-	 refreshCDKScreen (cdkscreen);
+	 refreshCDKScreen(cdkscreen);
 	 erstmals=0;
 }
 
@@ -535,7 +536,7 @@ int main (int argc, char **argv)
 	 //setlocale(LC_ALL,"de_DE.UTF-8");
 	 setlocale(LC_ALL,"");
    /* *INDENT-EQLS* */
-   CDKSCREEN *cdkscreen = 0;
+	 CDKSCREEN *cdkscreen = 0;
 
 	/* Get the user list. */
 	userSize = getUserList (&userList);
@@ -580,6 +581,8 @@ int main (int argc, char **argv)
 //	 file = newCDKEntry (cdkscreen, xpos, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
 
 		 allgscr=cdkscreen=initCDKScreen(0);
+		 static size_t maxy=getmaxy(cdkscreen->window)-yabst;
+		 static size_t maxh=maxy>maxhk?maxhk:maxy;
 		 /* Start CDK colors. */
 		 initCDKColor ();
 		 const int maxlen=100;
@@ -593,14 +596,13 @@ int main (int argc, char **argv)
 			 /* Is the widget null? */
 			 if (!hk[aktent].eingabef) {
 				 /* Clean up. */
-				 destroyCDKScreen (cdkscreen);
+				 destroyCDKScreen(cdkscreen);
 				 endCDK ();
 
 				 printf ("Cannot create the entry box. Is the window too small, aktent: %lu   \n",aktent);
 				 ExitProgram (EXIT_FAILURE);
 			 }
 		 }
-
 
 		 /*
     * Pass in whatever was given off of the command line. Notice we
@@ -639,31 +641,42 @@ int main (int argc, char **argv)
 //		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		 // Tab
 //#ifdef richtig		 
+		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i",Zweitzeichen);
 		 if (Zweitzeichen==-9) {
 			 Znr++;
-			 if (Znr==sizeof hk/sizeof *hk) Znr=0;
 			 // Alt+Tab
+			 // Seite nach unten
+		 } else if (Zweitzeichen==-10) {
+			 Znr+=maxh-1;
 		 } else if (Zweitzeichen==-8) {
 			 Znr--;
-			 if (Znr<0) Znr=sizeof hk/sizeof *hk-1;
+			 // Seite nach oben
+		 } else if (Zweitzeichen==-11) {
+			 Znr-=maxh-1;
 			 // Alt- +Buchstabe
-		 } else 
-			 if (Zweitzeichen) /*(info && *info==27)*/ {
-			 Znr=-1;
-			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
-				 if (Zweitzeichen==hk[aktent].buch) {
-					 Znr=aktent;
-					 break;
-				 }
-			 }
-			 if (Znr==-1) break;
 		 } else {
-			 break;
+			 if (Zweitzeichen) /*(info && *info==27)*/ {
+				 Znr=-1;
+				 for(int aktent=0;aktent<maxhk;aktent++) {
+					 if (Zweitzeichen==hk[aktent].buch) {
+						 Znr=aktent;
+						 break;
+					 }
+				 }
+				 if (Znr==-1) break;
+			 } else {
+				 break;
+			 }
 		 }
-//#endif 
+		 if (Znr<0) {
+			 Znr=0; // Znr=sizeof hk/sizeof *hk-1;
+		 } else if (Znr>=maxhk) {
+			 Znr=maxhk-1; // sizeof hk/sizeof *hk) Znr=0;
+		 }
+		 //#endif 
 	 }  // while (1)
 	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
-//		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
+		 //		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
 		 const char *ueb=
 			 hk[aktent].obalph?
 			 ueb=((CDKALPHALIST*)hk[aktent].eingabef)->entryField->info:
@@ -671,36 +684,36 @@ int main (int argc, char **argv)
 		 erg.push_back(ueb);
 	 }
 	 /*
-	 if (0) {
-		 // Tell them what they typed.
-		 if (exitType == vESCAPE_HIT && !Zweitzeichen) {
-			 mesg[0] = "<C>Sie schlügen escape. No information passed back.";
-			 mesg[1] = temp;
-			 mesg[2] = "<C>Press any key to continue.";
-			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
-			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
-		 } else if (exitType == vNORMAL) {
-			 mesg[0] = "<C>Sie gaben folgendes ein";
-			 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
-			 mesg[1] = temp;
-			 mesg[2] = "<C>Press any key to continue.";
-			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
-			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
-		 } else {
-			 sprintf(temp0,"Exit-type: %i",exitType);
-			 mesg[0]=temp0;
-			 mesg[1] = "<C>Sie gaben folgendes ein: ";
-			 sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
-			 mesg[2] = temp;
-			 mesg[3] = "<C>Eine Taste drücken zum Fortfahren.";
-			 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
-			 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 4);
-		 }
-	 }
-	 */
+			if (0) {
+// Tell them what they typed.
+if (exitType == vESCAPE_HIT && !Zweitzeichen) {
+mesg[0] = "<C>Sie schlügen escape. No information passed back.";
+mesg[1] = temp;
+mesg[2] = "<C>Press any key to continue.";
+for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
+} else if (exitType == vNORMAL) {
+mesg[0] = "<C>Sie gaben folgendes ein";
+sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
+mesg[1] = temp;
+mesg[2] = "<C>Press any key to continue.";
+for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
+} else {
+sprintf(temp0,"Exit-type: %i",exitType);
+mesg[0]=temp0;
+mesg[1] = "<C>Sie gaben folgendes ein: ";
+sprintf (temp, "<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info,Zweitzeichen);
+mesg[2] = temp;
+mesg[3] = "<C>Eine Taste drücken zum Fortfahren.";
+for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 4);
+}
+}
+		*/
 
-	 /* Clean up and exit. */
-	 destroyCDKScreen (cdkscreen);
+/* Clean up and exit. */
+	 destroyCDKScreen(cdkscreen);
 	 endCDK ();
 	 for(int aktent=0;aktent<erg.size();aktent++) {
 		 printf("%s\n",erg[aktent].c_str());

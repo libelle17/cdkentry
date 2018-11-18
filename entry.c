@@ -194,12 +194,16 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 			*Zweitzeichen=0;
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
-			if (input==27) *Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
-			else if (input==9||(obpfeil && input==KEY_DOWN)) {
+			if (input==27) {
+				*Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+			} else if (input==9||(obpfeil && input==KEY_DOWN)) {
 				*Zweitzeichen=-9;
-			}
-			else if (input==KEY_BTAB||(obpfeil && input==KEY_UP)) {
+			} else if (input==KEY_BTAB||(obpfeil && input==KEY_UP)) {
 				*Zweitzeichen=-8;
+			} else if (input==KEY_NPAGE) {
+				*Zweitzeichen=-10;
+			} else if (input==KEY_PPAGE) {
+				*Zweitzeichen=-11;
 			}
 			if (0) {
 				static boolean afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
@@ -226,7 +230,7 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
       drawCDKEntry (entry, ObjOf (entry)->box);
       // GSchade Ende
 
-			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9) {
+			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
 				return ret;
 			}
 		}
