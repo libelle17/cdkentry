@@ -79,7 +79,7 @@ void setCDKObjectBackgroundColor (CDKOBJS *obj, const char *color)
    }
 
    /* Convert the value of the environment variable to a chtype. */
-   holder = char2Chtype (color, &junk1, &junk2);
+   holder = char2Chtypeh(color, &junk1, &junk2);
 
    /* Set the widget's background color. */
    SetBackAttrObj (obj, holder[0]);
@@ -120,7 +120,7 @@ int setCdkTitle (CDKOBJS *obj, const char *title, int boxWidth)
 	    /* We need to determine the widest title line. */
 	    for (x = 0; x < obj->titleLines; x++)
 	    {
-	       chtype *holder = char2Chtype (temp[x], &len, &align);
+	       chtype *holder = char2Chtypeh(temp[x], &len, &align);
 	       maxWidth = MAXIMUM (maxWidth, len);
 	       freeChtype (holder);
 	    }
@@ -135,7 +135,7 @@ int setCdkTitle (CDKOBJS *obj, const char *title, int boxWidth)
 	 titleWidth = boxWidth - (2 * obj->borderSize);
 	 for (x = 0; x < obj->titleLines; x++)
 	 {
-	    obj->title[x] = char2Chtype (temp[x], &obj->titleLen[x],
+	    obj->title[x] = char2Chtypeh(temp[x], &obj->titleLen[x],
 					 &obj->titlePos[x]);
 	    obj->titlePos[x] = justifyString (titleWidth, obj->titleLen[x],
 					      obj->titlePos[x]);

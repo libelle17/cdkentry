@@ -420,7 +420,7 @@ static unsigned decodeAttribute (char *string,
  * to curses, because curses uses chtype almost exclusively
  */
 // highnr G.Schade 26.9.18
-chtype *char2Chtype (const char *string, int *to, int *align, int highnr)
+chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr)
 {
 	chtype *result = 0;
 	chtype attrib;

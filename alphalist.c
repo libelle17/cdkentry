@@ -83,7 +83,7 @@ CDKALPHALIST *newCDKAlphalist (CDKSCREEN *cdkscreen,
    /* Translate the label char *pointer to a chtype pointer. */
    if (label != 0)
    {
-      chtype *chtypeLabel = char2Chtype (label, &labelLen, &junk2
+      chtype *chtypeLabel = char2Chtypeh(label, &labelLen, &junk2
 					// GSchade Anfang
 					,highnr
 					// GSchade Ende

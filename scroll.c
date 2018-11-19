@@ -721,7 +721,7 @@ static boolean allocListItem (CDKSCROLL *scrollp,
       value = *work;
    }
 
-   if ((scrollp->item[which] = char2Chtype (value,
+   if ((scrollp->item[which] = char2Chtypeh(value,
 					    &(scrollp->itemLen[which]),
 					    &(scrollp->itemPos[which]))) == 0)
       return FALSE;

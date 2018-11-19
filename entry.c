@@ -70,7 +70,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label != 0)
 	{
-		entry->label = char2Chtype (label, &entry->labelLen, &junk
+		entry->label = char2Chtypeh(label, &entry->labelLen, &junk
 				// GSchade Anfang
 				,highnr
 				// GSchade Ende

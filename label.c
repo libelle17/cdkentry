@@ -46,7 +46,7 @@ CDKLABEL *newCDKLabel (CDKSCREEN *cdkscreen,
    for (x = 0; x < rows; x++)
    {
       /* Translate the char * to a chtype. */
-      label->info[x] = char2Chtype (mesg[x],
+      label->info[x] = char2Chtypeh(mesg[x],
 				    &label->infoLen[x],
 				    &label->infoPos[x]);
       boxWidth = MAXIMUM (boxWidth, label->infoLen[x]);
@@ -148,7 +148,7 @@ void setCDKLabelMessage (CDKLABEL *label, CDK_CSTRING2 info, int infoSize)
    /* Copy in the new message. */
    for (x = 0; x < label->rows; x++)
    {
-      label->info[x] = char2Chtype (info[x],
+      label->info[x] = char2Chtypeh(info[x],
 				    &label->infoLen[x],
 				    &label->infoPos[x]);
       label->infoPos[x] = justifyString (label->boxWidth - 2 * BorderOf (label),

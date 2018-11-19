@@ -296,7 +296,7 @@ char *chtype2String (
 /*
  * This takes a char pointer and returns a chtype pointer.
  */
-chtype *char2Chtype (
+chtype *char2Chtypeh(
 		const char *	/* string */,
 		int *		/* length */,
 		int *		/* align */,
