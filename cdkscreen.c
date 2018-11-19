@@ -380,9 +380,10 @@ void refreshCDKScreen (CDKSCREEN *cdkscreen)
 	int x;
 	int focused = -1;
 	int visible = -1;
-
+//#define richtig
+#ifdef richtig
 	refreshCDKWindow (cdkscreen->window);
-
+#endif
 	/* We erase all the invisible objects, then only
 	 * draw it all back, so that the objects
 	 * can overlap, and the visible ones will always

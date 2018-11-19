@@ -420,7 +420,7 @@ static unsigned decodeAttribute (char *string,
  * to curses, because curses uses chtype almost exclusively
  */
 // highnr G.Schade 26.9.18
-chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr)
+chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr/*=0*/)
 {
 	chtype *result = 0;
 	chtype attrib;
@@ -528,7 +528,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr)
 			/* Set the format marker boolean to false.  */
 			insideMarker = FALSE;
 // GSchade 25.9.18
-			size_t pos=0;
+			//size_t pos=0;
 			/* Start parsing the character string.  */
 			for (from = start; from < len; from++)
 			{
@@ -583,6 +583,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr)
 							if (used==highnr-1) {
 							result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
 							} else {
+								// Ende GSchade 
 							result[used] = CharOf (string[from]) | attrib;
 							}
 						}

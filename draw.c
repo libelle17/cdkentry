@@ -357,7 +357,8 @@ void writeChtypeAttrib (WINDOW *window,
 //				ausg[1]=0;
 //				chtype testa;
 //				wattr_get(window)
-				const chtype attrib=COLOR_PAIR(2)|A_REVERSE;//A_REVERSE|COLOR_GREEN;
+
+//				const chtype attrib=COLOR_PAIR(2)|A_REVERSE;//A_REVERSE|COLOR_GREEN;
 //				printf("String: %s, Farbe: %lu\n\r",ausg,attrib/*window->_attrs*/);
 				wattron(window,string[x+start]); 
 				mvwprintw(window,ypos,xpos+x-altumlz,"%s",ausg);

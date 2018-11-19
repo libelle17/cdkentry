@@ -299,8 +299,10 @@ char *chtype2String (
 chtype *char2Chtypeh(
 		const char *	/* string */,
 		int *		/* length */,
-		int *		/* align */,
-		int highnr=0);
+		int *		/* align */
+		// GSchade
+		,int highnr=0
+		);
 
 /*
  * Compare a char string to a chtype string

@@ -73,7 +73,7 @@ static void fill_undo (CDKALPHALIST *widget, int deleted, char *data)
 	}
 	++undoSize;
 }
-
+#ifdef brauchtsaano
 static int do_delete (CB_PARAMS)
 {
 	CDKALPHALIST *widget = (CDKALPHALIST *)clientdata;
@@ -195,6 +195,7 @@ static int do_undo (CB_PARAMS)
 	}
 	return result;
 }
+#endif
 
 struct hotkst {
 	int nr;
@@ -206,11 +207,14 @@ struct hotkst {
 	//		 /*
 	{4,'r',"</R/U/6>Dürectory:<!R!6>"},
 	{4,'t',"</R/U/6>Dätei:<!R!6>"},
+	{4,'t',"</R/U/6>Datei:<!R!6>"},
+	{4,'t',"</R/U/6>Döüßatei:<!R!6>"},
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 	//		 */
 	{4,'h',"</R/U/6>Alphalist:<!R!6>",1},
 	{3,'t',"</R/U/6>Betalist:<!R!6>",1},
-	{4,'r',"</R/U/6>Dürectory:<!R!6>"},
+	{4,'t',"</R/U/6>Betalist:<!R!6>",1},
+	{4,'r',"</R/U/6>Dürectory:<!R!6>",1},
 	{4,'r',"</R/U/4>Dürectory:<!R!4>"},
 	{4,'r',"</R/U/6>Dürectory 5:<!R!6>"},
 	{4,'r',"</R/U/6>Dürectory 6:<!R!6>"},
@@ -487,17 +491,12 @@ struct hotkst {
 	{4,'t',"</R/U/6>Dätei:<!R!6>"},
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 };
-const size_t maxhk=sizeof hk/sizeof *hk;
-const size_t yabst=7;
+const int maxhk=sizeof hk/sizeof *hk;
+const int yabst=7;
 const int xpos=11;
-
+/*
 void zeichne(CDKSCREEN *cdkscreen,int Znr)
 {
-	static size_t maxy=getmaxy(cdkscreen->window)-yabst;
-	static size_t maxh=maxy>maxhk?maxhk:maxy;
-	static size_t ymin=0;
-	static size_t ymax=maxh;
-	static bool erstmals=1;
 	bool obverschiebe=erstmals;
 	 if (Znr<ymin) {
 		 ymin-=(ymin-Znr);
@@ -527,164 +526,202 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 	 refreshCDKScreen(cdkscreen);
 	 erstmals=0;
 }
+*/
 
 /*
  * This demonstrates the Cdk entry field widget.
  */
 int main (int argc, char **argv)
 {
-	 //setlocale(LC_ALL,"de_DE.UTF-8");
-	 setlocale(LC_ALL,"");
-   /* *INDENT-EQLS* */
-	 CDKSCREEN *cdkscreen = 0;
+	//setlocale(LC_ALL,"de_DE.UTF-8");
+	setlocale(LC_ALL,"");
+	/* *INDENT-EQLS* */
+	CDKSCREEN *cdkscreen = 0;
 
 	/* Get the user list. */
 	userSize = getUserList (&userList);
-	if (userSize <= 0)
-	{
+	if (userSize <= 0) {
 		fprintf (stderr, "Cannot get user list\n");
 		ExitProgram (EXIT_FAILURE);
 	}
 	myUserList = copyCharList ((const char **)userList);
 	myUndoList = (UNDO *) malloc ((size_t) userSize * sizeof (UNDO));
 	undoSize = 0;
-	 /*
-   CDKENTRY *directory  = 0,*file=0;
-   const char *title    = "<C>Gib aößä\n<C>dürectory name.";
-   const char *ftit    = "<C>Dateiname.";
-   const char *label    = "</R/U/6>Dürectory:<!R!6>";
-   const char *flabel    = "</R/U/6>Dätei:<!R!6>";
+	/*
+		 CDKENTRY *directory  = 0,*file=0;
+		 const char *title    = "<C>Gib aößä\n<C>dürectory name.";
+		 const char *ftit    = "<C>Dateiname.";
+		 const char *label    = "</R/U/6>Dürectory:<!R!6>";
+		 const char *flabel    = "</R/U/6>Dätei:<!R!6>";
 	 */
-   char *info;
-   const char *mesg[10];
-   char temp0[256],temp[256];
+	//char *info;
+	//const char *mesg[10];
+	//char temp0[256],temp[256];
 
-   CDK_PARAMS params;
-	 CDKparseParams (argc, argv, &params, CDK_MIN_PARAMS);
-	 /*
-	 CDKparamValue (&params, 'N', FALSE), CDKparamValue (&params, 'S', FALSE); CDKparamValue (&params, 'X', CENTER), CDKparamValue (&params, 'Y', CENTER),
-*/
-//	 cdkscreen->window->_maxx=300;
-//	 cdkscreen->window->_scroll=1;
-//	 scrollok(cdkscreen->window,TRUE);
-//	 scroll(cdkscreen->window);
-//	 for(int i=0;i<64;i++) mvwaddch (cdkscreen->window, 20+(i/8), 20+i, 'a'|COLOR_PAIR(i));
-	 /*
-	 chtype wcol=COLOR_PAIR(11)|A_BLINK;
-				wattron(cdkscreen->window,wcol); // wirkt nicht
-		mvwprintw(cdkscreen->window,3,60,"%s","weltoffen");
-				wattroff(cdkscreen->window,wcol); // wirkt nicht
-				*/
+	CDK_PARAMS params;
+	CDKparseParams (argc, argv, &params, CDK_MIN_PARAMS);
+	/*
+		 CDKparamValue (&params, 'N', FALSE), CDKparamValue (&params, 'S', FALSE); CDKparamValue (&params, 'X', CENTER), CDKparamValue (&params, 'Y', CENTER),
+	 */
+	//	 cdkscreen->window->_maxx=300;
+	//	 cdkscreen->window->_scroll=1;
+	//	 scrollok(cdkscreen->window,TRUE);
+	//	 scroll(cdkscreen->window);
+	//	 for(int i=0;i<64;i++) mvwaddch (cdkscreen->window, 20+(i/8), 20+i, 'a'|COLOR_PAIR(i));
+	/*
+		 chtype wcol=COLOR_PAIR(11)|A_BLINK;
+		 wattron(cdkscreen->window,wcol); // wirkt nicht
+		 mvwprintw(cdkscreen->window,3,60,"%s","weltoffen");
+		 wattroff(cdkscreen->window,wcol); // wirkt nicht
+	 */
 
-	 /* Create the entry field widget. */
-//	 directory = newCDKEntry (cdkscreen,/*xplace*/xpos,/*yplace*/12, /*title*/"", label, A_UNDERLINE, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/2);
-//	 file = newCDKEntry (cdkscreen, xpos, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
+	/* Create the entry field widget. */
+	//	 directory = newCDKEntry (cdkscreen,/*xplace*/xpos,/*yplace*/12, /*title*/"", label, A_UNDERLINE, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/2);
+	//	 file = newCDKEntry (cdkscreen, xpos, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
 
-		 allgscr=cdkscreen=initCDKScreen(0);
-		 static size_t maxy=getmaxy(cdkscreen->window)-yabst;
-		 static size_t maxh=maxy>maxhk?maxhk:maxy;
-		 /* Start CDK colors. */
-		 initCDKColor ();
-		 const int maxlen=100;
-		 for(size_t aktent=0;aktent<maxhk;aktent++) {
-			 if (hk[aktent].obalph) {
-				 hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
-			 } else {
-				 hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].nr);
-				 bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
-			 }
-			 /* Is the widget null? */
-			 if (!hk[aktent].eingabef) {
-				 /* Clean up. */
-				 destroyCDKScreen(cdkscreen);
-				 endCDK ();
+	allgscr=cdkscreen=initCDKScreen(0);
+	/*static*/ int maxy=getmaxy(cdkscreen->window)-yabst;
+	/*static*/ int maxh=maxy>maxhk?maxhk:maxy;
+	/*static*/ int ymin=0;
+	/*static*/ int ymax=maxh;
+	/*static*/ bool erstmals=1;
+	// static size_t maxy=getmaxy(cdkscreen->window)-yabst;
+	// static size_t maxh=maxy>maxhk?maxhk:maxy;
+	/* Start CDK colors. */
+	initCDKColor ();
+	const int maxlen=100;
+	for(size_t aktent=0;aktent<maxhk;aktent++) {
+		if (hk[aktent].obalph) {
+			hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
+		} else {
+			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].nr);
+			bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
+		}
+		/* Is the widget null? */
+		if (!hk[aktent].eingabef) {
+			/* Clean up. */
+			destroyCDKScreen(cdkscreen);
+			endCDK ();
 
-				 printf ("Cannot create the entry box. Is the window too small, aktent: %lu   \n",aktent);
-				 ExitProgram (EXIT_FAILURE);
-			 }
-		 }
+			printf ("Cannot create the entry box. Is the window too small, aktent: %lu   \n",aktent);
+			ExitProgram (EXIT_FAILURE);
+		}
+	}
 
-		 /*
-    * Pass in whatever was given off of the command line. Notice we
-    * don't check if argv[1] is null or not. The function setCDKEntry
-    * already performs any needed checks.
-    */
-   //setCDKEntry (hk[0].eingabef, argv[optind], 0, max, TRUE);
+	/*
+	 * Pass in whatever was given off of the command line. Notice we
+	 * don't check if argv[1] is null or not. The function setCDKEntry
+	 * already performs any needed checks.
+	 */
+	//setCDKEntry (hk[0].eingabef, argv[optind], 0, max, TRUE);
 
-   /* Activate the entry field. */
-	 int Znr=0,Zweitzeichen=0;
-   EExitType	exitType;
-	 while (1) {
-		 akteinbart=einb_direkt;
-		 /* Draw the screen. */
-		 // refreshCDKScreen (cdkscreen);
-		 zeichne(cdkscreen,Znr);
-		 //		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
-		 if (hk[Znr].obalph) {
-			 akteinbart=einb_alphalist;
-			 info = activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/0);
-			 eraseCDKScroll (((CDKALPHALIST*)hk[Znr].eingabef)->scrollField);
-		 } else {
-			 info = activateCDKEntry(hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/1);
-		 }
-		 //#ifdef mdebug
-		 /*
-		 mesg[0] = "<C>Letzte Eingabe:";
+	/* Activate the entry field. */
+	int Znr=0,Zweitzeichen=0;
+	EExitType	exitType;
+	while (1) {
+		akteinbart=einb_direkt;
+		/* Draw the screen. */
+		// refreshCDKScreen (cdkscreen);
+		//zeichne(cdkscreen,Znr);
+
+		bool obverschiebe=erstmals;
+		int korr;
+		if (Znr<ymin) {
+			korr=ymin-Znr;
+			ymin-=korr;
+			ymax-=korr;
+			obverschiebe=1;
+		} else if (Znr>=ymax) {
+			korr=Znr-ymax+1;
+			ymin+=korr;
+			ymax+=korr;
+			obverschiebe=1;
+		} 
+		if (obverschiebe) {
+			mvwprintw(cdkscreen->window,1,xpos,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+			for(int aktent=0;aktent<maxhk;aktent++) {
+				if (aktent>=ymin && aktent<ymax) {
+					hk[aktent].eingabef->obj.isVisible=1;
+					if (hk[aktent].obalph)
+						moveCDKAlphalist(((CDKALPHALIST*)hk[aktent].eingabef),xpos,yabst+aktent-ymin,0,1);
+					else
+						moveCDKEntry(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,1);
+				} else {
+					hk[aktent].eingabef->obj.isVisible=0;
+				}
+			}
+		}else {
+			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+		}
+		refreshCDKScreen(cdkscreen);
+		erstmals=0;
+
+		//		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
+		if (hk[Znr].obalph) {
+			akteinbart=einb_alphalist;
+			/*info = */activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/0);
+			eraseCDKScroll (((CDKALPHALIST*)hk[Znr].eingabef)->scrollField);
+		} else {
+			/*info = */activateCDKEntry(hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/1);
+		}
+		//#ifdef mdebug
+		/*
+			 mesg[0] = "<C>Letzte Eingabe:";
 			 snprintf (temp, sizeof temp-1,"<C>(%.*s|%i)", (int)(sizeof (temp) - 10), info?info:"",Zweitzeichen);
-//		 if (info) if (hk[Znr].eingabef) if (hk[Znr].eingabef->info)
-			 //snprintf(temp,sizeof temp-1,"<C>(%.*s|%s|%i)",(int)(sizeof(temp)-10),info?info:"",info&&hk[Znr].eingabef&&hk[Znr].eingabef->info?hk[Znr].eingabef->info:"",Zweitzeichen);
-		 mesg[1] = temp;
-		 mesg[2] = "<C>Press any key to continue.";
+		//		 if (info) if (hk[Znr].eingabef) if (hk[Znr].eingabef->info)
+		//snprintf(temp,sizeof temp-1,"<C>(%.*s|%s|%i)",(int)(sizeof(temp)-10),info?info:"",info&&hk[Znr].eingabef&&hk[Znr].eingabef->info?hk[Znr].eingabef->info:"",Zweitzeichen);
+		mesg[1] = temp;
+		mesg[2] = "<C>Press any key to continue.";
 		 */
-//#endif
-		 exitType=hk[Znr].eingabef->exitType;
-//		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
-		 // Tab
-//#ifdef richtig		 
+		//#endif
+		exitType=hk[Znr].eingabef->exitType;
+		//		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
+		// Tab
+		//#ifdef richtig		 
 		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i",Zweitzeichen);
-		 if (Zweitzeichen==-9) {
-			 Znr++;
-			 // Alt+Tab
-			 // Seite nach unten
-		 } else if (Zweitzeichen==-10) {
-			 Znr+=maxh-1;
-		 } else if (Zweitzeichen==-8) {
-			 Znr--;
-			 // Seite nach oben
-		 } else if (Zweitzeichen==-11) {
-			 Znr-=maxh-1;
-			 // Alt- +Buchstabe
-		 } else {
-			 if (Zweitzeichen) /*(info && *info==27)*/ {
-				 Znr=-1;
-				 for(int aktent=0;aktent<maxhk;aktent++) {
-					 if (Zweitzeichen==hk[aktent].buch) {
-						 Znr=aktent;
-						 break;
-					 }
-				 }
-				 if (Znr==-1) break;
-			 } else {
-				 break;
-			 }
-		 }
-		 if (Znr<0) {
-			 Znr=0; // Znr=sizeof hk/sizeof *hk-1;
-		 } else if (Znr>=maxhk) {
-			 Znr=maxhk-1; // sizeof hk/sizeof *hk) Znr=0;
-		 }
-		 //#endif 
-	 }  // while (1)
-	 for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) {
-		 //		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
-		 const char *ueb=
-			 hk[aktent].obalph?
-			 ueb=((CDKALPHALIST*)hk[aktent].eingabef)->entryField->info:
-			 ueb=hk[aktent].eingabef->info;
-		 erg.push_back(ueb);
-	 }
-	 /*
-			if (0) {
+		if (Zweitzeichen==-9) {
+			Znr++;
+			// Alt+Tab
+			// Seite nach unten
+		} else if (Zweitzeichen==-10) {
+			Znr+=maxh-1;
+		} else if (Zweitzeichen==-8) {
+			Znr--;
+			// Seite nach oben
+		} else if (Zweitzeichen==-11) {
+			Znr-=maxh-1;
+			// Alt- +Buchstabe
+		} else {
+			if (Zweitzeichen) /*(info && *info==27)*/ {
+				Znr=-1;
+				for(int aktent=0;aktent<maxhk;aktent++) {
+					if (Zweitzeichen==hk[aktent].buch) {
+						Znr=aktent;
+						break;
+					}
+				}
+				if (Znr==-1) break;
+			} else {
+				break;
+			}
+		}
+		if (Znr<0) {
+			Znr=0; // Znr=sizeof hk/sizeof *hk-1;
+		} else if (Znr>=maxhk) {
+			Znr=maxhk-1; // sizeof hk/sizeof *hk) Znr=0;
+		}
+		//#endif 
+	}  // while (1)
+	for(int aktent=0;aktent<maxhk;aktent++) {
+		//		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
+		const char *ueb=
+			hk[aktent].obalph?
+			((CDKALPHALIST*)hk[aktent].eingabef)->entryField->info:
+			hk[aktent].eingabef->info;
+		erg.push_back(ueb);
+	}
+	/*
+		 if (0) {
 // Tell them what they typed.
 if (exitType == vESCAPE_HIT && !Zweitzeichen) {
 mesg[0] = "<C>Sie schlügen escape. No information passed back.";
@@ -710,15 +747,15 @@ for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[akten
 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 4);
 }
 }
-		*/
+	 */
 
 /* Clean up and exit. */
-	 destroyCDKScreen(cdkscreen);
-	 endCDK ();
-	 for(int aktent=0;aktent<erg.size();aktent++) {
-		 printf("%s\n",erg[aktent].c_str());
-	 }
-	 return EXIT_SUCCESS;
+destroyCDKScreen(cdkscreen);
+endCDK ();
+for(size_t aktent=0;aktent<erg.size();aktent++) {
+	printf("%s\n",erg[aktent].c_str());
+}
+return EXIT_SUCCESS;
 }
 
 static int XXXCB (EObjectType cdktype GCC_UNUSED,

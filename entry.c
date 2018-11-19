@@ -67,6 +67,10 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	entry->labelLen = 0;
 	entry->labelWin = 0;
 
+	// GSchade
+	const int endlen{1};
+//	boxWidth+=endlen;
+
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label != 0)
 	{
@@ -109,7 +113,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 			(ypos + TitleLinesOf (entry) + BorderOf (entry)),
 			(xpos + entry->labelLen
 			 + horizontalAdjust
-			 + BorderOf (entry)));
+			 + BorderOf (entry)/*-endlen*/));
 	if (entry->fieldWin == 0)
 	{
 		destroyCDKObject (entry);
@@ -190,7 +194,7 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 	drawCDKEntry (entry, ObjOf (entry)->box);
 	if (actions == 0) {
 		for (;;) {
-			static int y=2;
+			//static int y=2;
 			*Zweitzeichen=0;
 			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
 			// GSchade Anfang
@@ -205,14 +209,14 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 			} else if (input==KEY_PPAGE) {
 				*Zweitzeichen=-11;
 			}
-			if (0) {
-				static boolean afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
+//		if (0) {
+//				static boolean afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
 				/*
 				if (afk!=functionKey||ai!=input||aZz!=*Zweitzeichen||aex!=entry->exitType)
 					mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
 				 */
-				afk=functionKey; ai=input; aZz=*Zweitzeichen; aex=entry->exitType;
-			}
+//			afk=functionKey; ai=input; aZz=*Zweitzeichen; aex=entry->exitType;
+//			}
 			
 
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
@@ -582,7 +586,7 @@ static void CDKEntryCallBack (CDKENTRY* entry, chtype character)
 void SEntry::schreibl(chtype character)
 {
   static bool altobuml=0;
-  const bool obuml=character==-61||character==-62;
+  const bool obuml=character==(chtype)-61||character==(chtype)-62;
   int plainchar;
   if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
 	// wenn Ende erreicht wuerde, dann von 2-Buchstabenlaengen langen Buchstaben keinen schreiben
@@ -674,7 +678,7 @@ static void _drawCDKEntry (CDKOBJS *object, boolean Box)
 	/* Draw in the label to the widget. */
 	if (entry->labelWin != 0)
 	{
-		int f1,f2;
+		//int f1,f2;
 		writeChtype (entry->labelWin, 0, 0, entry->label, HORIZONTAL, 0, entry->labelLen);
 		wrefresh (entry->labelWin);
 	}
@@ -725,9 +729,11 @@ void SEntry::zeichneFeld()
 			size_t aktumlz=0;
 			for (x = leftChar; x < infoLength; x++) {
 				if (info[x]==-61 || info[x]==-62) {
+					/*
 					char ausgb[3]={0};
 					ausgb[0]=info[x];
 					ausgb[1]=info[x+1];
+					*/
 					// mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
 					x++;
 					aktumlz++;
