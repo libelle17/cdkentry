@@ -69,6 +69,7 @@ struct SEntry {
    WINDOW *	fieldWin;
    chtype *	label;
    int		labelLen;
+	 int		labelumlz; // GSchade
    int		titleAdj;
    chtype	fieldAttr;
    int		fieldWidth;

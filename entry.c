@@ -66,19 +66,26 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	entry->label = 0;
 	entry->labelLen = 0;
 	entry->labelWin = 0;
+	entry->labelumlz=0; // GSchade
 
 	// GSchade
-	const int endlen{1};
-//	boxWidth+=endlen;
 
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label != 0)
 	{
+
 		entry->label = char2Chtypeh(label, &entry->labelLen, &junk
 				// GSchade Anfang
 				,highnr
 				// GSchade Ende
 				);
+		// GSchade Anfang
+		for(int i=0;entry->label[i];i++) {
+			if ((int)CharOf(entry->label[i])==194 || (int)CharOf(entry->label[i])==195) {
+				entry->labelumlz++;
+			}
+		}
+		// GSchade Ende
 		boxWidth += entry->labelLen;
 	}
 
@@ -94,7 +101,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	boxWidth = MINIMUM (boxWidth, parentWidth);
 	boxHeight = MINIMUM (boxHeight, parentHeight);
 	fieldWidth = MINIMUM (fieldWidth,
-			boxWidth - entry->labelLen - 2 * BorderOf (entry));
+			boxWidth - entry->labelLen +entry->labelumlz - 2 * BorderOf (entry));
 
 	/* Rejustify the x and y positions if we need to. */
 	alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
@@ -111,9 +118,9 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 	/* Make the field window. */
 	entry->fieldWin = subwin (entry->win, 1, fieldWidth,
 			(ypos + TitleLinesOf (entry) + BorderOf (entry)),
-			(xpos + entry->labelLen
+			(xpos + entry->labelLen -entry->labelumlz
 			 + horizontalAdjust
-			 + BorderOf (entry)/*-endlen*/));
+			 + BorderOf (entry)));
 	if (entry->fieldWin == 0)
 	{
 		destroyCDKObject (entry);

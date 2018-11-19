@@ -205,13 +205,13 @@ struct hotkst {
 	CDKENTRY *eingabef;
 } hk[]={
 	//		 /*
-	{4,'r',"</R/U/6>Dürectory:<!R!6>"},
-	{4,'t',"</R/U/6>Dätei:<!R!6>"},
+	{4,'r',"</R/U/6>Dürectory:<!R!6!U> "},
+	{4,'t',"</R/U/6>Dätei:<!R!6!U> "},
 	{4,'t',"</R/U/6>Datei:<!R!6>"},
 	{4,'t',"</R/U/6>Döüßatei:<!R!6>"},
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 	//		 */
-	{4,'h',"</R/U/6>Alphalist:<!R!6>",1},
+	{4,'h',"</R/U/6>Alphälißt:<!R!6>",1},
 	{3,'t',"</R/U/6>Betalist:<!R!6>",1},
 	{4,'t',"</R/U/6>Betalist:<!R!6>",1},
 	{4,'r',"</R/U/6>Dürectory:<!R!6>",1},
