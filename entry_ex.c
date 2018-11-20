@@ -198,27 +198,27 @@ static int do_undo (CB_PARAMS)
 #endif
 
 struct hotkst {
-	int nr;
+	int highnr;
 	char buch;
 	const char *label;
 	u_char obalph;
 	CDKENTRY *eingabef;
 } hk[]={
 	//		 /*
-	{4,'r',"</R/U/6>Dürectory:<!R!6!U> "},
-	{4,'t',"</R/U/6>Dätei:<!R!6!U> "},
-	{4,'t',"</R/U/6>Datei:<!R!6>"},
-	{4,'t',"</R/U/6>Döüßatei:<!R!6>"},
+	{3,'r',"</R/U/6>Dürectory:<!R!6!U> "},
+	{3,'t',"</R/U/6>Däteis:<!R!6!U> "},
+	{3,'t',"</R/U/6>Datei:<!R!6>"},
+	{5,'a',"</R/U/6>Döüßatei:<!R!6>"},
 	{4,'n',"</R/U/6>Ordner:<!R!6>"},
 	//		 */
 	{4,'h',"</R/U/6>Alphälißt:<!R!6>",1},
 	{3,'t',"</R/U/6>Betalist:<!R!6>",1},
-	{4,'t',"</R/U/6>Betalist:<!R!6>",1},
-	{4,'r',"</R/U/6>Dürectory:<!R!6>",1},
-	{4,'r',"</R/U/4>Dürectory:<!R!4>"},
-	{4,'r',"</R/U/6>Dürectory 5:<!R!6>"},
-	{4,'r',"</R/U/6>Dürectory 6:<!R!6>"},
-	{4,'r',"</R/U/6>Dürectory 7:<!R!6>"},
+	{3,'t',"</R/U/6>Betalist:<!R!6>",1},
+	{3,'r',"</R/U/6>Dürectory:<!R!6>",1},
+	{3,'r',"</R/U/4>Dürectory:<!R!4>"},
+	{3,'r',"</R/U/6>Dürectory 5:<!R!6>"},
+	{3,'r',"</R/U/6>Dürectory 6:<!R!6>"},
+	{3,'r',"</R/U/6>Dürectory 7:<!R!6>"},
 	{4,'r',"</R/U/6>Dürectory 8:<!R!6>"},
 	{4,'r',"</R/U/6>Dürectory 9:<!R!6>"},
 	{4,'r',"</R/U/6>Dürectory 10:<!R!6>"},
@@ -591,10 +591,21 @@ int main (int argc, char **argv)
 	initCDKColor ();
 	const int maxlen=100;
 	for(size_t aktent=0;aktent<maxhk;aktent++) {
+		bool nichtzaehl=0;
+		hk[aktent].highnr=0;
+		for(int i=0;i<strlen(hk[aktent].label);i++) {
+			if (hk[aktent].label[i]=='>') nichtzaehl=0;
+			else if (nichtzaehl) {}
+			else if (hk[aktent].label[i]=='<') nichtzaehl=1;
+			else if (hk[aktent].label[i]!=hk[aktent].buch) hk[aktent].highnr++;
+			else {hk[aktent].highnr++;break;} // gefunden
+		}
+		if (hk[aktent].highnr)
+					mvwprintw(cdkscreen->window,aktent+yabst,140,"%i:%c,%s",hk[aktent].highnr,hk[aktent].buch,hk[aktent].label);
 		if (hk[aktent].obalph) {
-			hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].nr);
+			hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highnr);
 		} else {
-			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].nr);
+			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highnr);
 			bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
 		}
 		/* Is the widget null? */
@@ -653,6 +664,7 @@ int main (int argc, char **argv)
 		}else {
 			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		}
+	refreshCDKWindow (cdkscreen->window);
 		refreshCDKScreen(cdkscreen);
 		erstmals=0;
 
@@ -678,7 +690,8 @@ int main (int argc, char **argv)
 		//		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		// Tab
 		//#ifdef richtig		 
-		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i",Zweitzeichen);
+		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i (%c)",Zweitzeichen,Zweitzeichen);
+	refreshCDKWindow (cdkscreen->window);
 		if (Zweitzeichen==-9) {
 			Znr++;
 			// Alt+Tab
@@ -693,10 +706,13 @@ int main (int argc, char **argv)
 			// Alt- +Buchstabe
 		} else {
 			if (Zweitzeichen) /*(info && *info==27)*/ {
-				Znr=-1;
 				for(int aktent=0;aktent<maxhk;aktent++) {
-					if (Zweitzeichen==hk[aktent].buch) {
-						Znr=aktent;
+					if (aktent<30) mvwprintw(cdkscreen->window,(aktent+1+Znr)%maxhk+yabst,120,"->(%c)",hk[(aktent+1+Znr)%maxhk].buch);
+					refreshCDKWindow (cdkscreen->window);
+					if (Zweitzeichen==hk[(aktent+1+Znr)%maxhk].buch) {
+						mvwprintw(cdkscreen->window,4,60,"buch: %c",hk[(aktent+1+Znr)%maxhk].buch);
+						refreshCDKWindow (cdkscreen->window);
+						Znr=aktent+(aktent+1+Znr)%maxhk;
 						break;
 					}
 				}
@@ -727,7 +743,7 @@ if (exitType == vESCAPE_HIT && !Zweitzeichen) {
 mesg[0] = "<C>Sie schlügen escape. No information passed back.";
 mesg[1] = temp;
 mesg[2] = "<C>Press any key to continue.";
-for(int aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
+for(t aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 } else if (exitType == vNORMAL) {
 mesg[0] = "<C>Sie gaben folgendes ein";
