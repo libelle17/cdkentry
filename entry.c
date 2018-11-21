@@ -736,12 +736,11 @@ void SEntry::zeichneFeld()
 			size_t aktumlz=0;
 			for (x = leftChar; x < infoLength; x++) {
 				if (info[x]==-61 || info[x]==-62) {
-					/*
 					char ausgb[3]={0};
 					ausgb[0]=info[x];
 					ausgb[1]=info[x+1];
-					*/
-					// mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
+					//GSchade: Hier Umlautausgabe
+					mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
 					x++;
 					aktumlz++;
 				} else {
