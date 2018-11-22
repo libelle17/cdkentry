@@ -554,7 +554,6 @@ int main (int argc, char **argv)
 		 const char *label    = "</R/U/6>Dürectory:<!R!6>";
 		 const char *flabel    = "</R/U/6>Dätei:<!R!6>";
 	 */
-	//char *info;
 	//const char *mesg[10];
 	//char temp0[256],temp[256];
 
@@ -664,11 +663,12 @@ int main (int argc, char **argv)
 		}else {
 			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		}
-	refreshCDKWindow (cdkscreen->window);
+		refreshCDKWindow (cdkscreen->window);
 		refreshCDKScreen(cdkscreen);
 		erstmals=0;
 
-		//		mvwprintw(cdkscreen->window,30,30,"<R>werde eingeben:%i %i ",info,Zweitzeichen);
+		//char *info;
+		// mvwprintw(cdkscreen->window,30,60,"<R>werde eingegeben:%i %i ",info,Zweitzeichen);
 		if (hk[Znr].obalph) {
 			akteinbart=einb_alphalist;
 			/*info = */activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/0);
@@ -691,7 +691,7 @@ int main (int argc, char **argv)
 		// Tab
 		//#ifdef richtig		 
 		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i (%c)",Zweitzeichen,Zweitzeichen);
-	refreshCDKWindow (cdkscreen->window);
+		refreshCDKWindow (cdkscreen->window);
 		if (Zweitzeichen==-9) {
 			Znr++;
 			// Alt+Tab

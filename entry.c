@@ -199,7 +199,7 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 	if (!Zweitzeichen) Zweitzeichen=&zweit;
 	/* Draw the widget. */
 	drawCDKEntry (entry, ObjOf (entry)->box);
-	if (actions == 0) {
+	if (!actions) {
 		for (;;) {
 			//static int y=2;
 			*Zweitzeichen=0;
@@ -751,7 +751,7 @@ void SEntry::zeichneFeld()
 		wmove (fieldWin, 0, sbuch);
 	}
 	wrefresh (fieldWin);
-}
+} // void SEntry::zeichneFeld
 
 /*
  * This erases an entry widget from the screen.
