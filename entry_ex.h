@@ -1,0 +1,1 @@
+extern CDKSCREEN *allgscr;
