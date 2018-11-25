@@ -199,298 +199,25 @@ static int do_undo (CB_PARAMS)
 #endif
 
 struct hotkst {
-	int buch;
 	const char *label;
+	int highnr;
+	int highinr; // fuer jeden vorausgehenden Umlaut usw. 2 Buchstaben rechnen
+	int buch;
 	u_char obalph;
 	CDKENTRY *eingabef;
-	int highnr;
 } hk[]={
 	//		 /*
-	{'r',"</R/U/6>Dürectory:<!R!6!U> "},
-	{'ä',"</R/U/6>Däteis:<!R!6!U> "},
-	{'t',"</R/U/6>Datei:<!R!6>"},
-	{'a',"</R/U/6>Döüßatei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
+	{"</R/U/6>Directory:<!R!6!U> ",4},
+	{"</R/U/6>Däteis:<!R!6!U> ",2},
+	{"</R/U/6>Datei:<!R!6>",3},
+	{"</R/U/6>Döüßatei:<!R!6>",4},
+	{"</R/U/6>Ordner:<!R!6>",4},
 	//		 */
-	{'h',"</R/U/6>Alphälißt:<!R!6>",1},
-	{'t',"</R/U/6>Betalist:<!R!6>",1},
-	{'t',"</R/U/6>Betalist:<!R!6>",1},
-	{'r',"</R/U/6>Dürectory:<!R!6>",1},
-	{'r',"</R/U/4>Dürectory:<!R!4>"},
-	{'r',"</R/U/6>Dürectory 5:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 6:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 7:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 8:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 9:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 10:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 11:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 12:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 13:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 14:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 15:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 16:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 17:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 18:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 19:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 20:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 21:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 22:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 23:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 24:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 25:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 26:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 27:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 28:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 29:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 30:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 31:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 32:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 33:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 34:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 35:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 36:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 37:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 38:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 39:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 40:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 41:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 42:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 43:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 44:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 45:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 46:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 47:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 48:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 49:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 50:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 51:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 52:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 53:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 54:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 55:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 56:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 57:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 58:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 59:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 60:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 61:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 62:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 63:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 64:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 65:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 66:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 67:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 68:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 69:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 70:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 71:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 72:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 73:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 74:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 75:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 76:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 77:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 78:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 79:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 80:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 81:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 82:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 83:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 84:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 85:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 86:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 87:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 88:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 89:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 90:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 91:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 92:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 93:<!R!6>"},
-	{'r',"</R/U/6>Dürectory 94:<!R!6>"},
-	{'t',"</R/U/6>Dätei 95:<!R!6>"},
-	{'n',"</R/U/6>Ordner 96:<!R!6>"},
-	{'t',"</R/U/6>Dätei 97:<!R!6>"},
-	{'n',"</R/U/6>Ordner 98:<!R!6>"},
-	{'t',"</R/U/6>Dätei 99:<!R!6>"},
-	{'n',"</R/U/6>Ordner 100:<!R!6>"},
-	{'t',"</R/U/6>Dätei 101:<!R!6>"},
-	{'n',"</R/U/6>Ordner 102:<!R!6>"},
-	{'t',"</R/U/6>Dätei 103:<!R!6>"},
-	{'n',"</R/U/6>Ordner 104:<!R!6>"},
-	{'t',"</R/U/6>Dätei 105:<!R!6>"},
-	{'n',"</R/U/6>Ordner 106:<!R!6>"},
-	{'t',"</R/U/6>Dätei 107:<!R!6>"},
-	{'n',"</R/U/6>Ordner 108:<!R!6>"},
-	{'t',"</R/U/6>Dätei 109:<!R!6>"},
-	{'n',"</R/U/6>Ordner 110:<!R!6>"},
-	{'t',"</R/U/6>Dätei 111:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 150:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 160:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei 170:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 180:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei 190:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei 200:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 210:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei 220:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 230:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 240:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 250:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei 260:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 270:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner 280:<!R!6>"},
-	{'t',"</R/U/6>Dätei:<!R!6>"},
-	{'n',"</R/U/6>Ordner:<!R!6>"},
+	{"</R/U/6>Alphälißt:<!R!6>",4},
+	{"</R/U/6>Betalist:<!R!6>",2},
+	{"</R/U/6>Betalist:<!R!6>",3},
+	{"</R/U/6>Dürectory:<!R!6>",3},
+	{"</R/U/4>Dürectory:<!R!4>",3},
 };
 const int maxhk=sizeof hk/sizeof *hk;
 const int yabst=7;
@@ -592,20 +319,36 @@ int main (int argc, char **argv)
 	const int maxlen=100;
 	for(size_t aktent=0;aktent<maxhk;aktent++) {
 		bool nichtzaehl=0;
-		hk[aktent].highnr=0;
+		hk[aktent].highinr=0;
+		int hnr=1;
+//		for(int i=0;i<strlen(hk[aktent].label);i++) {
+//			mvwprintw(cdkscreen->window,20+i,aktent*10,"%c(%i)",(unsigned char)hk[aktent].label[i],(unsigned char)hk[aktent].label[i]);
+//		}
 		for(int i=0;i<strlen(hk[aktent].label);i++) {
 			if (hk[aktent].label[i]=='>') nichtzaehl=0;
 			else if (nichtzaehl) {}
 			else if (hk[aktent].label[i]=='<') nichtzaehl=1;
-			else if (hk[aktent].label[i]!=hk[aktent].buch) hk[aktent].highnr++;
-			else {hk[aktent].highnr++;break;} // gefunden
+			else {
+				hk[aktent].highinr++;
+				if (hnr==hk[aktent].highnr) {
+					if ((unsigned char)hk[aktent].label[i]==194 || (unsigned char)hk[aktent].label[i]==195) {
+						hk[aktent].buch=(unsigned char)hk[aktent].label[i]*256+(unsigned char)hk[aktent].label[i+1];
+					} else
+						hk[aktent].buch=(unsigned char)hk[aktent].label[i];
+					break;
+				}
+				else if ((unsigned char)hk[aktent].label[i]==194 || (unsigned char)hk[aktent].label[i]==195) {}
+				else hnr++;
+			}
 		}
-		if (hk[aktent].highnr)
-					mvwprintw(cdkscreen->window,aktent+yabst,140,"%i:%c,%s",hk[aktent].highnr,hk[aktent].buch,hk[aktent].label);
+//		mvwprintw(cdkscreen->window,18,aktent*10,"%i/%i",hk[aktent].highnr,hk[aktent].highinr);
+//		if (hk[aktent].highnr)
+//			mvwprintw(cdkscreen->window,aktent+yabst,125,"%i:%c,%s",hk[aktent].highnr,hk[aktent].buch,hk[aktent].label);
 		if (hk[aktent].obalph) {
-			hk[aktent].eingabef=(CDKENTRY*)newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highnr);
+			hk[aktent].eingabef=(CDKENTRY*)
+				newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
 		} else {
-			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highnr);
+			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
 			bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
 		}
 		/* Is the widget null? */
@@ -649,7 +392,7 @@ int main (int argc, char **argv)
 			obverschiebe=1;
 		} 
 		if (obverschiebe) {
-			mvwprintw(cdkscreen->window,1,xpos,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+//			mvwprintw(cdkscreen->window,1,xpos,"mit Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 			for(int aktent=0;aktent<maxhk;aktent++) {
 				if (aktent>=ymin && aktent<ymax) {
 					hk[aktent].eingabef->obj.isVisible=1;
@@ -662,7 +405,7 @@ int main (int argc, char **argv)
 				}
 			}
 		}else {
-			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
+//			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		}
 		refreshCDKWindow (cdkscreen->window);
 		refreshCDKScreen(cdkscreen);
@@ -691,7 +434,7 @@ int main (int argc, char **argv)
 		//		 popupLabel (cdkscreen, (CDK_CSTRING2) mesg, 3);
 		// Tab
 		//#ifdef richtig		 
-		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i (%c)",Zweitzeichen,Zweitzeichen);
+//		mvwprintw(cdkscreen->window,3,60,"Zweitzeichen: %i (%c)",Zweitzeichen,Zweitzeichen);
 		refreshCDKWindow (cdkscreen->window);
 		if (Zweitzeichen==-9) {
 			Znr++;
@@ -706,13 +449,15 @@ int main (int argc, char **argv)
 			Znr-=maxh-1;
 			// Alt- +Buchstabe
 		} else {
-			mvwprintw(cdkscreen->window,1,30,"Zweitzeichen: %c",Zweitzeichen);
+//			mvwprintw(cdkscreen->window,1,30,"Zweitzeichen: %c",Zweitzeichen);
 			if (Zweitzeichen) /*(info && *info==27)*/ {
 				for(int aktent=0;aktent<maxhk;aktent++) {
-					/*if (aktent<30)*/ mvwprintw(cdkscreen->window,(aktent+1+Znr)%maxhk+yabst,120,"->(%c) %i",hk[(aktent+1+Znr)%maxhk].buch,hk[(aktent+1+Znr)%maxhk].buch);
+					/*if (aktent<30)*/ 
+//					mvwprintw(cdkscreen->window,(aktent+1+Znr)%maxhk+yabst,100,"-->(%c) %i" ,hk[(aktent+1+Znr)%maxhk].buch,hk[(aktent+1+Znr)%maxhk].buch);
 					refreshCDKWindow (cdkscreen->window);
-					if (Zweitzeichen==hk[(aktent+1+Znr)%maxhk].buch || ((Zweitzeichen==194||Zweitzeichen==195)&&Zweitzeichen*256+Drittzeichen==hk[(aktent+1+Znr)%maxhk].buch)) {
-						mvwprintw(cdkscreen->window,4,60,"buch: %c",hk[(aktent+1+Znr)%maxhk].buch);
+					if (Zweitzeichen==hk[(aktent+1+Znr)%maxhk].buch ||
+							((Zweitzeichen==194||Zweitzeichen==195)&&Zweitzeichen*256+Drittzeichen==hk[(aktent+1+Znr)%maxhk].buch)) {
+//						mvwprintw(cdkscreen->window,4,60,"buch: %c",hk[(aktent+1+Znr)%maxhk].buch);
 						refreshCDKWindow (cdkscreen->window);
 						Znr=(aktent+1+Znr)%maxhk;
 						break;

@@ -421,8 +421,8 @@ static unsigned decodeAttribute (char *string,
  * and translates them into a chtype * array. This is better suited
  * to curses, because curses uses chtype almost exclusively
  */
-// highnr G.Schade 26.9.18
-chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr/*=0*/)
+// highinr G.Schade 26.9.18
+chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 {
 	chtype *result = 0;
 	chtype attrib;
@@ -582,7 +582,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr/*=0*/)
 					{
 						if (result != 0) {
 							// GSchade 26.9.18
-							if (used==highnr-1) {
+							if (used==highinr-1) {
 								result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
 							} else {
 								// Ende GSchade 

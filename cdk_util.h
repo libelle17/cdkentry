@@ -301,7 +301,7 @@ chtype *char2Chtypeh(
 		int *		/* length */,
 		int *		/* align */
 		// GSchade
-		,int highnr=0
+		,int highinr=0
 		);
 
 /*

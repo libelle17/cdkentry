@@ -245,17 +245,17 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
       // GSchade Ende
 
 			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
-					mvwprintw(entry->parent,3,2,"Zweitzeichen: %i         , Drittzeichen: %i     ",*Zweitzeichen,*Drittzeichen);
+//					mvwprintw(entry->parent,3,2,"Zweitzeichen: %i         , Drittzeichen: %i     ",*Zweitzeichen,*Drittzeichen);
 				return ret;
 			}
-					mvwprintw(entry->parent,3,2,"kein Zweitzeichen");
+//			mvwprintw(entry->parent,3,2,"kein Zweitzeichen");
 		}
 	} else {
 		int length = chlen (actions);
 		int x;
 		/* Inject each character one at a time. */
 		for (x = 0; x < length; x++) {
-					mvwprintw(entry->parent,4,2,"vor inject 2");
+//					mvwprintw(entry->parent,4,2,"vor inject 2");
 			ret = injectCDKEntry (entry, actions[x]);
 			if (entry->exitType != vEARLY_EXIT) {
 				return ret;
@@ -277,10 +277,10 @@ void SEntry::settoend()
     --i;
     if (sbuch<fieldWidth) {
       screenCol++;
-      if (info[i]!=-61 && info[i]!=-62) sbuch++;
+      if ((unsigned char)info[i]!=194 && (unsigned char)info[i]!=195) sbuch++;
     } else {
       leftChar++;
-      if (info[i]!=-61 && info[i]!=-62) lbuch++;
+      if ((unsigned char)info[i]!=194 && (unsigned char)info[i]!=195) lbuch++;
     }
   }
   if (sbuch>=fieldWidth && (sbuch+lbuch<max)) {
@@ -306,7 +306,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 //		printf("Eintrag: %i\n",inpint);
 		*umlaut=inpint;
 		umlaut[1]=0;
-	} else if (*umlaut==-61 || *umlaut==-62) {
+	} else if ((unsigned char)*umlaut==194 || (unsigned char)*umlaut==195) {
 //		printf("Folgezeichen: %i\n",inpint);
 		//printf("%c (%i)\n",inpint,inpint);
 		umlaut[1]=inpint;
@@ -345,6 +345,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					widget->screenCol = 0;
 					widget->sbuch=0;
 					widget->zeichneFeld();
+					mvwprintw(widget->parent,2,2,"Key_home");
 					break;
 				case CDK_TRANSPOSE:
 					if (currPos >= infoLength - 1) {
