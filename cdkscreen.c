@@ -380,7 +380,7 @@ void refreshCDKScreen (CDKSCREEN *cdkscreen)
 	int x;
 	int focused = -1;
 	int visible = -1;
-//#define richtig
+#define richtig
 #ifdef richtig
 	refreshCDKWindow (cdkscreen->window);
 #endif

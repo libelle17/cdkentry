@@ -1,5 +1,6 @@
 #include <cdk_int.h>
 // #include <locale.h>
+#include "entry_ex.h"
 
 /*
  * $Author: tom $
@@ -302,6 +303,8 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 	bool complete = FALSE;
 	static char umlaut[3]={0};
 	const int inpint=input;
+	mvwprintw(object->screen->window,2,2,"injectCDKEntry %c %i          ",input,input);
+	 refreshCDKScreen(object->screen);
 	if (inpint==194 || inpint==195) {
 //		printf("Eintrag: %i\n",inpint);
 		*umlaut=inpint;
@@ -345,7 +348,8 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					widget->screenCol = 0;
 					widget->sbuch=0;
 					widget->zeichneFeld();
-					mvwprintw(widget->parent,2,2,"Key_home");
+					mvwprintw(widget->parent,3,3,"Key_home");
+					refreshCDKScreen(allgscr);
 					break;
 				case CDK_TRANSPOSE:
 					if (currPos >= infoLength - 1) {
