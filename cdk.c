@@ -1,4 +1,6 @@
 #include <cdk_int.h>
+// GSchade 24.11.18
+#include "entry_ex.h"
 
 /*
  * $Author: tom $
@@ -581,7 +583,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highnr/*=0*/)
 						if (result != 0) {
 							// GSchade 26.9.18
 							if (used==highnr-1) {
-							result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
+								result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
 							} else {
 								// Ende GSchade 
 							result[used] = CharOf (string[from]) | attrib;

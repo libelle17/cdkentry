@@ -131,7 +131,8 @@ char *activateCDKEntry (
 		CDKENTRY *	/* entry */,
 		chtype *	/* actions */
 		// G.Schade Anfang
-		,int *Zweitzeichen
+		,int *Zweitzeichen/*=0*/
+		,int *Drittzeichen/*=0*/
 		,int obpfeil/*=0*/
 		// G.Schade Ende
 		);

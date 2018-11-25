@@ -111,8 +111,9 @@ char *activateCDKAlphalist (
 		CDKALPHALIST *	/* alphalist */,
 		chtype *	/* actions */
 		// G.Schade Anfang 30.9.18
-    ,int* Zweitzeichen=0
-		,int obpfeil=0
+    ,int* Zweitzeichen/*=0*/
+    ,int* Drittzeichen/*=0*/
+		,int obpfeil/*=0*/
 // G.Schade Ende
 );
 

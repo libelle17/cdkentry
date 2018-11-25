@@ -324,13 +324,13 @@ static void _drawCDKAlphalist(CDKOBJS *obj, boolean Box GCC_UNUSED)
 /*
  * This activates the file selector.
  */
-char *activateCDKAlphalist (CDKALPHALIST *alphalist, chtype *actions,int *Zweitzeichen/*=0*/,int obpfeil/*=0*/)
+char *activateCDKAlphalist (CDKALPHALIST *alphalist, chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/)
 {
    char *ret = 0;
    /* Draw the widget. */
    drawCDKAlphalist (alphalist, ObjOf (alphalist)->box);
    /* Activate the widget. */
-   ret = activateCDKEntry (alphalist->entryField, actions,Zweitzeichen,obpfeil);
+   ret = activateCDKEntry (alphalist->entryField, actions,Zweitzeichen,Drittzeichen,obpfeil);
    /* Copy the exit type from the entry field. */
    copyExitType (alphalist, alphalist->entryField);
    /* Determine the exit status. */

@@ -190,7 +190,7 @@ CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/,int obpfeil/*=0*/)
+char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 {
 	chtype input = 0;
 	boolean functionKey;
@@ -207,6 +207,9 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
 			// GSchade Anfang
 			if (input==27) {
 				*Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+				if (*Zweitzeichen==194||*Zweitzeichen==195) {
+					*Drittzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+				}
 			} else if (input==9||(obpfeil && input==KEY_DOWN)) {
 				*Zweitzeichen=-9;
 			} else if (input==KEY_BTAB||(obpfeil && input==KEY_UP)) {
@@ -242,14 +245,17 @@ char *activateCDKEntry (CDKENTRY *entry, chtype *actions,int *Zweitzeichen/*=0*/
       // GSchade Ende
 
 			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
+					mvwprintw(entry->parent,3,2,"Zweitzeichen: %i         , Drittzeichen: %i     ",*Zweitzeichen,*Drittzeichen);
 				return ret;
 			}
+					mvwprintw(entry->parent,3,2,"kein Zweitzeichen");
 		}
 	} else {
 		int length = chlen (actions);
 		int x;
 		/* Inject each character one at a time. */
 		for (x = 0; x < length; x++) {
+					mvwprintw(entry->parent,4,2,"vor inject 2");
 			ret = injectCDKEntry (entry, actions[x]);
 			if (entry->exitType != vEARLY_EXIT) {
 				return ret;
@@ -445,6 +451,8 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 				case KEY_ESC:
 					setExitType (widget, input);
 					complete = TRUE;
+
+					mvwprintw(widget->parent,2,2,"Key_esc");
 					break;
 				case CDK_ERASE:
 					if (infoLength != 0) {

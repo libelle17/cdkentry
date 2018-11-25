@@ -3,6 +3,7 @@
 #include <cdk_test.h>
 #include <locale.h>
 // GSchade 25.9.18
+#include "entry_ex.h"
 CDKSCREEN *allgscr;
 
 #ifdef HAVE_XCURSES
@@ -198,7 +199,7 @@ static int do_undo (CB_PARAMS)
 #endif
 
 struct hotkst {
-	char buch;
+	int buch;
 	const char *label;
 	u_char obalph;
 	CDKENTRY *eingabef;
@@ -206,7 +207,7 @@ struct hotkst {
 } hk[]={
 	//		 /*
 	{'r',"</R/U/6>Dürectory:<!R!6!U> "},
-	{'t',"</R/U/6>Däteis:<!R!6!U> "},
+	{'ä',"</R/U/6>Däteis:<!R!6!U> "},
 	{'t',"</R/U/6>Datei:<!R!6>"},
 	{'a',"</R/U/6>Döüßatei:<!R!6>"},
 	{'n',"</R/U/6>Ordner:<!R!6>"},
@@ -626,7 +627,7 @@ int main (int argc, char **argv)
 	//setCDKEntry (hk[0].eingabef, argv[optind], 0, max, TRUE);
 
 	/* Activate the entry field. */
-	int Znr=0,Zweitzeichen=0;
+	int Znr=0,Zweitzeichen=0,Drittzeichen=0;
 	EExitType	exitType;
 	while (1) {
 		akteinbart=einb_direkt;
@@ -671,10 +672,10 @@ int main (int argc, char **argv)
 		// mvwprintw(cdkscreen->window,30,60,"<R>werde eingegeben:%i %i ",info,Zweitzeichen);
 		if (hk[Znr].obalph) {
 			akteinbart=einb_alphalist;
-			/*info = */activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/0);
+			/*info = */activateCDKAlphalist((CDKALPHALIST*)hk[Znr].eingabef, 0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/0);
 			eraseCDKScroll (((CDKALPHALIST*)hk[Znr].eingabef)->scrollField);
 		} else {
-			/*info = */activateCDKEntry(hk[Znr].eingabef, 0,&Zweitzeichen, /*obpfeil*/1);
+			/*info = */activateCDKEntry(hk[Znr].eingabef, 0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/1);
 		}
 		//#ifdef mdebug
 		/*
@@ -708,9 +709,9 @@ int main (int argc, char **argv)
 			mvwprintw(cdkscreen->window,1,30,"Zweitzeichen: %c",Zweitzeichen);
 			if (Zweitzeichen) /*(info && *info==27)*/ {
 				for(int aktent=0;aktent<maxhk;aktent++) {
-					/*if (aktent<30)*/ mvwprintw(cdkscreen->window,(aktent+1+Znr)%maxhk+yabst,120,"->(%c)",hk[(aktent+1+Znr)%maxhk].buch);
+					/*if (aktent<30)*/ mvwprintw(cdkscreen->window,(aktent+1+Znr)%maxhk+yabst,120,"->(%c) %i",hk[(aktent+1+Znr)%maxhk].buch,hk[(aktent+1+Znr)%maxhk].buch);
 					refreshCDKWindow (cdkscreen->window);
-					if (Zweitzeichen==hk[(aktent+1+Znr)%maxhk].buch) {
+					if (Zweitzeichen==hk[(aktent+1+Znr)%maxhk].buch || ((Zweitzeichen==194||Zweitzeichen==195)&&Zweitzeichen*256+Drittzeichen==hk[(aktent+1+Znr)%maxhk].buch)) {
 						mvwprintw(cdkscreen->window,4,60,"buch: %c",hk[(aktent+1+Znr)%maxhk].buch);
 						refreshCDKWindow (cdkscreen->window);
 						Znr=(aktent+1+Znr)%maxhk;
