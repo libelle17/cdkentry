@@ -168,7 +168,8 @@ int getcCDKObject (CDKOBJS *obj)
    EObjectType cdktype = ObjTypeOf (obj);
    CDKOBJS *test = bindableObject (&cdktype, obj);
    int result = wgetch (InputWindowOf (obj));
-	 mvwprintw(obj->screen->window,1,1,"binding getcCDK %c %i          ",result,result);
+	 mvwprintw(obj->screen->window,1,1,"binding getcCDK %c %i %i         ",result,result,has_key(result));
+	 refresh();
 	 if (result >= 0
        && test != 0
        && (unsigned)result < test->bindingCount
