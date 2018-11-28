@@ -16,6 +16,53 @@
 #include <curses.h>
 #endif
 
+#include <string.h> // strlen
+#include <stdlib.h> // malloc
+
+#define CDK_CONST /*nothing*/
+#define CDK_CSTRING CDK_CONST char *
+#define CDK_CSTRING2 CDK_CONST char * CDK_CONST *
+#define CDK_PATCHDATE 20180306
+#define CDK_VERSION "5.0"
+#define HAVE_DIRENT_H 1
+#define HAVE_GETBEGX 1
+#define HAVE_GETBEGY 1
+#define HAVE_GETCWD 1
+#define HAVE_GETLOGIN 1
+#define HAVE_GETMAXX 1
+#define HAVE_GETMAXY 1
+#define HAVE_GETOPT_H 1
+#define HAVE_GETOPT_HEADER 1
+#define HAVE_GRP_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_LSTAT 1
+#define HAVE_MEMORY_H 1
+#define HAVE_MKTIME 1
+#define HAVE_NCURSES_H 1
+#define HAVE_PWD_H 1
+#define HAVE_SETLOCALE 1
+#define HAVE_SLEEP 1
+#define HAVE_START_COLOR 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRDUP 1
+#define HAVE_STRERROR 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_TERM_H 1
+#define HAVE_TYPE_CHTYPE 1
+#define HAVE_UNCTRL_H 1
+#define HAVE_UNISTD_H 1
+#define MIXEDCASE_FILENAMES 1
+#define NCURSES 1
+#define PACKAGE "cdk"
+#define STDC_HEADERS 1
+#define SYSTEM_NAME "linux-gnu"
+#define TYPE_CHTYPE_IS_SCALAR 1
+#define setbegyx(win,y,x) ((win)->_begy = (y), (win)->_begx = (x), OK)
 /*
  * Declare miscellaneous defines.
  */
@@ -44,7 +91,8 @@
 #define	COLOR_PAIR(a)	A_NORMAL
 #endif
 
-#define ObjOf(ptr)              (&(ptr)->obj)
+//#define ObjOf(ptr)              (&(ptr)->obj)
+#define ObjOf(ptr)              (ptr)
 #define MethodOf(ptr)           (ObjOf(ptr)->fn)
 #define ScreenOf(ptr)           (ObjOf(ptr)->screen)
 #define WindowOf(ptr)           (ScreenOf(ptr)->window)
@@ -112,11 +160,42 @@
 #define IsVisibleObj(p)         (ObjPtr(p)->isVisible)
 #define InputWindowOf(p)        (ObjPtr(p)->inputWindow)
 
-void Beep();
-int floorCDK (double value);
-int ceilCDK (double value);
+
+#define typeCallocN(type,n)     (type*)calloc((size_t)(n), sizeof(type))
+#define typeCalloc(type)        typeCallocN(type,1)
+
+#define typeReallocN(type,p,n)  (type*)realloc(p, (size_t)(n) * sizeof(type))
+
+#define typeMallocN(type,n)     (type*)malloc((size_t)(n) * sizeof(type))
+#define typeMalloc(type)        typeMallocN(type,1)
+
+#define freeChecked(p)          if ((p) != 0) free (p)
+#define freeAndNull(p)          if ((p) != 0) { free (p); p = 0; }
+
+#define isChar(c)               ((int)(c) >= 0 && (int)(c) < KEY_MIN)
+#define CharOf(c)               ((unsigned char)(c))
+
+#define SIZEOF(v)               (sizeof(v)/sizeof((v)[0]))
+
+#define MAX_COLORS		8
+
+#define L_MARKER '<'
+#define R_MARKER '>'
+#define DigitOf(c) ((c)-'0')
+#define ReturnOf(p)   (ObjPtr(p)->dataPtr)
+
+/*
+ * Hide details of modifying widget->exitType
+ */
+#define storeExitType(d)	ObjOf(d)->exitType = (d)->exitType
+#define initExitType(d)		storeExitType(d) = vNEVER_ACTIVATED
+#define setExitType(w,c)	setCdkExitType(ObjOf(w), &((w)->exitType), c)
+#define copyExitType(d,s)	storeExitType(d) = ExitTypeOf(s)
 
 
+#if	!defined(HAVE_GETMAXYX) && !defined(getmaxyx)
+#define getmaxyx(win,y,x)	(y = (win)?(win)->_maxy:ERR, x = (win)?(win)->_maxx:ERR)
+#endif
 struct CDKOBJS; // CDKOBJS
 
 typedef enum {
@@ -222,7 +301,7 @@ struct CDKOBJS;
 /*
  * Define the CDK screen structure.
  */
-struct SSCREENP { // SScreen
+struct SScreen { // SScreen
    WINDOW *		window;
    CDKOBJS**	object; // CDKOBJS
    int			objectCount;	/* last-used index in object[] */
@@ -230,13 +309,36 @@ struct SSCREENP { // SScreen
    EExitStatus		exitStatus;
    int			objectFocus;	/* focus index in object[] */
 };
-typedef struct SScreen CDKSCREEN;
 
 /*
  * This enumerated typedef defines the type of exits the widgets
  * recognize.
  */
 typedef enum {vEARLY_EXIT, vESCAPE_HIT, vNORMAL, vNEVER_ACTIVATED, vERROR} EExitType;
+
+int getmaxxf(WINDOW *win);
+int getmaxyf(WINDOW *win);
+
+void Beep();
+int floorCDK (double value);
+int ceilCDK (double value);
+int setWidgetDimension (int parentDim, int proposedDim, int adjustment);
+static int encodeAttribute (const char *string, int from, chtype *mask);
+chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr=0);
+char **CDKsplitString (const char *string, int separator);
+static unsigned countChar (const char *string, int separator);
+unsigned CDKcountStrings (CDK_CSTRING2 list);
+chtype *char2Chtype(const char *string, int *to, int *align);
+int chlen(const chtype *string);
+void freeChtype (chtype *string);
+int justifyString (int boxWidth, int mesgLength, int justify);
+void CDKfreeStrings (char **list);
+void CDKfreeChtypes (chtype **list);
+void alignxy (WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight);
+void cleanChar (char *s, int len, char character);
+typedef struct SScreen CDKSCREEN;
+void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
+
 
 /*
  * Data common to all objects (widget instances).  This appears first in
@@ -245,7 +347,7 @@ typedef enum {vEARLY_EXIT, vESCAPE_HIT, vNORMAL, vNEVER_ACTIVATED, vERROR} EExit
  */
 struct CDKOBJS { // CDKOBJS
    int          screenIndex;
-   SSCREENP *  screen;
+   SScreen *  screen;
    //const CDKFUNCS * fn;
    bool      box;
    int          borderSize;
@@ -299,16 +401,21 @@ struct CDKOBJS { // CDKOBJS
    /* background attribute */
 	 virtual void setBKattrObj(chtype);
 	 CDKOBJS();
+	 ~CDKOBJS();
+	 int setCdkTitle (const char *title, int boxWidth);
+	 void cleanCdkTitle();
+	 bool validObjType(EObjectType type);
+	 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype);
+	 void setScreenIndex(CDKSCREEN *pscreen, int number);
 }; // struct CDKOBJS
 
 /*
  * Define the CDK entry widget structure.
  */
 typedef struct SEntry CDKENTRY;
-typedef void (*ENTRYCB) (struct SEntry *entry, chtype character);
 
-struct SEntry {
-   CDKOBJS	obj;
+struct SEntry:CDKOBJS {
+//   CDKOBJS	obj;
    WINDOW *	parent;
    WINDOW *	win;
    WINDOW *	shadowWin;
@@ -338,7 +445,6 @@ struct SEntry {
    bool	shadow;
    chtype	filler;
    chtype	hidden;
-   ENTRYCB	callbackfn;
    void		*callbackData;
 	 /*
 		* This creates a pointer to a new CDK entry widget.
@@ -361,13 +467,15 @@ struct SEntry {
 			 int highnr/*=0*/
 			 // Ende GSchade 17.11.18
 			 );
+	 void setCDKEntryBox (bool Box);
+	 void CDKEntryCallBack(chtype character);
+	 void (SEntry::*callbfn)(chtype character)=NULL;
+}; // struct SEntry:CDKOBJS
 
-};
 
-
-struct SScroller {
+struct SScroller:CDKOBJS {
 	/* This field must stay on top */
-	CDKOBJS  obj; 
+//	CDKOBJS  obj; 
 	WINDOW * parent; 
 	WINDOW * win; 
 	WINDOW * scrollbarWin; 
