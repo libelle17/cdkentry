@@ -142,8 +142,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 	(*to) = 0;
 	*align = LEFT;
 
-	if (string != 0 && *string != 0)
-	{
+	if (string != 0 && *string != 0) {
 		int len = (int)strlen(string);
 		int pass;
 		int used = 0;
@@ -151,18 +150,15 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 		 * We make two passes because we may have indents and tabs to expand, and
 		 * do not know in advance how large the result will be.
 		 */
-		for (pass = 0; pass < 2; pass++)
-		{
+		for (pass = 0; pass < 2; pass++) {
 			int insideMarker;
 			int from;
 			int adjust;
 			int start;
 			int x = 3;
 
-			if (pass != 0)
-			{
-				if ((result = typeMallocN (chtype, used + 2)) == 0)
-				{
+			if (pass != 0) {
+				if ((result = typeMallocN (chtype, used + 2)) == 0) {
 					used = 0;
 					break;
 				}
@@ -173,35 +169,25 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 			used = 0;
 
 			/* Look for an alignment marker.  */
-			if (*string == L_MARKER)
-			{
-				if (string[1] == 'C' && string[2] == R_MARKER)
-				{
+			if (*string == L_MARKER) {
+				if (string[1] == 'C' && string[2] == R_MARKER) {
 					(*align) = CENTER;
 					start = 3;
-				}
-				else if (string[1] == 'R' && string[2] == R_MARKER)
-				{
+				} else if (string[1] == 'R' && string[2] == R_MARKER) {
 					(*align) = RIGHT;
 					start = 3;
-				}
-				else if (string[1] == 'L' && string[2] == R_MARKER)
-				{
+				} else if (string[1] == 'L' && string[2] == R_MARKER) {
 					start = 3;
-				}
-				else if (string[1] == 'B' && string[2] == '=')
-				{
+				} else if (string[1] == 'B' && string[2] == '=') {
 					/* Set the item index value in the string.       */
-					if (result != 0)
-					{
+					if (result != 0) {
 						result[0] = ' ';
 						result[1] = ' ';
 						result[2] = ' ';
 					}
 
 					/* Pull out the bullet marker.  */
-					while (string[x] != R_MARKER && string[x] != 0)
-					{
+					while (string[x] != R_MARKER && string[x] != 0) {
 						if (result != 0)
 							result[x] = (chtype)string[x] | A_BOLD;
 						x++;
@@ -211,112 +197,92 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 					/* Set the alignment variables.  */
 					start = x;
 					used = x;
-				}
-				else if (string[1] == 'I' && string[2] == '=')
-				{
+				} else if (string[1] == 'I' && string[2] == '=') {
 					from = 2;
 					x = 0;
 
-					while (string[++from] != R_MARKER && string[from] != 0)
-					{
-						if (isdigit (CharOf (string[from])))
-						{
+					while (string[++from] != R_MARKER && string[from] != 0) {
+						if (isdigit (CharOf (string[from]))) {
 							adjust = (adjust * 10) + DigitOf (string[from]);
 							x++;
 						}
 					}
 
 					start = x + 4;
-				}
-			}
+				} //  else if (string[1] == 'B' && string[2] == '=')
+			} // 			if (*string == L_MARKER)
 
-			while (adjust-- > 0)
-			{
+			while (adjust-- > 0) {
 				if (result != 0)
 					result[used] = ' ';
 				used++;
 			}
 
-			/* Set the format marker boolean to false.  */
+			/* Set the format marker bool to false.  */
 			insideMarker = FALSE;
-// GSchade 25.9.18
+			// GSchade 25.9.18
 			//size_t pos=0;
 			/* Start parsing the character string.  */
-			for (from = start; from < len; from++)
-			{
+			for (from = start; from < len; from++) {
 				/* Are we inside a format marker?  */
-				if (!insideMarker)
-				{
+				if (!insideMarker) {
 					if (string[from] == L_MARKER
 							&& (string[from + 1] == '/'
 								|| string[from + 1] == '!'
-								|| string[from + 1] == '#'))
-					{
+								|| string[from + 1] == '#')) {
 						insideMarker = TRUE;
-					}
-					else if (string[from] == '\\' && string[from + 1] == L_MARKER)
-					{
+					} else if (string[from] == '\\' && string[from + 1] == L_MARKER) {
 						from++;
 						if (result != 0)
 							result[used] = CharOf (string[from]) | attrib;
 						used++;
 						from++;
-					}
-					else if (string[from] == '\t')
-					{
-						do
-						{
+					} else if (string[from] == '\t') {
+						do {
 							if (result != 0)
 								result[used] = ' ';
 							used++;
-						}
-						while (used & 7);
-					} // else if (result && !strchr("ö",string[from])) { result[used++]=CharOf('o')|attrib;
+						} while (used & 7);
+					// KLZ else if (result && !strchr("ö",string[from])) KLA result[used++]=CharOf('o')|attrib;
 					// GSchade 25.9.18
 					/*
-					else if (strchr("äöüÄÖÜß",string[from])) {
-						printf("from: %i, string[from]: %i\n",from,(int)string[from]+256);
-						//if (result) result[used]=CharOf('z')|attrib; used++;
-						if (result) result[used]=CharOf(-61)|attrib; used++;
-						if (!strchr("ä",string[from])) { if (result) result[used]=CharOf(164-256)|attrib; used++; }
-						else if (!strchr("ö",string[from])) { if (result) result[used]=CharOf(182-256)|attrib; used++; }
-						else if (!strchr("ü",string[from])) { if (result) result[used]=CharOf(188-256)|attrib; used++; }
-						else if (!strchr("Ä",string[from])) { if (result) result[used]=CharOf(132)|attrib; used++; }
-						else if (!strchr("Ö",string[from])) { if (result) result[used]=CharOf(150)|attrib; used++; }
-						else if (!strchr("Ü",string[from])) { if (result) result[used]=CharOf(156)|attrib; used++; }
-						else if (!strchr("ß",string[from])) { if (result) result[used]=CharOf(159)|attrib; used++; }
-					}
-				*/
+						 else if (strchr("äöüÄÖÜß",string[from])) KLA
+						 printf("from: %i, string[from]: %i\n",from,(int)string[from]+256);
+					//if (result) result[used]=CharOf('z')|attrib; used++;
+					if (result) result[used]=CharOf(-61)|attrib; used++;
+					if (!strchr("ä",string[from])) { if (result) result[used]=CharOf(164-256)|attrib; used++; }
+					else if (!strchr("ö",string[from])) { if (result) result[used]=CharOf(182-256)|attrib; used++; }
+					else if (!strchr("ü",string[from])) { if (result) result[used]=CharOf(188-256)|attrib; used++; }
+					else if (!strchr("Ä",string[from])) { if (result) result[used]=CharOf(132)|attrib; used++; }
+					else if (!strchr("Ö",string[from])) { if (result) result[used]=CharOf(150)|attrib; used++; }
+					else if (!strchr("Ü",string[from])) { if (result) result[used]=CharOf(156)|attrib; used++; }
+					else if (!strchr("ß",string[from])) { if (result) result[used]=CharOf(159)|attrib; used++; }
+					KLZ
+					 */
 					// Ende GSchade 25.9.18
-					else
-					{
-						if (result != 0) {
+				} else {
+					if (result != 0) {
 							// GSchade 26.9.18
 							if (used==highinr-1) {
 								result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
 							} else {
 								// Ende GSchade 
-							result[used] = CharOf (string[from]) | attrib;
+								result[used] = CharOf (string[from]) | attrib;
 							}
 						}
 						used++;
 					}
-				}
-				else
-				{
-					switch (string[from])
-					{
+				} else {
+					switch (string[from]) {
 						case R_MARKER:
 							insideMarker = 0;
 							break;
 						case '#':
 							{
 								lastChar = 0;
-								switch (string[from + 2])
-								{
+								switch (string[from + 2]) {
 									case 'L':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LLCORNER;
 												break;
@@ -335,8 +301,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 										}
 										break;
 									case 'R':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LRCORNER;
 												break;
@@ -346,8 +311,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 										}
 										break;
 									case 'T':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'T':
 												lastChar = ACS_TTEE;
 												break;
@@ -363,8 +327,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 										}
 										break;
 									case 'A':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LARROW;
 												break;
@@ -403,8 +366,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 											lastChar = ACS_S9;
 								}
 
-								if (lastChar != 0)
-								{
+								if (lastChar != 0) {
 									adjust = 1;
 									from += 2;
 
@@ -422,9 +384,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 											}
 										}
 									}
-								}
-								for (x = 0; x < adjust; x++)
-								{
+								} for (x = 0; x < adjust; x++) {
 									if (result != 0)
 										result[used] = lastChar | attrib;
 									used++;
@@ -439,12 +399,11 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 							from = encodeAttribute (string, from, &mask);
 							attrib = attrib & ~mask;
 							break;
-					}
-				}
-			}
+					} // 					switch (string[from])
+				} // 				if (!insideMarker) else
+			} // 			for (from = start; from < len; from++)
 
-			if (result != 0)
-			{
+			if (result != 0) {
 				result[used] = 0;
 				result[used + 1] = 0;
 			}
@@ -453,16 +412,12 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 			 * If there are no characters, put the attribute into the
 			 * the first character of the array.
 			 */
-			if (used == 0
-					&& result != 0)
-			{
+			if (!used && result) {
 				result[0] = attrib;
 			}
 		}
 		*to = used;
-	}
-	else
-	{
+	} else {
 		/*
 		 * Try always to return something; otherwise lists of chtype strings
 		 * would get a spurious null pointer whenever there is a blank line,
@@ -471,12 +426,12 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 		result = typeCallocN (chtype, 1);
 	}
 	return result;
-}
+} // chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 
 /*
  * Split a string into a list of strings.
  */
-char **CDKsplitString (const char *string, int separator)
+char **CDKsplitString(const char *string, int separator)
 {
 	char **result = 0;
 	char *temp;
@@ -533,6 +488,7 @@ unsigned CDKcountStrings (CDK_CSTRING2 list)
 	return result;
 }
 
+#ifdef doppelt
 /*
  * This function takes a character string, full of format markers
  * and translates them into a chtype * array. This is better suited
@@ -548,8 +504,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 	(*to) = 0;
 	*align = LEFT;
 
-	if (string != 0 && *string != 0)
-	{
+	if (string != 0 && *string != 0) {
 		int len = (int)strlen (string);
 		int pass;
 		int used = 0;
@@ -643,7 +598,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 				used++;
 			}
 
-			/* Set the format marker boolean to false.  */
+			/* Set the format marker bool to false.  */
 			insideMarker = FALSE;
 
 			/* Start parsing the character string.  */
@@ -854,6 +809,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 	}
 	return result;
 }
+#endif
 
 /*
  * This determines the length of a chtype string
@@ -991,7 +947,7 @@ void alignxy (WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight)
 /*
  * This sets a string to the given character.
  */
-void cleanChar (char *s, int len, char character)
+void cleanChar(char *s, int len, char character)
 {
 	if (s != 0) {
 		int x;
@@ -1001,6 +957,166 @@ void cleanChar (char *s, int len, char character)
 		s[--x] = '\0';
 	}
 }
+
+/*
+ * This writes out a chtype * string.
+ */
+void writeChtype(WINDOW *window,
+		int xpos,
+		int ypos,
+		chtype *string,
+		int align,
+		int start,
+		int end)
+{
+	writeChtypeAttrib(window, xpos, ypos, string, A_NORMAL, align, start, end);
+}
+
+/*
+ * This writes out a chtype * string * with the given attributes added.
+ */
+void writeChtypeAttrib (WINDOW *window,
+		int xpos,
+		int ypos,
+		chtype *string,
+		chtype attr,
+		int align,
+		int start,
+		int end)
+{
+	/* *INDENT-EQLS* */
+	int diff             = end - start;
+	int display          = 0;
+	int x                = 0;
+
+	if (align == HORIZONTAL)
+	{
+		/* Draw the message on a horizontal axis. */
+		display = MINIMUM (diff, getmaxx (window) - xpos);
+		int altumlz=0;
+		for (x = 0; x < display; x++)
+		{
+			// GSchade 25.9.18
+			if (1&&((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195)) {
+				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
+				char ausg[3];
+				*ausg=string[x+start];
+				ausg[1]=string[x+start+1];
+				ausg[2]=0;
+//				ausg[0]='o';
+//				ausg[1]=0;
+//				chtype testa;
+//				wattr_get(window)
+
+//				const chtype attrib=COLOR_PAIR(2)|A_REVERSE;//A_REVERSE|COLOR_GREEN;
+//				printf("String: %s, Farbe: %lu\n\r",ausg,attrib/*window->_attrs*/);
+				wattron(window,string[x+start]); 
+				mvwprintw(window,ypos,xpos+x-altumlz,"%s",ausg);
+				wattroff(window,string[x+start]); 
+				x++;
+				altumlz++;
+			} else {
+//				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
+				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] |attr);
+			}
+		}
+	}
+	else
+	{
+		/* Draw the message on a vertical axis. */
+		display = MINIMUM (diff, getmaxy (window) - ypos);
+		for (x = 0; x < display; x++)
+		{
+			(void)mvwaddch (window, ypos + x, xpos, string[x + start] | attr);
+		}
+	}
+} // void writeChtypeAttrib(
+
+/*
+ * This draws a box with attributes and lets the user define
+ * each element of the box.
+ */
+void attrbox (WINDOW *win,
+		chtype tlc,
+		chtype trc,
+		chtype blc,
+		chtype brc,
+		chtype horz,
+		chtype vert,
+		chtype attr)
+{
+	/* *INDENT-EQLS* */
+	int x1       = 0;
+	int y1       = 0;
+	int y2       = getmaxy (win) - 1;
+	int x2       = getmaxx (win) - 1;
+	int count    = 0;
+
+	/* Draw horizontal lines. */
+	if (horz != 0)
+	{
+		(void)mvwhline (win, y1, 0, horz | attr, getmaxx (win));
+		(void)mvwhline (win, y2, 0, horz | attr, getmaxx (win));
+		count++;
+	}
+
+	/* Draw vertical lines. */
+	if (vert != 0)
+	{
+		(void)mvwvline (win, 0, x1, vert | attr, getmaxy (win));
+		(void)mvwvline (win, 0, x2, vert | attr, getmaxy (win));
+		count++;
+	}
+
+	/* Draw in the corners. */
+	if (tlc != 0)
+	{
+		(void)mvwaddch (win, y1, x1, tlc | attr);
+		count++;
+	}
+	if (trc != 0)
+	{
+		(void)mvwaddch (win, y1, x2, trc | attr);
+		count++;
+	}
+	if (blc != 0)
+	{
+		(void)mvwaddch (win, y2, x1, blc | attr);
+		count++;
+	}
+	if (brc != 0)
+	{
+		(void)mvwaddch (win, y2, x2, brc | attr);
+		count++;
+	}
+	if (count != 0)
+	{
+		wrefresh (win);
+	}
+} // void attrbox(
+
+/*
+ * This draws a shadow around a window.
+ */
+void drawShadow (WINDOW *shadowWin)
+{
+	if (shadowWin != 0) {
+		int x_hi = getmaxx (shadowWin) - 1;
+		int y_hi = getmaxy (shadowWin) - 1;
+
+		/* Draw the line on the bottom. */
+		(void)mvwhline (shadowWin, y_hi, 1, ACS_HLINE | A_DIM, x_hi);
+
+		/* Draw the line on the right. */
+		(void)mvwvline (shadowWin, 0, x_hi, ACS_VLINE | A_DIM, y_hi);
+
+		(void)mvwaddch (shadowWin, 0, x_hi, ACS_URCORNER | A_DIM);
+		(void)mvwaddch (shadowWin, y_hi, 0, ACS_LLCORNER | A_DIM);
+		(void)mvwaddch (shadowWin, y_hi, x_hi, ACS_LRCORNER | A_DIM);
+		wrefresh (shadowWin);
+	}
+}
+
 
 /*
  * This registers a CDK object with a screen.
@@ -1109,6 +1225,23 @@ int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
 } // int CDKOBJS::setCdkTitle(const char *title, int boxWidth)
 
 /*
+ * Draw the widget's title.
+ */
+void CDKOBJS::drawCdkTitle(WINDOW *win)
+{
+	int x;
+	for (x = 0; x < titleLines; x++) {
+		writeChtype(win,
+				titlePos[x] + borderSize,
+				x + borderSize,
+				title[x],
+				HORIZONTAL, 0,
+				titleLen[x]);
+	}
+}
+
+
+/*
  * Remove storage for the widget's title.
  */
 void CDKOBJS::cleanCdkTitle()
@@ -1163,6 +1296,121 @@ bool CDKOBJS::validObjType(EObjectType type)
 	return valid;
 }
 
+/*
+ * The cdktype parameter passed to bindCDKObject, etc., is redundant since
+ * the object parameter also has the same information.  For compatibility
+ * just use it for a sanity check.
+ */
+
+#ifndef KEY_MAX
+#define KEY_MAX 512
+#endif
+
+CDKOBJS * CDKOBJS::bindableObject (EObjectType * cdktype, void *object)
+{
+	CDKOBJS *obj = (CDKOBJS *)object;
+	if (obj != 0 && *cdktype == this->cdktype) {
+		if (*cdktype == vFSELECT) {
+			*cdktype = vENTRY;
+			object = ((CDKFSELECT *)object)->entryField;
+		} else if (*cdktype == vALPHALIST) {
+			*cdktype = vENTRY;
+			object = ((CDKALPHALIST *)object)->entryField;
+		}
+	} else {
+		object = 0;
+	}
+	return (CDKOBJS *)object;
+}
+
+
+/*
+ * Draw a box around the given window using the object's defined line-drawing
+ * characters.
+ */
+void CDKOBJS::drawObjBox (WINDOW *win)
+{
+	attrbox(win,
+			ULChar,
+			URChar,
+			LLChar,
+			LRChar,
+			HZChar,
+			VTChar,
+			BXAttr);
+}
+
+/*
+ * Read from the input window, filtering keycodes as needed.
+ */
+int CDKOBJS::getcCDKObject()
+{
+	// EObjectType cdktype = ObjTypeOf (this);
+	CDKOBJS *test = bindableObject (&cdktype, this);
+	int result = wgetch (InputWindowOf (this));
+	// printf("%c %ul\n",result,result); //G.Schade
+	if (result >= 0
+			&& test != 0
+			&& (unsigned)result < test->bindingCount
+			&& test->bindingList[result].bindFunction == getcCDKBind)
+	{
+		result = (int)(long)test->bindingList[result].bindData;
+	}
+	else if (test == 0
+			|| (unsigned)result >= test->bindingCount
+			|| test->bindingList[result].bindFunction == 0)
+	{
+		switch (result)
+		{
+			case '\r':
+			case '\n':
+				result = KEY_ENTER;
+				break;
+			case '\t':
+				result = KEY_TAB;
+				break;
+			case DELETE:
+				result = KEY_DC;
+				break;
+			case '\b':		/* same as CTRL('H'), for ASCII */
+				result = KEY_BACKSPACE;
+				break;
+			case CDK_BEGOFLINE:
+				result = KEY_HOME;
+				break;
+			case CDK_ENDOFLINE:
+				result = KEY_END;
+				break;
+			case CDK_FORCHAR:
+				result = KEY_RIGHT;
+				break;
+			case CDK_BACKCHAR:
+				result = KEY_LEFT;
+				break;
+			case CDK_NEXT:
+				result = KEY_TAB;
+				break;
+			case CDK_PREV:
+				result = KEY_BTAB;
+				break;
+		}
+	}
+	return result;
+} // int CDKOBJS::getcCDKObject()
+
+/*
+ * Use this function rather than getcCDKObject(), since we can extend it to
+ * handle wide-characters.
+ */
+int CDKOBJ::getchCDKObject (bool *functionKey)
+{
+   int key = getcCDKObject();
+
+   *functionKey = (key >= KEY_MIN && key <= KEY_MAX);
+   return key;
+}
+
+
 void SEntry::CDKEntryCallBack(chtype character)
 {
 	SEntry::schreibl(character);
@@ -1190,6 +1438,9 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 		// GSchade Ende
 		)
 {
+	// GSchade Anfang
+	cdkentry=vEntry;
+	// GSchade Ende
 	/* *INDENT-EQLS* */
 	int parentWidth      = getmaxxf(cdkscreen->window);
 	int parentHeight     = getmaxyf(cdkscreen->window);
@@ -1328,6 +1579,120 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	}
 //	return (entry);
 } // SEntry::SEntry
+
+/*
+ * This draws the entry field.
+ */
+void SEntry::_drawCDKEntry (bool Box)
+{
+//	CDKENTRY *entry = (CDKENTRY *)object;
+	/* Did we ask for a shadow? */
+	if (this->shadowWin != 0) {
+		drawShadow(this->shadowWin);
+	}
+	/* Box the widget if asked. */
+	if (Box) {
+		drawObjBox(this->win/*, ObjOf (this)*/);
+	}
+	drawCdkTitle(this->win/*, object*/);
+	wrefresh (this->win);
+
+	/* Draw in the label to the widget. */
+	if (this->labelWin) {
+		//int f1,f2;
+		writeChtype (this->labelWin, 0, 0, this->label, HORIZONTAL, 0, this->labelLen);
+		wrefresh (this->labelWin);
+	}
+	this->zeichneFeld();
+
+}
+
+
+/*
+ * This means you want to use the given entry field. It takes input
+ * from the keyboard, and when its done, it fills the entry info
+ * element of the structure with what was typed.
+ */
+char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+{
+	chtype input = 0;
+	bool functionKey;
+	char *ret = 0;
+	int zweit;
+	if (!Zweitzeichen) Zweitzeichen=&zweit;
+	/* Draw the widget. */
+	_drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+	if (!actions) {
+		for (;;) {
+			//static int y=2;
+			*Zweitzeichen=0;
+			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+			// GSchade Anfang
+			if (input==27) {
+				*Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+				if (*Zweitzeichen==194||*Zweitzeichen==195) {
+					*Drittzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+				}
+			} else if (input==9||(obpfeil && input==KEY_DOWN)) {
+				*Zweitzeichen=-9;
+			} else if (input==KEY_BTAB||(obpfeil && input==KEY_UP)) {
+				*Zweitzeichen=-8;
+			} else if (input==KEY_NPAGE) {
+				*Zweitzeichen=-10;
+			} else if (input==KEY_PPAGE) {
+				*Zweitzeichen=-11;
+			}
+//		if (0) {
+//				static bool afk{0}; static chtype ai{0}; static int aZz{0}; static EExitType	aex{vEARLY_EXIT};
+				/*
+				if (afk!=functionKey||ai!=input||aZz!=*Zweitzeichen||aex!=entry->exitType)
+					mvwprintw(entry->parent,y++,30,"eingeb:%i %i %i %i",functionKey,input,*Zweitzeichen,entry->exitType);
+				 */
+//			afk=functionKey; ai=input; aZz=*Zweitzeichen; aex=entry->exitType;
+//			}
+			
+
+			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
+			// GSchade Ende
+			/* Inject the character into the widget. */
+			ret = injectCDKEntry (entry, input);
+			// GSchade Anfang
+      /*
+			mvwprintw(entry->parent,1,80,"info:%s ",entry->info);
+			for(int i=0;i<strlen(entry->info);i++) {
+				mvwprintw(entry->parent,2+i,60,"i: %i: %i",i,entry->info[i]);
+			}
+			wrefresh(entry->parent); // gleichbedeutend: wrefresh(entry->obj.screen->window);
+      */
+      drawCDKEntry (entry, ObjOf (entry)->box);
+      // GSchade Ende
+
+			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
+//					mvwprintw(entry->parent,3,2,"Zweitzeichen: %i         , Drittzeichen: %i     ",*Zweitzeichen,*Drittzeichen);
+				return ret;
+			}
+//			mvwprintw(entry->parent,3,2,"kein Zweitzeichen");
+		}
+	} else {
+		int length = chlen (actions);
+		int x;
+		/* Inject each character one at a time. */
+		for (x = 0; x < length; x++) {
+//					mvwprintw(entry->parent,4,2,"vor inject 2");
+			ret = injectCDKEntry (entry, actions[x]);
+			if (entry->exitType != vEARLY_EXIT) {
+				return ret;
+			}
+		}
+	}
+	/* Make sure we return the correct info. */
+	if (entry->exitType == vNORMAL) {
+		return entry->info;
+	} else {
+		return 0;
+	}
+}
+
 
 /*
  * This sets the widgets box attribute.

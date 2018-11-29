@@ -336,6 +336,11 @@ void CDKfreeStrings (char **list);
 void CDKfreeChtypes (chtype **list);
 void alignxy (WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight);
 void cleanChar (char *s, int len, char character);
+void writeChtype(WINDOW *window, int xpos, int ypos, chtype *string, int align, int start, int end);
+void writeChtypeAttrib (WINDOW *window, int xpos, int ypos, chtype *string, chtype attr, int align, int start, int end);
+void attrbox (WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
+void drawShadow (WINDOW *shadowWin);
+
 typedef struct SScreen CDKSCREEN;
 void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
 
@@ -348,7 +353,8 @@ void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
 struct CDKOBJS { // CDKOBJS
    int          screenIndex;
    SScreen *  screen;
-   //const CDKFUNCS * fn;
+	 EObjectType cdktype; 
+	 //const CDKFUNCS * fn;
    bool      box;
    int          borderSize;
    bool      acceptsFocus;
@@ -402,17 +408,23 @@ struct CDKOBJS { // CDKOBJS
 	 virtual void setBKattrObj(chtype);
 	 CDKOBJS();
 	 ~CDKOBJS();
-	 int setCdkTitle (const char *title, int boxWidth);
+	 int setCdkTitle(const char *title, int boxWidth);
+	 void drawCdkTitle(WINDOW *);
 	 void cleanCdkTitle();
 	 bool validObjType(EObjectType type);
+	 CDKOBJS * bindableObject (EObjectType * cdktype, void *object);
 	 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype);
 	 void setScreenIndex(CDKSCREEN *pscreen, int number);
+	 void drawObjBox(WINDOW *win);
+	 int getcCDKObject();
+	 int getchCDKObject (bool *functionKey);
 }; // struct CDKOBJS
 
 /*
  * Define the CDK entry widget structure.
  */
 typedef struct SEntry CDKENTRY;
+typedef struct SFileSelector CDKFSELECT;
 
 struct SEntry:CDKOBJS {
 //   CDKOBJS	obj;
@@ -467,6 +479,8 @@ struct SEntry:CDKOBJS {
 			 int highnr/*=0*/
 			 // Ende GSchade 17.11.18
 			 );
+	 void _drawCDKEntry (bool Box);
+	 char * activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
 	 void setCDKEntryBox (bool Box);
 	 void CDKEntryCallBack(chtype character);
 	 void (SEntry::*callbfn)(chtype character)=NULL;
