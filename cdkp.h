@@ -90,6 +90,76 @@
 #ifndef COLOR_PAIR
 #define	COLOR_PAIR(a)	A_NORMAL
 #endif
+/*
+ * This header file adds some useful curses-style definitions.
+ */
+
+#undef CTRL
+#define CTRL(c)		((c)&0x1f)
+
+#undef  CDK_REFRESH
+#define CDK_REFRESH	CTRL('L')
+#undef  CDK_PASTE
+#define CDK_PASTE	CTRL('V')
+#undef  CDK_COPY
+#define CDK_COPY	CTRL('Y')
+#undef  CDK_ERASE
+#define CDK_ERASE	CTRL('U')
+#undef  CDK_CUT
+#define CDK_CUT		CTRL('X')
+#undef  CDK_BEGOFLINE
+#define CDK_BEGOFLINE	CTRL('A')
+#undef  CDK_ENDOFLINE
+#define CDK_ENDOFLINE	CTRL('E')
+#undef  CDK_BACKCHAR
+#define CDK_BACKCHAR	CTRL('B')
+#undef  CDK_FORCHAR
+#define CDK_FORCHAR	CTRL('F')
+#undef  CDK_TRANSPOSE
+#define CDK_TRANSPOSE	CTRL('T')
+#undef  CDK_NEXT
+#define CDK_NEXT	CTRL('N')
+#undef  CDK_PREV
+#define CDK_PREV	CTRL('P')
+#undef  SPACE
+#define SPACE		' '
+#undef  DELETE
+#define DELETE		'\177'	/* Delete key				*/
+#undef  TAB
+#define TAB		'\t'	/* Tab key.				*/
+#undef  KEY_ESC
+#define KEY_ESC		'\033'	/* Escape Key.				*/
+#undef  KEY_RETURN
+#define KEY_RETURN	'\012'	/* Return key				*/
+#undef  KEY_TAB
+#define KEY_TAB		'\t'	/* Tab key				*/
+#undef  KEY_F1
+#define KEY_F1          KEY_F(1)
+#undef  KEY_F2
+#define KEY_F2          KEY_F(2)
+#undef  KEY_F3
+#define KEY_F3          KEY_F(3)
+#undef  KEY_F4
+#define KEY_F4          KEY_F(4)
+#undef  KEY_F5
+#define KEY_F5          KEY_F(5)
+#undef  KEY_F6
+#define KEY_F6          KEY_F(6)
+#undef  KEY_F7
+#define KEY_F7          KEY_F(7)
+#undef  KEY_F8
+#define KEY_F8          KEY_F(8)
+#undef  KEY_F9
+#define KEY_F9          KEY_F(9)
+#undef  KEY_F10
+#define KEY_F10		KEY_F(10)
+#undef  KEY_F11
+#define KEY_F11		KEY_F(11)
+#undef  KEY_F12
+#define KEY_F12		KEY_F(12)
+
+#define KEY_ERROR       ((chtype)ERR)
+
 
 //#define ObjOf(ptr)              (&(ptr)->obj)
 #define ObjOf(ptr)              (ptr)
@@ -215,8 +285,9 @@ typedef union {
 /*
  * This enumerated typedef lists all of the CDK widget types.
  */
-typedef enum {	vNULL = 0
-		,vALPHALIST
+enum EObjectType
+{	vNULL = 0
+	,vALPHALIST
 		,vBUTTON
 		,vBUTTONBOX
 		,vCALENDAR
@@ -245,7 +316,7 @@ typedef enum {	vNULL = 0
 		,vUSCALE
 		,vUSLIDER
 		,vVIEWER
-		} EObjectType;
+		} ;
 
 /*
  * This enumerated typedef lists all the valid display types for
@@ -340,6 +411,7 @@ void writeChtype(WINDOW *window, int xpos, int ypos, chtype *string, int align, 
 void writeChtypeAttrib (WINDOW *window, int xpos, int ypos, chtype *string, chtype attr, int align, int start, int end);
 void attrbox (WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
 void drawShadow (WINDOW *shadowWin);
+int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
 
 typedef struct SScreen CDKSCREEN;
 void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
@@ -350,10 +422,12 @@ void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
  * each widget's struct to allow us to use generic functions in binding.c,
  * cdkscreen.c, position.c, etc.
  */
-struct CDKOBJS { // CDKOBJS
+struct CDKOBJS 
+{ 
    int          screenIndex;
    SScreen *  screen;
 	 EObjectType cdktype; 
+	 CDKOBJS* bindableObject=0; 
 	 //const CDKFUNCS * fn;
    bool      box;
    int          borderSize;
@@ -412,21 +486,20 @@ struct CDKOBJS { // CDKOBJS
 	 void drawCdkTitle(WINDOW *);
 	 void cleanCdkTitle();
 	 bool validObjType(EObjectType type);
-	 CDKOBJS * bindableObject (EObjectType * cdktype, void *object);
+	 //CDKOBJS * bindableObject (EObjectType * cdktype, void *object);
 	 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype);
 	 void setScreenIndex(CDKSCREEN *pscreen, int number);
 	 void drawObjBox(WINDOW *win);
 	 int getcCDKObject();
-	 int getchCDKObject (bool *functionKey);
+	 int getchCDKObject(bool *functionKey);
 }; // struct CDKOBJS
 
 /*
  * Define the CDK entry widget structure.
  */
-typedef struct SEntry CDKENTRY;
-typedef struct SFileSelector CDKFSELECT;
 
-struct SEntry:CDKOBJS {
+struct SEntry:CDKOBJS 
+{
 //   CDKOBJS	obj;
    WINDOW *	parent;
    WINDOW *	win;
@@ -485,9 +558,10 @@ struct SEntry:CDKOBJS {
 	 void CDKEntryCallBack(chtype character);
 	 void (SEntry::*callbfn)(chtype character)=NULL;
 }; // struct SEntry:CDKOBJS
+typedef struct SEntry CDKENTRY;
 
-
-struct SScroller:CDKOBJS {
+struct SScroll_basis:CDKOBJS 
+{
 	/* This field must stay on top */
 //	CDKOBJS  obj; 
 	WINDOW * parent; 
@@ -522,6 +596,11 @@ struct SScroller:CDKOBJS {
 	EExitType    exitType; 
 	bool  shadow; 
 	chtype   highlight;
+	virtual void nix()=0;
+};
+
+struct SScroller:SScroll_basis
+{
 	void scroller_KEY_UP();
 	void scroller_KEY_DOWN();
 	void scroller_KEY_LEFT();
@@ -536,4 +615,59 @@ struct SScroller:CDKOBJS {
 	void scroller_SetViewSize(int size);
 };
 typedef struct SScroller CDKSCROLLER;
+
+/*
+ * Declare scrolling list definitions.
+ */
+struct SScroll:SScroll_basis 
+{
+   bool	numbers;	/* */
+   chtype	titlehighlight;	/* */
+	 WINDOW	*listWin;
+	 SScroll(
+			 CDKSCREEN *	/* cdkscreen */,
+			 int		/* xpos */,
+			 int		/* ypos */,
+			 int		/* spos */,
+			 int		/* height */,
+			 int		/* width */,
+			 const char *	/* title */,
+			 CDK_CSTRING2	/* itemList */,
+			 int		/* items */,
+			 bool		/* numbers */,
+			 chtype		/* highlight */,
+			 bool		/* Box */,
+			 bool		/* shadow */);
+};
+typedef struct SScroll CDKSCROLL;
+
+
+struct SFileSelector:CDKOBJS
+{
+	SFileSelector();
+}; // struct SFileSelector:CDKOBJS
+typedef struct SFileSelector CDKFSELECT;
+
+struct SAlphalist:CDKOBJS
+{
+   WINDOW *	parent;
+   WINDOW *	win;
+   WINDOW *	shadowWin;
+   CDKENTRY *	entryField;
+   CDKSCROLL *	scrollField;
+   char **	list;
+   int		listSize;
+   int		xpos;
+   int		ypos;
+   int		height;
+   int		width;
+   int		boxHeight;
+   int		boxWidth;
+   chtype	highlight;
+   chtype	fillerChar;
+   bool	shadow;
+   EExitType	exitType;
+	 SAlphalist();
+};
+typedef struct SAlphalist CDKALPHALIST;
 

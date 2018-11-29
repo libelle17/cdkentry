@@ -1117,6 +1117,18 @@ void drawShadow (WINDOW *shadowWin)
 	}
 }
 
+/*
+ * This is a dummy function used to ensure that the constant for mapping has
+ * a distinct address.
+ */
+int getcCDKBind (EObjectType cdktype GCC_UNUSED,
+		 void *object GCC_UNUSED,
+		 void *clientData GCC_UNUSED,
+		 chtype input GCC_UNUSED)
+{
+   return 0;
+}
+
 
 /*
  * This registers a CDK object with a screen.
@@ -1306,6 +1318,7 @@ bool CDKOBJS::validObjType(EObjectType type)
 #define KEY_MAX 512
 #endif
 
+/*
 CDKOBJS * CDKOBJS::bindableObject (EObjectType * cdktype, void *object)
 {
 	CDKOBJS *obj = (CDKOBJS *)object;
@@ -1322,13 +1335,14 @@ CDKOBJS * CDKOBJS::bindableObject (EObjectType * cdktype, void *object)
 	}
 	return (CDKOBJS *)object;
 }
+*/
 
 
 /*
  * Draw a box around the given window using the object's defined line-drawing
  * characters.
  */
-void CDKOBJS::drawObjBox (WINDOW *win)
+void CDKOBJS::drawObjBox(WINDOW *win)
 {
 	attrbox(win,
 			ULChar,
@@ -1346,19 +1360,19 @@ void CDKOBJS::drawObjBox (WINDOW *win)
 int CDKOBJS::getcCDKObject()
 {
 	// EObjectType cdktype = ObjTypeOf (this);
-	CDKOBJS *test = bindableObject (&cdktype, this);
+//	CDKOBJS *test = bindableObject (&cdktype, this);
 	int result = wgetch (InputWindowOf (this));
 	// printf("%c %ul\n",result,result); //G.Schade
 	if (result >= 0
-			&& test != 0
-			&& (unsigned)result < test->bindingCount
-			&& test->bindingList[result].bindFunction == getcCDKBind)
+			&& bindableObject != 0
+			&& (unsigned)result < bindableObject->bindingCount
+			&& bindableObject->bindingList[result].bindFunction == getcCDKBind)
 	{
-		result = (int)(long)test->bindingList[result].bindData;
+		result = (int)(long)bindableObject->bindingList[result].bindData;
 	}
-	else if (test == 0
-			|| (unsigned)result >= test->bindingCount
-			|| test->bindingList[result].bindFunction == 0)
+	else if (bindableObject == 0
+			|| (unsigned)result >= bindableObject->bindingCount
+			|| bindableObject->bindingList[result].bindFunction == 0)
 	{
 		switch (result)
 		{
@@ -1402,10 +1416,9 @@ int CDKOBJS::getcCDKObject()
  * Use this function rather than getcCDKObject(), since we can extend it to
  * handle wide-characters.
  */
-int CDKOBJ::getchCDKObject (bool *functionKey)
+int CDKOBJS::getchCDKObject(bool *functionKey)
 {
    int key = getcCDKObject();
-
    *functionKey = (key >= KEY_MIN && key <= KEY_MAX);
    return key;
 }
@@ -1439,7 +1452,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 		)
 {
 	// GSchade Anfang
-	cdkentry=vEntry;
+	cdktype=vENTRY;
 	// GSchade Ende
 	/* *INDENT-EQLS* */
 	int parentWidth      = getmaxxf(cdkscreen->window);
@@ -1626,12 +1639,12 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 		for (;;) {
 			//static int y=2;
 			*Zweitzeichen=0;
-			input = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+			input = (chtype)getchCDKObject (&functionKey);
 			// GSchade Anfang
 			if (input==27) {
-				*Zweitzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+				*Zweitzeichen = (chtype)getchCDKObject (&functionKey);
 				if (*Zweitzeichen==194||*Zweitzeichen==195) {
-					*Drittzeichen = (chtype)getchCDKObject (ObjOf (entry), &functionKey);
+					*Drittzeichen = (chtype)getchCDKObject (&functionKey);
 				}
 			} else if (input==9||(obpfeil && input==KEY_DOWN)) {
 				*Zweitzeichen=-9;
@@ -1655,7 +1668,7 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
 			// GSchade Ende
 			/* Inject the character into the widget. */
-			ret = injectCDKEntry (entry, input);
+			ret = injectCDKEntry(entry, input);
 			// GSchade Anfang
       /*
 			mvwprintw(entry->parent,1,80,"info:%s ",entry->info);
@@ -1679,7 +1692,7 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 		/* Inject each character one at a time. */
 		for (x = 0; x < length; x++) {
 //					mvwprintw(entry->parent,4,2,"vor inject 2");
-			ret = injectCDKEntry (entry, actions[x]);
+			ret = injectCDKEntry(entry, actions[x]);
 			if (entry->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -1703,11 +1716,23 @@ void SEntry::setCDKEntryBox (bool Box)
 	borderSize = Box ? 1 : 0;
 }
 
+SFileSelector::SFileSelector()
+{
+	bindableObject=entryField;
+	cdktype = vFSELECT;
+}
+
+SAlphalist::SAlphalist()
+{
+	bindableObject=entryField;
+	cdktype = vALPHALIST;
+}
+
 void SScroller::scroller_KEY_UP()
 {
-   if (listSize <= 0 || currentItem <= 0) {
-      Beep();
-      return;
+	if (listSize <= 0 || currentItem <= 0) {
+		Beep();
+		return;
    }
    currentItem--;
    if (currentHigh) {
@@ -1855,4 +1880,9 @@ void SScroller::scroller_SetViewSize(int size)
       step = 1;
       toggleSize = 1;
    }
+}
+
+SScroll::SScroll
+{
+	cdktype=vSCROLL;
 }
