@@ -282,6 +282,12 @@ typedef union {
    unsigned valueUnsigned;
 } CDKDataUnion;
 
+#define unknownString   (char *)0
+#define unknownInt      (-1)
+#define unknownFloat    (0.0)
+#define unknownDouble   (0.0)
+#define unknownUnsigned (0)
+
 /*
  * This enumerated typedef lists all of the CDK widget types.
  */
@@ -464,7 +470,7 @@ struct CDKOBJS
 	 virtual void drawObj(bool);
 	 virtual void eraseObj();
 	 virtual void moveObj(int,int,bool,bool);
-	 virtual void injectObj(chtype);
+	 virtual int injectObj(chtype);
 	 virtual void focusObj();
 	 virtual void unfocusObj();
 	 virtual void saveDataObj();
@@ -553,6 +559,8 @@ struct SEntry:CDKOBJS
 			 // Ende GSchade 17.11.18
 			 );
 	 void _drawCDKEntry (bool Box);
+	 //void drawObj(bool);
+	 int injectObj(chtype);
 	 char * activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
 	 void setCDKEntryBox (bool Box);
 	 void CDKEntryCallBack(chtype character);

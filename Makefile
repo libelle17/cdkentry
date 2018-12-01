@@ -11,7 +11,7 @@ opt:
 p: cdkp.o
 
 cdkp.o: cdkp.cpp cdkp.h
-	g++-7 -c cdkp.cpp
+	g++-7 -c cdkp.cpp 2>fehler.txt; vi fehler.txt
 git:
 	git add -u
 	git commit -m"aus Makefile"

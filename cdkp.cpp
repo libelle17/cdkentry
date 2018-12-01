@@ -1668,7 +1668,8 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 			//mvwprintw(entry->parent,1,60,"info:%s -> ",entry->info);
 			// GSchade Ende
 			/* Inject the character into the widget. */
-			ret = injectCDKEntry(entry, input);
+//			ret = injectCDKEntry(entry, input);
+			ret=injectObj(input)?resultData.valueString:unknownString;
 			// GSchade Anfang
       /*
 			mvwprintw(entry->parent,1,80,"info:%s ",entry->info);
@@ -1677,10 +1678,10 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 			}
 			wrefresh(entry->parent); // gleichbedeutend: wrefresh(entry->obj.screen->window);
       */
-      drawCDKEntry (entry, ObjOf (entry)->box);
+      drawObj(/*entry, ObjOf (entry)->*/box);
       // GSchade Ende
 
-			if (entry->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
+			if (this->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
 //					mvwprintw(entry->parent,3,2,"Zweitzeichen: %i         , Drittzeichen: %i     ",*Zweitzeichen,*Drittzeichen);
 				return ret;
 			}
@@ -1692,19 +1693,303 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 		/* Inject each character one at a time. */
 		for (x = 0; x < length; x++) {
 //					mvwprintw(entry->parent,4,2,"vor inject 2");
-			ret = injectCDKEntry(entry, actions[x]);
-			if (entry->exitType != vEARLY_EXIT) {
+//			ret = injectCDKEntry(entry, actions[x]);
+			ret = injectObj(actions[x])?resultData.valueString:unknownString;
+			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
 		}
 	}
 	/* Make sure we return the correct info. */
-	if (entry->exitType == vNORMAL) {
-		return entry->info;
+	if (this->exitType == vNORMAL) {
+		return this->info;
 	} else {
 		return 0;
 	}
+} // char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+
+void SEntry::drawObj(bool Box)
+{
+//	CDKENTRY *entry = (CDKENTRY *)object;
+
+	/* Did we ask for a shadow? */
+	if (this->shadowWin != 0)
+	{
+		drawShadow (this->shadowWin);
+	}
+
+	/* Box the widget if asked. */
+	if (Box)
+	{
+		drawObjBox (this->win/*, ObjOf (this)*/);
+	}
+
+	drawCdkTitle (this->win/*, this*/);
+
+	wrefresh (this->win);
+
+	/* Draw in the label to the widget. */
+	if (this->labelWin != 0)
+	{
+		//int f1,f2;
+		writeChtype (this->labelWin, 0, 0, this->label, HORIZONTAL, 0, this->labelLen);
+		wrefresh (this->labelWin);
+	}
+	this->zeichneFeld();
+
 }
+
+
+/*
+ * This injects a single character into the widget.
+ */
+int SEntry::injectObj(chtype input)
+{
+//	CDKENTRY *widget = (CDKENTRY *)object;
+	int ppReturn = 1;
+	char *ret = unknownString;
+	bool complete = FALSE;
+	static char umlaut[3]={0};
+	const int inpint=input;
+	mvwprintw(this->screen->window,2,2,"injectCDKEntry %c %i          ",input,input);
+	 refreshCDKScreen(this->screen);
+	if (inpint==194 || inpint==195) {
+//		printf("Eintrag: %i\n",inpint);
+		*umlaut=inpint;
+		umlaut[1]=0;
+	} else if ((unsigned char)*umlaut==194 || (unsigned char)*umlaut==195) {
+//		printf("Folgezeichen: %i\n",inpint);
+		//printf("%c (%i)\n",inpint,inpint);
+		umlaut[1]=inpint;
+	} else {
+//		printf("sonstiges Zeichen: %i\n",inpint);
+		umlaut[1]=*umlaut=0;
+	}
+	/* Set the exit type. */
+	setExitType (this, 0);
+	/* Refresh the widget field. */
+	this->zeichneFeld();
+	/* Check if there is a pre-process function to be called. */
+	if (PreProcessFuncOf (this) != 0) {
+		ppReturn = PreProcessFuncOf (this) (vENTRY,
+				this,
+				PreProcessDataOf (this),
+				input);
+	}
+	/* Should we continue? */
+	if (ppReturn != 0) {
+		/* Check a predefined binding... */
+		if (checkCDKObjectBind (vENTRY, this, input) != 0) {
+			checkEarlyExit (this);
+			complete = TRUE;
+		} else {
+			int infoLength = (int)strlen (this->info);
+			int currPos = this->screenCol + this->leftChar;
+			switch (input) {
+				case KEY_UP:
+				case KEY_DOWN:
+					Beep();
+					break;
+				case KEY_HOME:
+					this->leftChar = 0;
+					this->lbuch=0;
+					this->screenCol = 0;
+					this->sbuch=0;
+					this->zeichneFeld();
+					mvwprintw(this->parent,3,3,"Key_home");
+					refreshCDKScreen(allgscr);
+					break;
+				case CDK_TRANSPOSE:
+					if (currPos >= infoLength - 1) {
+						Beep ();
+					} else {
+						char holder = this->info[currPos];
+						this->info[currPos] = this->info[currPos + 1];
+						this->info[currPos + 1] = holder;
+						this->zeichneFeld();
+					}
+					break;
+				case KEY_END:
+					this->settoend();
+					this->zeichneFeld();
+					break;
+				case KEY_LEFT:
+					if (currPos <= 0) {
+						Beep ();
+					} else if (this->screenCol == 0) {
+						/* Scroll left.  */
+						if (currPos>1) if (this->info[currPos-2]==-61 || this->info[currPos-2]==-62) this->leftChar--;
+						this->leftChar--;
+						this->lbuch--;
+						this->zeichneFeld();
+					} else {
+						/* Move left. */
+						wmove (this->fieldWin, 0, --this->sbuch);
+						this->screenCol--;
+						if (currPos>1) if (this->info[currPos-2]==-61 || this->info[currPos-2]==-62) this->screenCol--;
+					}
+					break;
+				case KEY_RIGHT:
+					if (currPos >= infoLength || currPos>this->max) {
+						Beep ();
+					} else if (this->sbuch == this->fieldWidth - 1) {
+						/* Scroll to the right. */
+						if (this->info[this->leftChar]==-61 || this->info[this->leftChar]==-62) {
+							this->screenCol--;
+							this->leftChar++;
+						}
+						this->leftChar++;
+						this->lbuch++;
+						if (this->info[currPos]==-61 || this->info[currPos]==-62) this->screenCol++;
+						this->zeichneFeld();
+					} else {
+						/* Move right. */
+						wmove (this->fieldWin, 0, ++this->sbuch);
+						this->screenCol++;
+						if (this->info[currPos]==-61 || this->info[currPos]==-62) this->screenCol++;
+					}
+					break;
+				case KEY_BACKSPACE:
+				case KEY_DC:
+					if (this->dispType == vVIEWONLY) {
+						Beep ();
+					} else {
+						// mvwprintw(this->parent,1,100,"!!!!!!!!!, currPos: %i  ",currPos);
+						bool success = FALSE;
+						if (input == KEY_BACKSPACE) {
+							--currPos;
+							if (this->info[currPos-1]==-61||this->info[currPos-1]==-62) --currPos;
+						}
+						// .. und jetzt fuer den zu loeschenden
+						const int obuml=(this->info[currPos]==-61||this->info[currPos]==-62);
+						if (currPos >= 0 && infoLength > 0) {
+							if (currPos < infoLength) {
+						// mvwprintw(this->parent,2,100,"!!!!!!!!!, currPos: %i, obuml: %i",currPos,obuml);
+						wrefresh(this->parent);
+								int x;
+								for (x = currPos; x < infoLength; x++) {
+									if (x+1+obuml>this->max-1) this->info[x]=0;
+									else 												 this->info[x]=this->info[x+1+obuml];
+								}
+								if (obuml) if (infoLength>1) this->info[infoLength-2]=0;
+								success = TRUE;
+							} else if (input == KEY_BACKSPACE) {
+								this->info[infoLength - 1] = '\0';
+								success = TRUE;
+                if (infoLength>1) if (obuml) this->info[infoLength-2]=0;
+              }
+						}
+						if (success) {
+							if (input == KEY_BACKSPACE) {
+								if (this->screenCol > 0 && !this->lbuch) {
+									this->screenCol--;
+                  if (obuml) this->screenCol--;
+                  this->sbuch--;
+                } else {
+									this->leftChar--;
+                  if (this->info[this->leftChar-1]==-61||this->info[this->leftChar-1]==-62) {
+										this->leftChar--;
+										this->screenCol++;
+									}
+                  this->lbuch--;
+									if (obuml) this->screenCol--;
+                }
+							}
+							this->zeichneFeld();
+						} else {
+							Beep ();
+						}
+					}
+					break;
+				case KEY_ESC:
+					setExitType (this, input);
+					complete = TRUE;
+
+					mvwprintw(this->parent,2,2,"Key_esc");
+					break;
+				case CDK_ERASE:
+					if (infoLength != 0) {
+						cleanCDKEntry (this);
+						this->zeichneFeld();
+					}
+					break;
+				case CDK_CUT:
+					if (infoLength != 0) {
+						freeChar (GPasteBuffer);
+						GPasteBuffer = copyChar (this->info);
+						cleanCDKEntry (this);
+						this->zeichneFeld();
+					} else {
+						Beep ();
+					}
+					break;
+				case CDK_COPY:
+					if (infoLength != 0) {
+						freeChar (GPasteBuffer);
+						GPasteBuffer = copyChar (this->info);
+					} else {
+						Beep ();
+					}
+					break;
+				case CDK_PASTE:
+					if (GPasteBuffer != 0) {
+						setCDKEntryValue (this, GPasteBuffer);
+						this->zeichneFeld();
+					} else {
+						Beep ();
+					}
+					break;
+				case KEY_TAB:
+				case KEY_ENTER:
+					if (infoLength >= this->min)
+					{
+						setExitType (this, input);
+						ret = (this->info);
+						complete = TRUE;
+					} else {
+						Beep ();
+					}
+					break;
+				case KEY_ERROR:
+					setExitType (this, input);
+					complete = TRUE;
+					break;
+				case CDK_REFRESH:
+					eraseCDKScreen (ScreenOf (this));
+					refreshCDKScreen (ScreenOf (this));
+					break;
+				default:
+					// printf("%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
+					if (umlaut[1]) {
+//						printf("Sonderdruck Anfang");
+//						setlocale(LC_ALL,"");
+			//			wprintw(this->fieldWin,"%s",umlaut);
+//			wprintw(this->fieldWin,"Achtung!");
+						this->schreibl(umlaut[0]);
+						this->schreibl(umlaut[1]);
+						umlaut[1]=*umlaut=0;
+//						printf("\n%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
+//						printf("Sonderdruck Ende");
+					} else if (!*umlaut) {
+						(this->callbackfn) (this, input);
+					}
+					break;
+			}
+		}
+		/* Should we do a post-process? */
+		if (!complete && (PostProcessFuncOf (this) != 0))
+		{
+			PostProcessFuncOf (this) (vENTRY,
+					this,
+					PostProcessDataOf (this),
+					input);
+		}
+	}
+	if (!complete) setExitType (this, 0);
+	ResultOf (this).valueString = ret;
+	return (ret != unknownString);
+} // int SEntry::injectObj(chtype input)
+
 
 
 /*
