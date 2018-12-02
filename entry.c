@@ -349,7 +349,8 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 					widget->sbuch=0;
 					widget->zeichneFeld();
 					mvwprintw(widget->parent,3,3,"Key_home");
-					refreshCDKScreen(allgscr);
+					wrefresh(widget->win);
+//					refreshCDKScreen(allgscr);
 					break;
 				case CDK_TRANSPOSE:
 					if (currPos >= infoLength - 1) {

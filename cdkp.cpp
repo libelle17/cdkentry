@@ -429,6 +429,26 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 } // chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 
 /*
+ * This returns a pointer to char * of a chtype *
+ * Formatting codes are omitted.
+ */
+char *chtype2Char (const chtype *string)
+{
+	char *newstring = 0;
+	if (string != 0) {
+		int len = chlen (string);
+		if ((newstring = typeMallocN (char, len + 1)) != 0) {
+			for (int x = 0; x < len; x++) {
+				newstring[x] = (char)CharOf (string[x]);
+			}
+			newstring[len] = '\0';
+		}
+	}
+	return (newstring);
+}
+
+
+/*
  * Split a string into a list of strings.
  */
 char **CDKsplitString(const char *string, int separator)
@@ -842,17 +862,13 @@ int justifyString (int boxWidth, int mesgLength, int justify)
 	 */
 	if (mesgLength >= boxWidth)
 		return (0);
-
 	/* Try to justify the message.  */
 	if (justify == LEFT)
 		return (0);
-
 	if (justify == RIGHT)
 		return boxWidth - mesgLength;
-
 	if (justify == CENTER)
 		return ((int)((boxWidth - mesgLength) / 2));
-
 	return (justify);
 }
 
@@ -1121,7 +1137,7 @@ void drawShadow (WINDOW *shadowWin)
  * This is a dummy function used to ensure that the constant for mapping has
  * a distinct address.
  */
-int getcCDKBind (EObjectType cdktype GCC_UNUSED,
+int getcCDKBind(EObjectType cdktype GCC_UNUSED,
 		 void *object GCC_UNUSED,
 		 void *clientData GCC_UNUSED,
 		 chtype input GCC_UNUSED)
@@ -1129,6 +1145,168 @@ int getcCDKBind (EObjectType cdktype GCC_UNUSED,
    return 0;
 }
 
+/*
+ * Refresh one CDK window.
+ * FIXME: this should be rewritten to use the panel library, so it would not
+ * be necessary to touch the window to ensure that it covers other windows.
+ */
+void refreshCDKWindow (WINDOW *win)
+{
+   touchwin (win);
+   wrefresh (win);
+}
+
+/*
+ * This performs a safe copy of a string. This means it adds the null
+ * terminator on the end of the string, like strdup().
+ */
+char *copyChar (const char *original)
+{
+	char *newstring = 0;
+	if (original != 0) {
+		if ((newstring = typeMallocN (char, strlen (original) + 1)) != 0)
+			strcpy (newstring, original);
+	}
+	return (newstring);
+}
+
+chtype *copyChtype (const chtype *original)
+{
+	chtype *newstring = 0;
+	if (original != 0) {
+		int len = chlen (original);
+		if ((newstring = typeMallocN (chtype, len + 4)) != 0) {
+			int x;
+			for (x = 0; x < len; x++) {
+				newstring[x] = original[x];
+			}
+			newstring[len] = '\0';
+			newstring[len + 1] = '\0';
+		}
+	}
+	return (newstring);
+}
+
+/*
+ * This safely erases a given window.
+ */
+void eraseCursesWindow(WINDOW *window)
+{
+	if (window != 0) {
+		werase (window);
+		wrefresh (window);
+	}
+}
+
+/*
+ * This safely deletes a given window.
+ */
+void deleteCursesWindow(WINDOW *window)
+{
+	if (window != 0) {
+		eraseCursesWindow (window);
+		delwin (window);
+	}
+}
+
+/*
+ * This moves a given window (if we're able to set the window's beginning).
+ * We do not use mvwin(), because it does (usually) not move subwindows.
+ */
+void moveCursesWindow (WINDOW *window, int xdiff, int ydiff)
+{
+	if (window != 0)
+	{
+		int xpos, ypos;
+
+		getbegyx (window, ypos, xpos);
+		(void)setbegyx (window, (short)ypos, (short)xpos);
+		xpos += xdiff;
+		ypos += ydiff;
+		werase (window);
+		(void)setbegyx (window, (short)ypos, (short)xpos);
+	}
+}
+
+/*
+ * Given a character input, check if it is allowed by the display type,
+ * and return the character to apply to the display, or ERR if not.
+ */
+int filterByDisplayType (EDisplayType type, chtype input)
+{
+	int result = CharOf(input);
+	if (!isChar(input)) {
+		result = ERR;
+	} else if ((type == vINT ||
+				type == vHINT) &&
+			!isdigit (CharOf (result))) {
+		result = ERR;
+	} else if ((type == vCHAR ||
+				type == vUCHAR ||
+				type == vLCHAR ||
+				type == vUHCHAR ||
+				type == vLHCHAR) &&
+			isdigit (CharOf (result))) {
+		result = ERR;
+	} else if (type == vVIEWONLY) {
+		result = ERR;
+	} else if ((type == vUCHAR ||
+				type == vUHCHAR ||
+				type == vUMIXED ||
+				type == vUHMIXED) &&
+			isalpha (CharOf (result))) {
+		result = toupper (result);
+	} else if ((type == vLCHAR ||
+				type == vLHCHAR ||
+				type == vLMIXED ||
+				type == vLHMIXED) &&
+			isalpha (CharOf (result))) {
+		result = tolower (result);
+	}
+	return result;
+}
+
+/*
+ * Tell if a display type is "hidden"
+ */
+bool isHiddenDisplayType(EDisplayType type)
+{
+	bool result = FALSE;
+	switch (type) {
+		case vHCHAR:
+		case vHINT:
+		case vHMIXED:
+		case vLHCHAR:
+		case vLHMIXED:
+		case vUHCHAR:
+		case vUHMIXED:
+			result = TRUE;
+			break;
+		case vCHAR:
+		case vINT:
+		case vINVALID:
+		case vLCHAR:
+		case vLMIXED:
+		case vMIXED:
+		case vUCHAR:
+		case vUMIXED:
+		case vVIEWONLY:
+			result = FALSE;
+			break;
+	}
+	return result;
+}
+
+int comparSort(const void *a, const void *b)
+{
+	return strcmp (*(const char *const *)a, (*(const char *const *)b));
+}
+
+void sortList(CDK_CSTRING *list, int length)
+{
+	if (length > 1)
+		qsort (list, (unsigned)length, sizeof (list[0]), comparSort);
+}
 
 /*
  * This registers a CDK object with a screen.
@@ -1146,9 +1324,34 @@ void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
 }
 
 /*
+ * Set the object's exit-type based on the input.
+ * The .exitType field should have been part of the CDKOBJS struct, but it
+ * is used too pervasively in older applications to move (yet).
+ */
+//void CDKOBJS::setCdkExitType(chtype ch)
+void CDKOBJS::setExitType(chtype ch)
+{
+   switch (ch) {
+   case KEY_ERROR:
+      exitType = vERROR;
+      break;
+   case KEY_ESC:
+      exitType = vESCAPE_HIT;
+      break;
+   case KEY_TAB:
+   case KEY_ENTER:
+      exitType = vNORMAL;
+      break;
+   case 0:
+      exitType = vEARLY_EXIT;
+      break;
+   }
+}
+
+/*
  * Set indices so the screen and object point to each other.
  */
-void CDKOBJS::setScreenIndex(CDKSCREEN *pscreen, int number)
+void CDKOBJS::setScreenIndex(CDKSCREEN *pscreen, int number/*, CDKOBJS *obj*/)
 {
 	screenIndex = number;
 	screen = pscreen;
@@ -1194,11 +1397,166 @@ CDKOBJS::~CDKOBJS()
 }
 
 /*
+ * This removes an object from the CDK screen.
+ */
+void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
+{
+	//   CDKOBJS *obj = (CDKOBJS *)object;
+	if (validObjType(cdktype) && this->screenIndex >= 0) {
+		CDKSCREEN *screen = (this)->screen;
+		if (screen != 0) {
+			int Index = (this)->screenIndex;
+			int x;
+			this->screenIndex = -1;
+			/*
+			 * Resequence the objects.
+			 */
+			for (x = Index; x < screen->objectCount - 1; x++) {
+				screen->object[x+1]->setScreenIndex(screen, x/*, screen->object[x + 1]*/);
+			}
+			if (screen->objectCount <= 1) {
+				/* if no more objects, remove the array */
+				freeAndNull (screen->object);
+				screen->objectCount = 0;
+				screen->objectLimit = 0;
+			} else {
+				/* Reduce the list by one object. */
+				screen->object[screen->objectCount--] = 0;
+				/*
+				 * Update the object-focus
+				 */
+				if (screen->objectFocus == Index) {
+					screen->objectFocus--;
+					screen->setCDKFocusNext();
+				} else if (screen->objectFocus > Index) {
+					screen->objectFocus--;
+				}
+			}
+		}
+	}
+}
+
+SEntry::~SEntry()
+{
+//		CDKENTRY *entry = (CDKENTRY *)object;
+		cleanCdkTitle();
+		freeChtype(this->label);
+		freeChecked(this->info);
+		/* Delete the windows. */
+		deleteCursesWindow(this->fieldWin);
+		deleteCursesWindow(this->labelWin);
+		deleteCursesWindow(this->shadowWin);
+		deleteCursesWindow(this->win);
+		/* Clean the key bindings. */
+		cleanCDKObjectBindings();
+		/* Unregister this object. */
+		unregisterCDKObject(vENTRY);
+}
+
+/*
+ * This moves the entry field to the given location.
+ */
+void SEntry::moveObj(/*CDKOBJS *object,*/
+		int xplace,
+		int yplace,
+		bool relative,
+		bool refresh_flag)
+{
+	/* *INDENT-EQLS* */
+//	CDKENTRY *entry = (CDKENTRY *)object;
+	int currentX    = getbegx (this->win);
+	int currentY    = getbegy (this->win);
+	int xpos        = xplace;
+	int ypos        = yplace;
+	int xdiff       = 0;
+	int ydiff       = 0;
+
+	/*
+	 * If this is a relative move, then we will adjust where we want
+	 * to move to.
+	 */
+	if (relative)
+	{
+		xpos = getbegx (this->win) + xplace;
+		ypos = getbegy (this->win) + yplace;
+	}
+
+	/* Adjust the window if we need to. */
+	alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+
+	/* Get the difference. */
+	xdiff = currentX - xpos;
+	ydiff = currentY - ypos;
+
+	/* Move the window to the new location. */
+	moveCursesWindow(this->win, -xdiff, -ydiff);
+	moveCursesWindow(this->fieldWin, -xdiff, -ydiff);
+	moveCursesWindow(this->labelWin, -xdiff, -ydiff);
+	moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
+
+	/* Touch the windows so they 'move'. */
+	refreshCDKWindow (WindowOf (this));
+
+	/* Redraw the window, if they asked for it. */
+	if (refresh_flag)
+	{
+		drawObj(box);
+	}
+}
+
+
+void SAlphalist::destroyInfo()
+{
+   CDKfreeStrings(list);
+   list = 0;
+   listSize = 0;
+}
+
+SAlphalist::~SAlphalist()
+{
+//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+
+      destroyInfo();
+      /* Clean the key bindings. */
+      cleanCDKObjectBindings ();
+//      destroyCDKEntry (this->entryField);
+			entryField->~SEntry();
+//      destroyCDKScroll (this->scrollField);
+			scrollField->~SScroll();
+      /* Free up the window pointers. */
+      deleteCursesWindow (this->shadowWin);
+      deleteCursesWindow (this->win);
+      /* Unregister the object. */
+      unregisterCDKObject(vALPHALIST);
+}
+
+/*
+ * This function destroys
+ */
+SScroll::~SScroll(/*CDKOBJS *object*/)
+{
+		//CDKSCROLL *scrollp = (CDKSCROLL *)object;
+		cleanCdkTitle();
+		CDKfreeChtypes (this->item);
+		freeChecked (this->itemPos);
+		freeChecked (this->itemLen);
+		/* Clean up the windows. */
+		deleteCursesWindow (this->scrollbarWin);
+		deleteCursesWindow (this->shadowWin);
+		deleteCursesWindow (this->listWin);
+		deleteCursesWindow (this->win);
+		/* Clean the key bindings. */
+		cleanCDKObjectBindings();
+		/* Unregister this object. */
+		unregisterCDKObject(vSCROLL);
+}
+
+/*
  * Set the widget's title.
  */
 int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
 {
-	cleanCdkTitle ();
+	cleanCdkTitle();
 	if (titlec != 0) {
 		char **temp = 0;
 		int titleWidth;
@@ -1318,24 +1676,107 @@ bool CDKOBJS::validObjType(EObjectType type)
 #define KEY_MAX 512
 #endif
 
-/*
-CDKOBJS * CDKOBJS::bindableObject (EObjectType * cdktype, void *object)
+CDKOBJS* CDKOBJS::bindableObject()
 {
-	CDKOBJS *obj = (CDKOBJS *)object;
-	if (obj != 0 && *cdktype == this->cdktype) {
-		if (*cdktype == vFSELECT) {
-			*cdktype = vENTRY;
-			object = ((CDKFSELECT *)object)->entryField;
-		} else if (*cdktype == vALPHALIST) {
-			*cdktype = vENTRY;
-			object = ((CDKALPHALIST *)object)->entryField;
-		}
-	} else {
-		object = 0;
-	}
-	return (CDKOBJS *)object;
+	return 0;
 }
-*/
+
+CDKOBJS* SFileSelector::bindableObject()
+{
+	return entryField;
+}
+
+CDKOBJS* SAlphalist::bindableObject()
+{
+	return entryField;
+}
+
+/*
+ * This inserts a binding.
+ */
+void CDKOBJS::bindCDKObject (
+		    chtype key,
+		    BINDFN function,
+		    void *data)
+{
+	CDKOBJS *obj = bindableObject();
+	if ((key < KEY_MAX) && obj) {
+		if (key && (unsigned)key >= obj->bindingCount) {
+			unsigned next = (unsigned) (key + 1);
+			if (obj->bindingList != 0)
+				obj->bindingList = typeReallocN (CDKBINDING, obj->bindingList, next);
+			else
+				obj->bindingList = typeMallocN (CDKBINDING, next);
+			memset (&(obj->bindingList[obj->bindingCount]), 0, (next - obj->bindingCount) * sizeof (CDKBINDING));
+			obj->bindingCount = next;
+		}
+		if (obj->bindingList) {
+			obj->bindingList[key].bindFunction = function;
+			obj->bindingList[key].bindData = data;
+		}
+	}
+}
+
+/*
+ * This removes a binding on an object.
+ */
+void CDKOBJS::unbindCDKObject(chtype key)
+{
+	CDKOBJS *obj = bindableObject();
+	if (obj && ((unsigned)key < obj->bindingCount)) {
+		obj->bindingList[key].bindFunction = 0;
+		obj->bindingList[key].bindData = 0;
+	}
+}
+
+/*
+ * This removes all the bindings for the given objects.
+ */
+void CDKOBJS::cleanCDKObjectBindings()
+{
+	CDKOBJS *obj = bindableObject ();
+	if (obj && obj->bindingList) {
+		for (unsigned x = 0; x < obj->bindingCount; x++) {
+			(obj)->bindingList[x].bindFunction = 0;
+			(obj)->bindingList[x].bindData = 0;
+		}
+		freeAndNull((obj)->bindingList);
+	}
+}
+
+
+/*
+ * This checks to see if the binding for the key exists:
+ * If it does then it runs the command and returns its value, normally TRUE.
+ * If it doesn't it returns a FALSE.  This way we can 'overwrite' coded
+ * bindings.
+ */
+int CDKOBJS::checkCDKObjectBind(chtype key)
+{
+	CDKOBJS *obj = bindableObject();
+	if (obj && ((unsigned)key < obj->bindingCount)) {
+		if ((obj)->bindingList[key].bindFunction) {
+			BINDFN function = obj->bindingList[key].bindFunction;
+			void *data = obj->bindingList[key].bindData;
+			return function(cdktype, this, data, key);
+		}
+	}
+	return (FALSE);
+}
+
+/*
+ * This checks to see if the binding for the key exists.
+ */
+bool CDKOBJS::isCDKObjectBind(chtype key)
+{
+	bool result = FALSE;
+	CDKOBJS *obj = bindableObject();
+	if (obj && ((unsigned)key < obj->bindingCount)) {
+		if ((obj)->bindingList[key].bindFunction)
+			result = TRUE;
+	}
+	return (result);
+}
 
 
 /*
@@ -1360,20 +1801,17 @@ void CDKOBJS::drawObjBox(WINDOW *win)
 int CDKOBJS::getcCDKObject()
 {
 	// EObjectType cdktype = ObjTypeOf (this);
-//	CDKOBJS *test = bindableObject (&cdktype, this);
-	int result = wgetch (InputWindowOf (this));
+	CDKOBJS *test = bindableObject();
+	int result = wgetch(InputWindowOf (this));
 	// printf("%c %ul\n",result,result); //G.Schade
 	if (result >= 0
-			&& bindableObject != 0
-			&& (unsigned)result < bindableObject->bindingCount
-			&& bindableObject->bindingList[result].bindFunction == getcCDKBind)
-	{
-		result = (int)(long)bindableObject->bindingList[result].bindData;
-	}
-	else if (bindableObject == 0
-			|| (unsigned)result >= bindableObject->bindingCount
-			|| bindableObject->bindingList[result].bindFunction == 0)
-	{
+			&& test
+			&& (unsigned)result < test->bindingCount
+			&& test->bindingList[result].bindFunction == getcCDKBind) {
+		result = (int)(long)test->bindingList[result].bindData;
+	} else if (!test 
+			|| (unsigned)result >= test->bindingCount
+			|| !test->bindingList[result].bindFunction) {
 		switch (result)
 		{
 			case '\r':
@@ -1429,6 +1867,112 @@ void SEntry::CDKEntryCallBack(chtype character)
 	SEntry::schreibl(character);
 }
 
+/*
+ * This is a generic character parser for the entry field. It is used as a
+ * callback function, so any personal modifications can be made by creating
+ * a new function and calling the activation with its name.
+ */
+void SEntry::schreibl(chtype character)
+{
+  static bool altobuml=0;
+  const bool obuml=character==(chtype)-61||character==(chtype)-62;
+  int plainchar;
+  if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
+	// wenn Ende erreicht wuerde, dann von 2-Buchstabenlaengen langen Buchstaben keinen schreiben
+	const int slen=strlen(info);
+  if (plainchar == ERR ||(obuml&&slen>max-2)||(altobuml&&slen>max-2&&info[slen-1]!=-61&&info[slen-1]!=-62)||(slen >= max)) {
+    Beep ();
+  } else {
+    /* Update the screen and pointer. */
+    if (sbuch != fieldWidth - 1) {
+      for (int x = slen; x > (screenCol + leftChar); x--) {
+        info[x] = info[x - 1];
+      }
+      info[screenCol + leftChar] = (char)plainchar;
+      screenCol++;
+      if (!obuml) sbuch++;
+    } else {
+      /* Update the character pointer. */
+      size_t temp = slen;
+      info[temp] = (char)plainchar;
+      info[temp + 1] = '\0';
+			if (obuml) {
+				screenCol++;
+			} else {
+        /* Do not update the pointer if it's the last character */
+        if ((int)(temp + 1) < max) {
+          lbuch++;
+          if (info[leftChar]==-61||info[leftChar]==-62) {
+						leftChar++;
+						screenCol--;
+					}
+          leftChar++;
+        }
+      }
+    }
+    /* Update the entry field. */
+    if (!obuml) {
+      zeichneFeld();
+    }
+  }
+  altobuml=obuml;
+}
+
+/*
+ * This redraws the entry field.
+ */
+void SEntry::zeichneFeld()
+{
+	// setlocale(LC_ALL,"");
+	int x = 0;
+	/* Set background color and attributes of the entry field */
+	wbkgd (fieldWin, fieldAttr);
+	/* Draw in the filler characters. */
+	(void)mvwhline (fieldWin, 0, x, filler | fieldAttr, fieldWidth);
+	/* If there is information in the field. Then draw it in. */
+	if (info) {
+		int infoLength = (int)strlen (info);
+		/* Redraw the field. */
+		if (isHiddenDisplayType(dispType)) {
+			for (x = leftChar; x < infoLength; x++) {
+				(void)mvwaddch (fieldWin, 0, x - leftChar, hidden | fieldAttr);
+			}
+		} else {
+			if (0) {
+				char ausgabe[infoLength-leftChar+1];
+				memcpy(ausgabe,info+leftChar,infoLength-leftChar);
+				ausgabe[infoLength-leftChar]=0;
+			} else if (0) {
+				/*
+				mvwprintw(parent,1,1,"x:%i,len:%i,fwidth:%i,max:%i,lChar:%i,lbuch:%i,sCol:%i,sbuch:%i,info:%s   ",x,infoLength,fieldWidth,max,leftChar,lbuch,screenCol,sbuch,info);
+				for (x = leftChar; x < infoLength; x++) {
+					mvwprintw(parent,2+x,2,"x:%i, info[x]:%i  ",x,info[x]);
+				}
+				mvwprintw(parent,2+infoLength,2,"                            ");
+				mvwprintw(parent,2+infoLength+1,2,"                            ");
+				*/
+				wrefresh(parent); // gleichbedeutend: wrefresh(obj.screen->window);
+			}
+			size_t aktumlz=0;
+			for (x = leftChar; x < infoLength; x++) {
+				if (info[x]==-61 || info[x]==-62) {
+					char ausgb[3]={0};
+					ausgb[0]=info[x];
+					ausgb[1]=info[x+1];
+					//GSchade: Hier Umlautausgabe
+					mvwprintw(fieldWin,0,x-leftChar-aktumlz,ausgb);
+					x++;
+					aktumlz++;
+				} else {
+					(void)mvwaddch (fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
+				}
+			}
+		}
+		wmove (fieldWin, 0, sbuch);
+	}
+	wrefresh (fieldWin);
+} // void SEntry::zeichneFeld
+
 
 /*
  * This creates a pointer to an entry widget.
@@ -1468,7 +2012,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	//	if ((entry = newCDKObject (CDKENTRY, &my_funcs)) == 0) return (0);
 	::CDKOBJS();
 
-	setCDKEntryBox(Box);
+	setBox(Box);
 	boxHeight = (BorderOf (this) * 2) + 1;
 
 	/*
@@ -1524,7 +2068,8 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	/* Make the label window. */
 	win = newwin (boxHeight, boxWidth, ypos, xpos);
 	if (win == 0) {
-		//		destroyCDKObject(this); return (0); 
+		destroyCDKObject();
+		return;
 	} else {
 		keypad (win, TRUE);
 
@@ -1535,7 +2080,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 				 + horizontalAdjust
 				 + BorderOf (this)));
 		if (fieldWin == 0) {
-			//		destroyCDKObject (this); return (0);
+			destroyCDKObject();
 		} else {
 			keypad (fieldWin, TRUE);
 
@@ -1548,8 +2093,8 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 
 			/* Make room for the info char * pointer. */
 			info = typeMallocN (char, maxp + 3);
-			if (info == 0) {
-				//		destroyCDKObject (this); return (0);
+			if (!info) {
+				destroyCDKObject();
 			} else {
 				cleanChar (info, maxp + 3, '\0');
 				infoWidth = maxp + 3;
@@ -1593,40 +2138,13 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 //	return (entry);
 } // SEntry::SEntry
 
-/*
- * This draws the entry field.
- */
-void SEntry::_drawCDKEntry (bool Box)
-{
-//	CDKENTRY *entry = (CDKENTRY *)object;
-	/* Did we ask for a shadow? */
-	if (this->shadowWin != 0) {
-		drawShadow(this->shadowWin);
-	}
-	/* Box the widget if asked. */
-	if (Box) {
-		drawObjBox(this->win/*, ObjOf (this)*/);
-	}
-	drawCdkTitle(this->win/*, object*/);
-	wrefresh (this->win);
-
-	/* Draw in the label to the widget. */
-	if (this->labelWin) {
-		//int f1,f2;
-		writeChtype (this->labelWin, 0, 0, this->label, HORIZONTAL, 0, this->labelLen);
-		wrefresh (this->labelWin);
-	}
-	this->zeichneFeld();
-
-}
-
 
 /*
  * This means you want to use the given entry field. It takes input
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 {
 	chtype input = 0;
 	bool functionKey;
@@ -1634,7 +2152,7 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 	int zweit;
 	if (!Zweitzeichen) Zweitzeichen=&zweit;
 	/* Draw the widget. */
-	_drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+	drawObj(/*entry, ObjOf (entry)->*/box);
 	if (!actions) {
 		for (;;) {
 			//static int y=2;
@@ -1706,39 +2224,34 @@ char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Dr
 	} else {
 		return 0;
 	}
-} // char * SEntry::activateCDKEntry (chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+} // char * SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 
+/*
+ * This draws the entry field.
+ */
+//void SEntry::drawCDKEntry(bool Box)
 void SEntry::drawObj(bool Box)
 {
 //	CDKENTRY *entry = (CDKENTRY *)object;
-
 	/* Did we ask for a shadow? */
-	if (this->shadowWin != 0)
-	{
-		drawShadow (this->shadowWin);
+	if (this->shadowWin != 0) {
+		drawShadow(this->shadowWin);
 	}
-
 	/* Box the widget if asked. */
-	if (Box)
-	{
-		drawObjBox (this->win/*, ObjOf (this)*/);
+	if (Box) {
+		drawObjBox(this->win/*, ObjOf (this)*/);
 	}
-
-	drawCdkTitle (this->win/*, this*/);
-
+	drawCdkTitle(this->win/*, object*/);
 	wrefresh (this->win);
 
 	/* Draw in the label to the widget. */
-	if (this->labelWin != 0)
-	{
+	if (this->labelWin) {
 		//int f1,f2;
 		writeChtype (this->labelWin, 0, 0, this->label, HORIZONTAL, 0, this->labelLen);
 		wrefresh (this->labelWin);
 	}
 	this->zeichneFeld();
-
 }
-
 
 /*
  * This injects a single character into the widget.
@@ -1752,7 +2265,7 @@ int SEntry::injectObj(chtype input)
 	static char umlaut[3]={0};
 	const int inpint=input;
 	mvwprintw(this->screen->window,2,2,"injectCDKEntry %c %i          ",input,input);
-	 refreshCDKScreen(this->screen);
+	 refreshCDKScreen();
 	if (inpint==194 || inpint==195) {
 //		printf("Eintrag: %i\n",inpint);
 		*umlaut=inpint;
@@ -1766,7 +2279,7 @@ int SEntry::injectObj(chtype input)
 		umlaut[1]=*umlaut=0;
 	}
 	/* Set the exit type. */
-	setExitType (this, 0);
+	setExitType (0);
 	/* Refresh the widget field. */
 	this->zeichneFeld();
 	/* Check if there is a pre-process function to be called. */
@@ -1779,8 +2292,8 @@ int SEntry::injectObj(chtype input)
 	/* Should we continue? */
 	if (ppReturn != 0) {
 		/* Check a predefined binding... */
-		if (checkCDKObjectBind (vENTRY, this, input) != 0) {
-			checkEarlyExit (this);
+		if (checkCDKObjectBind(input)) {
+			checkEarlyExit(this);
 			complete = TRUE;
 		} else {
 			int infoLength = (int)strlen (this->info);
@@ -1797,7 +2310,8 @@ int SEntry::injectObj(chtype input)
 					this->sbuch=0;
 					this->zeichneFeld();
 					mvwprintw(this->parent,3,3,"Key_home");
-					refreshCDKScreen(allgscr);
+					wrefresh(this->win);
+					//refreshCDKScreen(allgscr);
 					break;
 				case CDK_TRANSPOSE:
 					if (currPos >= infoLength - 1) {
@@ -1824,7 +2338,7 @@ int SEntry::injectObj(chtype input)
 						this->zeichneFeld();
 					} else {
 						/* Move left. */
-						wmove (this->fieldWin, 0, --this->sbuch);
+						wmove(this->fieldWin, 0, --this->sbuch);
 						this->screenCol--;
 						if (currPos>1) if (this->info[currPos-2]==-61 || this->info[currPos-2]==-62) this->screenCol--;
 					}
@@ -1844,7 +2358,7 @@ int SEntry::injectObj(chtype input)
 						this->zeichneFeld();
 					} else {
 						/* Move right. */
-						wmove (this->fieldWin, 0, ++this->sbuch);
+						wmove(this->fieldWin, 0, ++this->sbuch);
 						this->screenCol++;
 						if (this->info[currPos]==-61 || this->info[currPos]==-62) this->screenCol++;
 					}
@@ -1902,22 +2416,22 @@ int SEntry::injectObj(chtype input)
 					}
 					break;
 				case KEY_ESC:
-					setExitType (this, input);
+					setExitType(input);
 					complete = TRUE;
 
 					mvwprintw(this->parent,2,2,"Key_esc");
 					break;
 				case CDK_ERASE:
 					if (infoLength != 0) {
-						cleanCDKEntry (this);
+						cleanCDKEntry();
 						this->zeichneFeld();
 					}
 					break;
 				case CDK_CUT:
 					if (infoLength != 0) {
-						freeChar (GPasteBuffer);
+						freeChecked(GPasteBuffer);
 						GPasteBuffer = copyChar (this->info);
-						cleanCDKEntry (this);
+						cleanCDKEntry();
 						this->zeichneFeld();
 					} else {
 						Beep ();
@@ -1925,7 +2439,7 @@ int SEntry::injectObj(chtype input)
 					break;
 				case CDK_COPY:
 					if (infoLength != 0) {
-						freeChar (GPasteBuffer);
+						freeChecked(GPasteBuffer);
 						GPasteBuffer = copyChar (this->info);
 					} else {
 						Beep ();
@@ -1933,7 +2447,7 @@ int SEntry::injectObj(chtype input)
 					break;
 				case CDK_PASTE:
 					if (GPasteBuffer != 0) {
-						setCDKEntryValue (this, GPasteBuffer);
+						setCDKEntryValue(GPasteBuffer);
 						this->zeichneFeld();
 					} else {
 						Beep ();
@@ -1943,7 +2457,7 @@ int SEntry::injectObj(chtype input)
 				case KEY_ENTER:
 					if (infoLength >= this->min)
 					{
-						setExitType (this, input);
+						setExitType(input);
 						ret = (this->info);
 						complete = TRUE;
 					} else {
@@ -1951,12 +2465,12 @@ int SEntry::injectObj(chtype input)
 					}
 					break;
 				case KEY_ERROR:
-					setExitType (this, input);
+					setExitType(input);
 					complete = TRUE;
 					break;
 				case CDK_REFRESH:
-					eraseCDKScreen (ScreenOf (this));
-					refreshCDKScreen (ScreenOf (this));
+					screen->eraseCDKScreen();
+					refreshCDKScreen();
 					break;
 				default:
 					// printf("%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
@@ -1971,7 +2485,7 @@ int SEntry::injectObj(chtype input)
 //						printf("\n%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
 //						printf("Sonderdruck Ende");
 					} else if (!*umlaut) {
-						(this->callbackfn) (this, input);
+						(this->*callbfn)(input);
 					}
 					break;
 			}
@@ -1985,32 +2499,524 @@ int SEntry::injectObj(chtype input)
 					input);
 		}
 	}
-	if (!complete) setExitType (this, 0);
+	if (!complete) setExitType(0);
 	ResultOf (this).valueString = ret;
 	return (ret != unknownString);
 } // int SEntry::injectObj(chtype input)
 
+/*
+ * This removes the old information in the entry field and keeps the
+ * new information given.
+ */
+void SEntry::setCDKEntryValue(const char *newValue)
+{
+	/* If the pointer sent in is the same pointer as before, do nothing. */
+	if (this->info != newValue) {
+		/* Just to be sure, if lets make sure the new value isn't null. */
+		if (newValue == 0) {
+			/* Then we want to just erase the old value. */
+			cleanChar (this->info, this->infoWidth, '\0');
+
+			/* Set the pointers back to zero. */
+			this->leftChar = 0;
+      this->lbuch=0;
+			this->screenCol = 0;
+      this->sbuch=0;
+		} else {
+			/* Determine how many characters we need to copy. */
+			int copychars = MINIMUM ((int)strlen (newValue), this->max);
+
+			/* OK, erase the old value, and copy in the new value. */
+			cleanChar (this->info, this->max, '\0');
+			strncpy (this->info, newValue, (unsigned)copychars);
+
+      this->settoend();
+		}
+	}
+}
+
+char* SEntry::getCDKEntryValue()
+{
+	return info;
+}
+
+/*
+ * This sets specific attributes of the entry field.
+ */
+void SEntry::setCDKEntry(
+		const char *value,
+		int pmin,
+		int pmax,
+		bool Box GCC_UNUSED)
+{
+	setCDKEntryValue(value);
+	min=pmin;
+	max=pmax;
+}
+
+
+void SEntry::settoend()
+{
+  screenCol=sbuch=leftChar=lbuch=0;
+  for(int i=strlen(info);i;) {
+    --i;
+    if (sbuch<fieldWidth) {
+      screenCol++;
+      if ((unsigned char)info[i]!=194 && (unsigned char)info[i]!=195) sbuch++;
+    } else {
+      leftChar++;
+      if ((unsigned char)info[i]!=194 && (unsigned char)info[i]!=195) lbuch++;
+    }
+  }
+  if (sbuch>=fieldWidth && (sbuch+lbuch<max)) {
+    leftChar++;
+		lbuch++;
+    screenCol--;
+		sbuch--;
+  }
+}
+
+/*
+ * This erases the information in the entry field
+ * and redraws a clean and empty entry field.
+ */
+void SEntry::cleanCDKEntry()
+{
+	/* Erase the information in the character pointer. */
+	cleanChar(info,infoWidth,'\0');
+	/* Clean the entry screen field. */
+	(void)mvwhline(fieldWin, 0, 0, this->filler, fieldWidth);
+	/* Reset some variables. */
+	this->screenCol = 0;
+	this->leftChar = 0;
+	/* Refresh the entry field. */
+	wrefresh(fieldWin);
+}  
+
+/*
+ * This erases an entry widget from the screen.
+ */
+void SEntry::eraseObj() // _eraseCDKEntry
+{
+//	if (validCDKObject (object))
+	{
+		eraseCursesWindow(fieldWin);
+		eraseCursesWindow(labelWin);
+		eraseCursesWindow(win);
+		eraseCursesWindow(shadowWin);
+	}
+}
+
+/*
+ * This erases the file selector from the screen.
+ */
+void SAlphalist::eraseObj/*_eraseCDKAlphalist*/()
+{
+	//   if (validCDKObject (object))
+	{
+		//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+		//      eraseCDKScroll (scrollField);
+		scrollField->eraseObj();
+		//      eraseCDKEntry (entryField);
+		entryField->eraseObj();
+		eraseCursesWindow(shadowWin);
+		eraseCursesWindow(win);
+	}
+}
+
+/*
+ * This function erases the scrolling list from the screen.
+ */
+void SScroll::eraseObj/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
+{
+//   if (validCDKObject (object))
+   {
+//      CDKSCROLL *scrollp = (CDKSCROLL *)object;
+      eraseCursesWindow(win);
+      eraseCursesWindow(shadowWin);
+   }
+}
+
+
+/*
+ * This refreshes all the objects in the screen.
+ */
+void CDKOBJS::refreshCDKScreen()
+{
+	int objectCount = screen->objectCount;
+	int x;
+	int focused = -1;
+	int visible = -1;
+#define richtig
+#ifdef richtig
+	refreshCDKWindow (screen->window);
+#endif
+	/* We erase all the invisible objects, then only
+	 * draw it all back, so that the objects
+	 * can overlap, and the visible ones will always
+	 * be drawn after all the invisible ones are erased */
+	for (x = 0; x < objectCount; x++) {
+		CDKOBJS *obj = screen->object[x];
+//		if (validObjType (obj, ObjTypeOf (obj))) {
+			if (obj->validObjType(obj->cdktype)) {
+			if (obj->isVisible) {
+				if (visible < 0)
+					visible = x;
+				if (obj->hasFocus && focused < 0)
+					focused = x;
+			} else {
+				obj->eraseObj();
+			}
+		}
+	}
+	for (x = 0; x < objectCount; x++) {
+		CDKOBJS *obj = screen->object[x];
+		//		if (validObjType (obj, ObjTypeOf (obj))) {
+		if (obj->validObjType(obj->cdktype)) {
+			obj->hasFocus = (x == focused);
+			if (obj->isVisible) {
+				// GSchade 13.11.18 hier gehts vorbei
+				obj->drawObj(obj->box);
+			}
+		}
+	}
+}
 
 
 /*
  * This sets the widgets box attribute.
  */
-void SEntry::setCDKEntryBox (bool Box)
+void CDKOBJS::setBox(bool Box)
 {
 	box = Box;
 	borderSize = Box ? 1 : 0;
 }
 
+/*
+ * This sets the background attribute of the widget.
+ */
+void SEntry::setBKattrEntry(chtype attrib)
+{
+		wbkgd (win, attrib);
+		wbkgd (fieldWin, attrib);
+		if (labelWin != 0) {
+			wbkgd (labelWin, attrib);
+		}
+}
+
+/*
+ * This sets the attribute of the entry field.
+ */
+void SEntry::setCDKEntryHighlight(chtype highlight, bool cursor)
+{
+	wbkgd(fieldWin, highlight);
+	fieldAttr = highlight;
+	curs_set(cursor);
+	/*
+	 *  FIXME -  if (cursor) { move the cursor to this widget }
+	 */
+}
+
+void SEntry::focusCDKEntry()
+{
+	wmove(fieldWin, 0, sbuch);
+	wrefresh(fieldWin);
+}
+
+void SEntry::unfocusCDKEntry()
+{
+	drawObj(box);
+	wrefresh(fieldWin);
+}
+
+void CDKOBJS::refreshDataCDK()
+{
+}
+
+void CDKOBJS::saveDataCDK()
+{
+}
+
+
 SFileSelector::SFileSelector()
 {
-	bindableObject=entryField;
 	cdktype = vFSELECT;
 }
 
-SAlphalist::SAlphalist()
+int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 {
-	bindableObject=entryField;
+	int status = 0;
+	if (listSize >= 0) {
+		char **newlist = typeCallocN (char *, listSize + 1);
+		if (newlist != 0) {
+			int x;
+			/*
+			 * We'll sort the list before we use it.  It would have been better to
+			 * declare list[] const and only modify the copy, but there may be
+			 * clients that rely on the old behavior.
+			 */
+			sortList(list, listSize);
+			/* Copy in the new information. */
+			status = 1;
+			for (x = 0; x < listSize; x++) {
+				if ((newlist[x] = copyChar(list[x])) == 0) {
+					status = 0;
+					break;
+				}
+			}
+			if (status) {
+				destroyInfo();
+				this->listSize = listSize;
+				this->list = newlist;
+			} else {
+				CDKfreeStrings(newlist);
+			}
+		}
+	} else {
+		destroyInfo();
+		status = TRUE;
+	}
+	return status;
+}
+
+/*
+ * The alphalist's focus resides in the entry widget.  But the scroll widget
+ * will not draw items highlighted unless it has focus.  Temporarily adjust the
+ * focus of the scroll widget when drawing on it to get the right highlighting.
+ */
+#define SaveFocus(widget) \
+   bool save = HasFocusObj (ObjOf (widget->scrollField)); \
+   HasFocusObj (ObjOf (widget->scrollField)) = \
+   HasFocusObj (ObjOf (widget->entryField))
+
+#define RestoreFocus(widget) \
+   HasFocusObj (ObjOf (widget->scrollField)) = save
+
+void SAlphalist::injectMyScroller(chtype key)
+{
+	SaveFocus(this);
+	scrollField->injectObj(key);
+	RestoreFocus(this);
+}
+
+/*
+ * Start of callback functions.
+ */
+static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
+			      *object GCC_UNUSED,
+			      void *clientData,
+			      chtype key)
+{
+   /* *INDENT-EQLS* */
+   CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
+   CDKSCROLL *scrollp      = alphalist->scrollField;
+   CDKENTRY *entry         = alphalist->entryField;
+   if (scrollp->listSize > 0) {
+      char *current;
+      /* Adjust the scrolling list. */
+      alphalist->injectMyScroller(key);
+      /* Set the value in the entry field. */
+      current = chtype2Char(scrollp->item[scrollp->currentItem]);
+      setCDKEntryValue(entry, current);
+      drawCDKEntry(entry, ObjOf (entry)->box);
+      freeChar(current);
+      return TRUE;
+   }
+   Beep();
+   return FALSE;
+}
+
+/*
+ * This creates the alphalist widget.
+ */
+SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
+			       int xplace,
+			       int yplace,
+			       int height,
+			       int width,
+			       const char *title,
+			       const char *label,
+			       CDK_CSTRING *list,
+			       int listSize,
+			       chtype fillerChar,
+			       chtype highlight,
+			       bool Box,
+						 bool shadow,
+						 // GSchade Anfang
+						 int highnr/*=0*/
+						 // GSchade Ende
+		)
+{
 	cdktype = vALPHALIST;
+	/* *INDENT-EQLS* */
+//	CDKALPHALIST *alphalist      = 0;
+	int parentWidth              = getmaxx(cdkscreen->window);
+	int parentHeight             = getmaxy(cdkscreen->window);
+	int boxWidth;
+	int boxHeight;
+	int xpos                     = xplace;
+	int ypos                     = yplace;
+	int tempWidth                = 0;
+	int tempHeight               = 0;
+	int labelLen                 = 0;
+	int x, junk2;
+	/* *INDENT-OFF* */
+	static const struct { int from; int to; } bindings[] = {
+		{ CDK_BACKCHAR,	KEY_PPAGE },
+		{ CDK_FORCHAR,	KEY_NPAGE },
+	};
+	/* *INDENT-ON* */
+
+	::CDKOBJS();
+	if (/*(alphalist = newCDKObject (CDKALPHALIST, &my_funcs)) == 0 || */ !createList (list, listSize)) {
+		destroyCDKObject();
+		return;
+	}
+
+	setBox (Box);
+
+	/*
+	 * If the height is a negative value, the height will
+	 * be ROWS-height, otherwise, the height will be the
+	 * given height.
+	 */
+	boxHeight = setWidgetDimension (parentHeight, height, 0);
+
+	/*
+	 * If the width is a negative value, the width will
+	 * be COLS-width, otherwise, the width will be the
+	 * given width.
+	 */
+	boxWidth = setWidgetDimension (parentWidth, width, 0);
+
+	/* Translate the label char *pointer to a chtype pointer. */
+	if (label != 0)
+	{
+		chtype *chtypeLabel = char2Chtypeh(label, &labelLen, &junk2
+				// GSchade Anfang
+				,highnr
+				// GSchade Ende
+				);
+		freeChtype (chtypeLabel);
+	}
+
+	/* Rejustify the x and y positions if we need to. */
+	alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+
+	/* Make the file selector window. */
+	this->win = newwin (boxHeight, boxWidth, ypos, xpos);
+
+	if (this->win == 0)
+	{
+		destroyCDKObject();
+		return;
+	}
+	keypad (this->win, TRUE);
+
+	/* *INDENT-EQLS* Set some variables. */
+	ScreenOf (this)         = cdkscreen;
+	this->parent            = cdkscreen->window;
+	this->highlight         = highlight;
+	this->fillerChar        = fillerChar;
+	this->boxHeight         = boxHeight;
+	this->boxWidth          = boxWidth;
+	initExitType (this);
+	this->shadow            = shadow;
+	this->shadowWin         = 0;
+
+	/* Do we want a shadow? */
+	if (shadow)
+	{
+		this->shadowWin = newwin (boxHeight, boxWidth, ypos + 1, xpos + 1);
+	}
+
+	/* Create the entry field. */
+	tempWidth = (isFullWidth (width)
+			? FULL
+			: boxWidth - 2 - labelLen);
+	this->entryField = new CDKENTRY(cdkscreen,
+			getbegx (this->win),
+			getbegy (this->win),
+			title, label,
+			A_NORMAL, fillerChar,
+			vMIXED, tempWidth, 0, 512,
+			Box, FALSE
+			// GSchade Anfang
+			,highnr
+			// GSchade Ende
+			);
+	if (this->entryField == 0)
+	{
+//		destroyCDKObject (this);
+		return;
+	}
+	//setCDKEntryLLChar(this->entryField, ACS_LTEE);
+   LLChar=ACS_LTEE;		/* lines: lower-left */
+	//setCDKEntryLRChar(this->entryField, ACS_RTEE);
+   LRChar=ACS_RTEE;		/* lines: lower-right */
+
+	/* Set the key bindings for the entry field. */
+	bindCDKObject (vENTRY,
+			this->entryField,
+			KEY_UP,
+			adjustAlphalistCB,
+			this);
+	bindCDKObject (vENTRY,
+			this->entryField,
+			KEY_DOWN,
+			adjustAlphalistCB,
+			this);
+	bindCDKObject (vENTRY,
+			this->entryField,
+			KEY_NPAGE,
+			adjustAlphalistCB,
+			this);
+	bindCDKObject (vENTRY,
+			this->entryField,
+			KEY_PPAGE,
+			adjustAlphalistCB,
+			this);
+	bindCDKObject (vENTRY,
+			this->entryField,
+			KEY_TAB,
+			completeWordCB,
+			this);
+
+	/* Set up the post-process function for the entry field. */
+	setCDKEntryPreProcess (this->entryField, preProcessEntryField, this);
+
+	/*
+	 * Create the scrolling list.  It overlaps the entry field by one line if
+	 * we are using box-borders.
+	 */
+	tempHeight = getmaxy (this->entryField->win) - BorderOf (this);
+	tempWidth = (isFullWidth (width)
+			? FULL
+			: boxWidth - 1);
+	this->scrollField = newCDKScroll (cdkscreen,
+			getbegx (this->win),
+			getbegy (this->entryField->win)
+			+ tempHeight,
+			RIGHT,
+			boxHeight - tempHeight,
+			tempWidth,
+			0, (CDK_CSTRING2)list, listSize,
+			NONUMBERS, A_REVERSE,
+			Box, FALSE);
+	setCDKScrollULChar (this->scrollField, ACS_LTEE);
+	setCDKScrollURChar (this->scrollField, ACS_RTEE);
+
+	/* Setup the key bindings. */
+	for (x = 0; x < (int)SIZEOF (bindings); ++x)
+		bindCDKObject (vthis,
+				this,
+				(chtype)bindings[x].from,
+				getcCDKBind,
+				(void *)(long)bindings[x].to);
+
+	registerCDKObject (cdkscreen, vALPHALIST, this);
+
+//	return (this);
 }
 
 void SScroller::scroller_KEY_UP()
@@ -2069,7 +3075,7 @@ void SScroller::scroller_KEY_PPAGE()
       return;
    }
    if (currentTop < viewSize) {
-      scroller_KEY_HOME();
+      scroll_KEY_HOME();
    } else {
       currentTop -= viewSize;
       currentItem -= viewSize;
@@ -2087,18 +3093,18 @@ void SScroller::scroller_KEY_NPAGE()
       currentTop += viewSize;
       currentItem += viewSize;
    } else {
-      scroller_KEY_END();
+      scroll_KEY_END();
    }
 }
 
-void SScroller::scroller_KEY_HOME()
+void SScroll_basis::scroll_KEY_HOME()
 {
    currentTop = 0;
    currentItem = 0;
    currentHigh = 0;
 }
 
-void SScroller::scroller_KEY_END()
+void SScroll_basis::scroll_KEY_END()
 {
    currentTop = maxTopItem;
    currentItem = lastItem;
@@ -2114,42 +3120,38 @@ void SScroller::scroller_FixCursorPosition()
    wrefresh(InputWindowOf(this));
 }
 
-void SScroller::scroller_SetPosition(int item)
+void SScroll_basis::SetPosition(int item)
 {
    /* item out of band */
    if (item <= 0) {
-      scroller_KEY_HOME();
+      scroll_KEY_HOME();
       return;
    }
    /* item out of band */
    if (item >= lastItem) {
-      scroller_KEY_END();
+      scroll_KEY_END();
       return;
    }
    /* item in first view port */
    if (item < viewSize) {
       currentTop = 0;
-   }
-   /* item in last view port */
-   else if (item >= lastItem - viewSize) {
+   } /* item in last view port */ else if (item >= lastItem - viewSize) {
       currentTop = maxTopItem;
-   }
-   /* item not in visible view port */
-   else if (item < currentTop || item >= currentTop + viewSize) {
+   } /* item not in visible view port */ else if (item < currentTop || item >= currentTop + viewSize) {
       currentTop = item;
    }
    currentItem = item;
    currentHigh = currentItem - currentTop;
 }
 
-int SScroller::scroller_MaxViewSize()
+int SScroll_basis::MaxViewSize()
 {
-   return(boxHeight - (2 * BorderOf(this) + TitleLinesOf(this)));
+   return(boxHeight - (2 * borderSize + titleLines));
 }
 
-void SScroller::scroller_SetViewSize(int size)
+void SScroll_basis::setViewSize(int size)
 {
-   int max_view_size = scroller_MaxViewSize();
+   int max_view_size = MaxViewSize();
    viewSize = max_view_size;
    listSize = size;
    lastItem = size - 1;
@@ -2167,7 +3169,528 @@ void SScroller::scroller_SetViewSize(int size)
    }
 }
 
-SScroll::SScroll
+/*
+ * This function creates a new scrolling list widget.
+ */
+SScroll::SScroll(CDKSCREEN *cdkscreen,
+			 int xplace,
+			 int yplace,
+			 int splace,
+			 int height,
+			 int width,
+			 const char *title,
+			 CDK_CSTRING2 list,
+			 int listSize,
+			 bool numbers,
+			 chtype highlight,
+			 bool Box,
+			 bool shadow)
 {
 	cdktype=vSCROLL;
+   /* *INDENT-EQLS* */
+   //CDKSCROLL *scrollp           = 0;
+   int parentWidth              = getmaxx (cdkscreen->window);
+   int parentHeight             = getmaxy (cdkscreen->window);
+   int boxWidth;
+   int boxHeight;
+   int xpos                     = xplace;
+   int ypos                     = yplace;
+   int scrollAdjust             = 0;
+   int x;
+   /* *INDENT-OFF* */
+   static const struct { int from; int to; } bindings[] = {
+		{ CDK_BACKCHAR,	KEY_PPAGE },
+		{ CDK_FORCHAR,	KEY_NPAGE },
+		{ 'g',		KEY_HOME },
+		{ '1',		KEY_HOME },
+		{ 'G',		KEY_END },
+		{ '<',		KEY_HOME },
+		{ '>',		KEY_END },
+   };
+   /* *INDENT-ON* */
+
+//   if ((scrollp = newCDKObject (CDKSCROLL, &my_funcs)) == 0) { destroyCDKObject (scrollp); return (0); }
+	::CDKOBJS();
+   setBox(Box);
+
+   /*
+    * If the height is a negative value, the height will
+    * be ROWS-height, otherwise, the height will be the
+    * given height.
+    */
+   boxHeight = setWidgetDimension (parentHeight, height, 0);
+
+   /*
+    * If the width is a negative value, the width will
+    * be COLS-width, otherwise, the width will be the
+    * given width.
+    */
+   boxWidth = setWidgetDimension (parentWidth, width, 0);
+
+   boxWidth = setCdkTitle(title, boxWidth);
+
+   /* Set the box height. */
+   if (titleLines > boxHeight)
+   {
+      boxHeight = (titleLines 
+		   + MINIMUM (listSize, 8)
+		   + 2 * borderSize);
+   }
+
+   /* Adjust the box width if there is a scrollp bar. */
+   if ((splace == LEFT) || (splace == RIGHT))
+   {
+      scrollbar = TRUE;
+      boxWidth += 1;
+   }
+   else
+   {
+      scrollbar = FALSE;
+   }
+
+   /*
+    * Make sure we didn't extend beyond the dimensions of the window.
+    */
+   boxWidth = (boxWidth > parentWidth
+			? (parentWidth - scrollAdjust)
+			: boxWidth);
+   boxHeight = (boxHeight > parentHeight
+			 ? parentHeight
+			 : boxHeight);
+
+   setViewSize(listSize);
+
+   /* Rejustify the x and y positions if we need to. */
+   alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+
+   /* Make the scrolling window */
+   win = newwin(boxHeight, boxWidth, ypos, xpos);
+
+   /* Is the scrolling window null?? */
+   if (!win) {
+      destroyCDKObject();
+			return;
+   }
+
+   /* Turn the keypad on for the window. */
+   keypad(win, TRUE);
+
+   /* Create the scrollbar window. */
+   if (splace == RIGHT) {
+      scrollbarWin = subwin (win,
+				      MaxViewSize(), 1,
+				      SCREEN_YPOS (this, ypos),
+				      xpos + boxWidth
+				      - BorderOf (this) - 1);
+   } else if (splace == LEFT) {
+      scrollbarWin = subwin (win,
+				      MaxViewSize(), 1,
+				      SCREEN_YPOS (this, ypos),
+				      SCREEN_XPOS (this, xpos));
+   } else {
+      scrollbarWin = 0;
+   }
+
+   /* create the list window */
+
+   listWin = subwin (win,
+			      MaxViewSize(),
+			      boxWidth
+			      - 2 * BorderOf (this) - scrollAdjust,
+			      SCREEN_YPOS (this, ypos),
+			      SCREEN_XPOS (this, xpos)
+			      + (splace == LEFT ? 1 : 0));
+
+   /* *INDENT-EQLS* Set the rest of the variables */
+   ScreenOf (this)           = cdkscreen;
+   parent              = cdkscreen->window;
+   shadowWin           = 0;
+   scrollbarPlacement  = splace;
+   maxLeftChar         = 0;
+   leftChar            = 0;
+   highlight           = highlight;
+   initExitType (this);
+   ObjOf (this)->acceptsFocus = TRUE;
+   ObjOf (this)->inputWindow = win;
+   shadow              = shadow;
+   SetPosition(0);
+   /* Create the scrolling list item list and needed variables. */
+   if (createCDKScrollItemList(numbers, list, listSize) <= 0) {
+      destroyCDKObject();
+      return;
+   }
+   /* Do we need to create a shadow? */
+   if (shadow) {
+      shadowWin = newwin (boxHeight,
+				   boxWidth,
+				   ypos + 1,
+				   xpos + 1);
+   }
+   /* Setup the key bindings. */
+   for (x = 0; x < (int)SIZEOF (bindings); ++x)
+      bindCDKObject(/*vSCROLL,
+		     this,*/
+		     (chtype)bindings[x].from,
+		     getcCDKBind,
+		     (void *)(long)bindings[x].to);
+   registerCDKObject(cdkscreen, vSCROLL);
+   /* Return the scrolling list */
+//   return this;
 }
+
+#undef  SCREEN_YPOS		/* because listWin is separate */
+#define SCREEN_YPOS(w,n) (n)
+
+/*
+ * This redraws the scrolling list.
+ */
+static void SScroll::drawCDKScrollList(bool Box)
+{
+	/* If the list is empty, don't draw anything. */
+	if (this->listSize > 0) {
+		int j;
+		/* Redraw the list */
+		for (j = 0; j < this->viewSize; j++) {
+			int k;
+			int xpos = SCREEN_YPOS (this, 0);
+			int ypos = SCREEN_YPOS (this, j);
+			writeBlanks (this->listWin, xpos, ypos,
+					HORIZONTAL, 0, this->boxWidth - 2 * BorderOf (this));
+			k = j + this->currentTop;
+			/* Draw the elements in the scroll list. */
+			if (k < this->listSize) {
+				int screenPos = SCREENPOS (this, k);
+				/* Write in the correct line. */
+				writeChtype (this->listWin,
+						(screenPos >= 0) ? screenPos : 1,
+						ypos,
+						this->item[k],
+						HORIZONTAL,
+						(screenPos >= 0) ? 0 : (1 - screenPos),
+						this->itemLen[k]);
+			}
+		}
+		drawCDKScrollCurrent(this);
+		/* Determine where the toggle is supposed to be. */
+		if (this->scrollbarWin != 0) {
+			this->togglePos = floorCDK (this->currentItem * (double)this->step);
+			/* Make sure the toggle button doesn't go out of bounds. */
+			if (this->togglePos >= getmaxy (this->scrollbarWin))
+				this->togglePos = getmaxy (this->scrollbarWin) - 1;
+			/* Draw the scrollbar. */
+			(void)mvwvline (this->scrollbarWin,
+					0, 0,
+					ACS_CKBOARD,
+					getmaxy (this->scrollbarWin));
+			(void)mvwvline (this->scrollbarWin,
+					this->togglePos, 0,
+					' ' | A_REVERSE,
+					this->toggleSize);
+		}
+	}
+	/* Box it if needed. */
+	if (Box) {
+		drawObjBox (this->win, ObjOf (this));
+	} else {
+		touchwin (this->win);
+	}
+	wrefresh (this->win);
+} // static void drawCDKScrollList
+
+/*
+ * This injects a single character into the widget.
+ */
+int SScroll::injectObj(/*CDKOBJS *object, */chtype input)
+{
+	//   CDKSCROLL *myself = (CDKSCROLL *)object;
+	CDKSCROLLER *widget = (CDKSCROLLER *)this;
+	int ppReturn = 1;
+	int ret = unknownInt;
+	bool complete = FALSE;
+
+	/* Set the exit type for the widget. */
+	setExitType(widget, 0);
+
+	/* Draw the scrolling list */
+	drawCDKScrollList(box);
+
+	/* Check if there is a pre-process function to be called. */
+	if (PreProcessFuncOf(widget) != 0) {
+		/* Call the pre-process function. */
+		ppReturn = PreProcessFuncOf(widget) (vSCROLL,
+				widget,
+				PreProcessDataOf(widget),
+				input);
+	}
+
+	/* Should we continue? */
+	if (ppReturn != 0) {
+		/* Check for a predefined key binding. */
+		if (checkCDKObjectBind (vSCROLL, widget, input) != 0) {
+			checkEarlyExit (widget);
+			complete = TRUE;
+		} else {
+			switch (input) {
+				case KEY_UP:
+					scroller_KEY_UP (widget);
+					break;
+
+				case KEY_DOWN:
+					scroller_KEY_DOWN (widget);
+					break;
+
+				case KEY_RIGHT:
+					scroller_KEY_RIGHT (widget);
+					break;
+
+				case KEY_LEFT:
+					scroller_KEY_LEFT (widget);
+					break;
+
+				case KEY_PPAGE:
+					scroller_KEY_PPAGE (widget);
+					break;
+
+				case KEY_NPAGE:
+					scroller_KEY_NPAGE (widget);
+					break;
+
+				case KEY_HOME:
+					scroller_KEY_HOME (widget);
+					break;
+
+				case KEY_END:
+					scroller_KEY_END (widget);
+					break;
+
+				case '$':
+					widget->leftChar = widget->maxLeftChar;
+					break;
+
+				case '|':
+					widget->leftChar = 0;
+					break;
+
+				case KEY_ESC:
+					setExitType (widget, input);
+					complete = TRUE;
+					break;
+
+				case KEY_ERROR:
+					setExitType (widget, input);
+					complete = TRUE;
+					break;
+
+				case CDK_REFRESH:
+					eraseCDKScreen (ScreenOf (widget));
+					refreshCDKScreen (ScreenOf (widget));
+					break;
+
+				case KEY_TAB:
+				case KEY_ENTER:
+					setExitType (widget, input);
+					ret = widget->currentItem;
+					complete = TRUE;
+					break;
+
+				default:
+					break;
+			}
+		}
+		/* Should we call a post-process? */
+		if (!complete && (PostProcessFuncOf (widget) != 0))
+		{
+			PostProcessFuncOf (widget) (vSCROLL,
+					widget,
+					PostProcessDataOf (widget),
+					input);
+		}
+	}
+	if (!complete) {
+		drawCDKScrollList(myself, ObjOf (widget)->box);
+		setExitType (widget, 0);
+	}
+	fixCursorPosition (myself);
+	ResultOf (widget).valueInt = ret;
+	return (ret != unknownInt);
+} // static int _injectCDKScroll
+
+/*
+ * This function creates the scrolling list information and sets up the needed
+ * variables for the scrolling list to work correctly.
+ */
+int SScroll::createCDKScrollItemList(
+				    bool nummern,
+				    CDK_CSTRING2 list,
+				    int listSize)
+{
+	int status = 0;
+	if (listSize > 0) {
+		/* *INDENT-EQLS* */
+		size_t have               = 0;
+		char *temp                = 0;
+		if (allocListArrays(0, listSize)) {
+			int widestItem = 0;
+			int x = 0;
+			/* Create the items in the scrolling list. */
+			status = 1;
+			for (x = 0; x < listSize; x++) {
+				if (!allocListItem (
+							x,
+							&temp,
+							&have,
+							nummern ? (x + 1) : 0,
+							list[x])) {
+					status = 0;
+					break;
+				}
+				widestItem = MAXIMUM (this->itemLen[x], widestItem);
+			}
+			freeChecked (temp);
+			if (status) {
+				updateViewWidth(widestItem);
+				/* Keep the boolean flag 'numbers' */
+				this->numbers = nummern;
+			}
+		}
+	} else {
+		status = 1;		/* null list is ok - for a while */
+	}
+	return status;
+}
+
+void SScroll_basis::updateViewWidth(int widest)
+{
+/* Determine how many characters we can shift to the right */
+/* before all the items have been scrolled off the screen. */
+	maxLeftChar=boxWidth>widest?0:widest-(boxWidth-2*borderSize);
+}
+
+bool SScroll::allocListArrays(int oldSize, int newSize)
+{
+	/* *INDENT-EQLS* */
+	bool result;
+	int nchunk           = ((newSize + 1) | 31) + 1;
+	chtype **newList     = typeCallocN (chtype *, nchunk);
+	int *newLen          = typeCallocN (int, nchunk);
+	int *newPos          = typeCallocN (int, nchunk);
+	if (newList != 0 &&
+			newLen != 0 &&
+			newPos != 0) {
+		for (int n = 0; n < oldSize; ++n) {
+			newList[n] = this->item[n];
+			newLen[n] = this->itemLen[n];
+			newPos[n] = this->itemPos[n];
+		}
+		freeChecked (this->item);
+		freeChecked (this->itemPos);
+		freeChecked (this->itemLen);
+		this->item = newList;
+		this->itemLen = newLen;
+		this->itemPos = newPos;
+		result = TRUE;
+	} else {
+		freeChecked (newList);
+		freeChecked (newLen);
+		freeChecked (newPos);
+		result = FALSE;
+	}
+	return result;
+}
+
+bool SScroll::allocListItem(
+			      int which,
+			      char **work,
+			      size_t * used,
+			      int number,
+			      const char *value)
+{
+	if (number > 0) {
+		size_t need = NUMBER_LEN(value);
+		if (need > *used) {
+			*used = ((need + 2) * 2);
+			if (*work == 0) {
+				if ((*work = (char*)malloc(*used)) == 0)
+					return FALSE;
+			} else {
+				if ((*work = (char*)realloc(*work, *used)) == 0)
+					return FALSE;
+			}
+		}
+		sprintf (*work, NUMBER_FMT, number, value);
+		value = *work;
+	}
+	if ((this->item[which] = char2Chtypeh(value,
+					&(this->itemLen[which]),
+					&(this->itemPos[which]))) == 0)
+		return FALSE;
+	this->itemPos[which] = justifyString (this->boxWidth,
+			this->itemLen[which],
+			this->itemPos[which]);
+	return TRUE;
+}
+
+
+
+/*
+ * This clears all the objects in the screen.
+ */
+void SScreen::eraseCDKScreen()
+{
+	int objectCount = this->objectCount;
+	/* We just call the drawObject function. */
+	for (int x = 0; x < objectCount; x++) {
+		CDKOBJS *obj = this->object[x];
+		//		if (validObjType (obj, ObjTypeOf (obj))) {
+		if (obj->validObjType(obj->cdktype)) {
+			obj->eraseObj();
+		}
+	}
+	/* Refresh the screen. */
+	wrefresh (this->window);
+}
+
+/*
+ * Set focus to the next object, returning it.
+ */
+CDKOBJS *SScreen::setCDKFocusNext()
+{
+	CDKOBJS *result = 0;
+	CDKOBJS *curobj;
+	int n = getFocusIndex();
+	int first = n;
+
+	for (;;) {
+		if (++n >= this->objectCount)
+			n = 0;
+		curobj = this->object[n];
+		if (curobj != 0 && AcceptsFocusObj (curobj)) {
+			result = curobj;
+			break;
+		} else {
+			if (n == first) {
+				break;
+			}
+		}
+	}
+	setFocusIndex((result) ? n : -1);
+	return result;
+}
+
+#define limitFocusIndex(screen, value) \
+ 	(((value) >= (screen)->objectCount || (value) < 0) \
+	 ? 0 \
+	 : (value))
+
+int SScreen::getFocusIndex()
+{
+   int result = limitFocusIndex(this, objectFocus);
+   return result;
+}
+
+
+void SScreen::setFocusIndex(int value)
+{
+   objectFocus = limitFocusIndex(this, value);
+}
+
