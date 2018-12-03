@@ -653,7 +653,7 @@ struct SEntry:CDKOBJS
 	 ~SEntry();
 	 void drawObj(bool);
 	 void cleanCDKEntry();
-	 int injectObj(chtype);
+	 int injectCDKEntry(chtype);
 	 void setCDKEntryValue(const char *newValue);
 	 void eraseObj();
 	 char* activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
@@ -753,6 +753,7 @@ struct SScroll:SScroll_basis
 	 void setCDKScrollPosition(int item);
 	 void drawCDKScroll(bool Box);
 	 void drawCDKScrollCurrent();
+	 void moveObj(int xplace, int yplace, bool relative, bool refresh_flag);
 };
 typedef struct SScroll CDKSCROLL;
 
@@ -807,7 +808,10 @@ struct SAlphalist:CDKOBJS
 	 ~SAlphalist();
 	 void drawMyScroller(/*CDKALPHALIST *widget*/);
 	 void drawCDKAlphalist(bool Box GCC_UNUSED);
+	 void moveCDKAlphalist(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void injectMyScroller(chtype key);
+	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
+	 int injectCDKAlphalist(chtype input);
 	 /*
 	 void focusCDKAlphalist()//CDKOBJS *object
 	 void unfocusCDKAlphalist()//CDKOBJS *object

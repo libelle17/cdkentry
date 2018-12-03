@@ -1600,38 +1600,125 @@ void SEntry::moveObj(/*CDKOBJS *object,*/
 	int ypos        = yplace;
 	int xdiff       = 0;
 	int ydiff       = 0;
-
 	/*
 	 * If this is a relative move, then we will adjust where we want
 	 * to move to.
 	 */
-	if (relative)
-	{
+	if (relative) {
 		xpos = getbegx (this->win) + xplace;
 		ypos = getbegy (this->win) + yplace;
 	}
-
 	/* Adjust the window if we need to. */
 	alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
-
 	/* Get the difference. */
 	xdiff = currentX - xpos;
 	ydiff = currentY - ypos;
-
 	/* Move the window to the new location. */
 	moveCursesWindow(this->win, -xdiff, -ydiff);
 	moveCursesWindow(this->fieldWin, -xdiff, -ydiff);
 	moveCursesWindow(this->labelWin, -xdiff, -ydiff);
 	moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
-
 	/* Touch the windows so they 'move'. */
 	refreshCDKWindow (WindowOf (this));
-
 	/* Redraw the window, if they asked for it. */
-	if (refresh_flag)
-	{
+	if (refresh_flag) {
 		drawObj(box);
 	}
+}
+
+/*
+ * This moves the alphalist field to the given location.
+ */
+void SAlphalist::moveCDKAlphalist(
+			       int xplace,
+			       int yplace,
+			       bool relative,
+			       bool refresh_flag)
+{
+//	CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+   /* *INDENT-EQLS* */
+   int currentX = getbegx (this->win);
+   int currentY = getbegy (this->win);
+   int xpos     = xplace;
+   int ypos     = yplace;
+   int xdiff    = 0;
+   int ydiff    = 0;
+
+   /*
+    * If this is a relative move, then we will adjust where we want
+    * to move to.
+    */
+   if (relative)
+   {
+      xpos = getbegx (this->win) + xplace;
+      ypos = getbegy (this->win) + yplace;
+   }
+
+   /* Adjust the window if we need to. */
+   alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+
+   /* Get the difference. */
+   xdiff = currentX - xpos;
+   ydiff = currentY - ypos;
+
+   /* Move the window to the new location. */
+   moveCursesWindow(this->win, -xdiff, -ydiff);
+   moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
+
+   /* Move the sub-widgets. */
+   entryField->moveObj(xplace, yplace, relative, FALSE);
+   scrollField->moveObj(xplace, yplace, relative, FALSE);
+
+   /* Touch the windows so they 'move'. */
+   refreshCDKWindow (WindowOf (this));
+
+   /* Redraw the window, if they asked for it. */
+   if (refresh_flag) {
+      drawCDKAlphalist(box);
+   }
+} // void SAlphalist::moveCDKAlphalist(
+
+/*
+ * This moves the scroll field to the given location.
+ */
+void SScroll::moveObj(
+			    int xplace,
+			    int yplace,
+			    bool relative,
+			    bool refresh_flag)
+{
+   /* *INDENT-EQLS* */
+//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+   int currentX       = getbegx (this->win);
+   int currentY       = getbegy (this->win);
+   int xpos           = xplace;
+   int ypos           = yplace;
+   int xdiff          = 0;
+   int ydiff          = 0;
+   /*
+    * If this is a relative move, then we will adjust where we want
+    * to move to.
+    */
+   if (relative) {
+      xpos = getbegx (this->win) + xplace;
+      ypos = getbegy (this->win) + yplace;
+   }
+   /* Adjust the window if we need to. */
+   alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+   /* Get the difference. */
+   xdiff = currentX - xpos;
+   ydiff = currentY - ypos;
+   /* Move the window to the new location. */
+   moveCursesWindow(this->win, -xdiff, -ydiff);
+   moveCursesWindow(this->listWin, -xdiff, -ydiff);
+   moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
+   moveCursesWindow(this->scrollbarWin, -xdiff, -ydiff);
+   /* Touch the windows so they 'move'. */
+   refreshCDKWindow(WindowOf (this));
+   /* Redraw the window, if they asked for it. */
+   if (refresh_flag) {
+      drawCDKScroll(box);
+   }
 }
 
 
@@ -2338,7 +2425,7 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 			// GSchade Ende
 			/* Inject the character into the widget. */
 //			ret = injectCDKEntry(entry, input);
-			ret=injectObj(input)?resultData.valueString:unknownString;
+			ret=injectCDKEntry(input)?resultData.valueString:unknownString;
 			// GSchade Anfang
       /*
 			mvwprintw(entry->parent,1,80,"info:%s ",entry->info);
@@ -2363,7 +2450,7 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 		for (x = 0; x < length; x++) {
 //					mvwprintw(entry->parent,4,2,"vor inject 2");
 //			ret = injectCDKEntry(entry, actions[x]);
-			ret = injectObj(actions[x])?resultData.valueString:unknownString;
+			ret = injectCDKEntry(actions[x])?resultData.valueString:unknownString;
 			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -2376,6 +2463,28 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 		return 0;
 	}
 } // char * SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+
+
+/*
+ * This activates the file selector.
+ */
+char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/)
+{
+   char *ret = 0;
+   /* Draw the widget. */
+   drawCDKAlphalist(box);
+   /* Activate the widget. */
+   ret = entryField->activate(actions,Zweitzeichen,Drittzeichen,obpfeil);
+   /* Copy the exit type from the entry field. */
+   copyExitType (this, this->entryField);
+   /* Determine the exit status. */
+   if (this->exitType != vEARLY_EXIT) {
+      return ret;
+   }
+   return 0;
+}
+
+
 
 /*
  * This draws the entry field.
@@ -2407,7 +2516,7 @@ void SEntry::drawObj(bool Box)
 /*
  * This injects a single character into the widget.
  */
-int SEntry::injectObj(chtype input)
+int SEntry::injectCDKEntry(chtype input)
 {
 //	CDKENTRY *widget = (CDKENTRY *)object;
 	int ppReturn = 1;
@@ -2653,7 +2762,7 @@ int SEntry::injectObj(chtype input)
 	if (!complete) setExitType(0);
 	ResultOf (this).valueString = ret;
 	return (ret != unknownString);
-} // int SEntry::injectObj(chtype input)
+} // int SEntry::injectCDKEntry(chtype input)
 
 /*
  * This removes the old information in the entry field and keeps the
@@ -2949,6 +3058,27 @@ void SAlphalist::injectMyScroller(chtype key)
 	scrollField->injectObj(key);
 	RestoreFocus(this);
 }
+
+/*
+ * This injects a single character into the alphalist.
+ */
+int SAlphalist::injectCDKAlphalist(chtype input)
+{
+//   CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+   char *ret;
+   /* Draw the widget. */
+   drawCDKAlphalist(box);
+   /* Inject a character into the widget. */
+	 ret=entryField->injectCDKEntry(input)?entryField->resultData.valueString:unknownString;
+	 /* Copy the exit type from the entry field. */
+   copyExitType(this, this->entryField);
+   /* Determine the exit status. */
+   if (this->exitType == vEARLY_EXIT)
+      ret = unknownString;
+   ResultOf (this).valueString = ret;
+   return (ret != unknownString);
+}
+
 
 /*
  * Start of callback functions.
@@ -3467,7 +3597,7 @@ void SAlphalist::drawCDKAlphalist(bool Box GCC_UNUSED)
 {
 //   CDKALPHALIST *alphalist = (CDKALPHALIST *)obj;
    /* Does this widget have a shadow? */
-   if (!shadowWin) {
+   if (shadowWin) {
       drawShadow(shadowWin);
    }
    /* Draw in the entry field. */
