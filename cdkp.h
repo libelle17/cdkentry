@@ -15,6 +15,13 @@
 #else
 #include <curses.h>
 #endif
+// GSchade 17.11.18
+enum einbauart {
+	einb_direkt,
+	einb_alphalist,
+	einb_sonst
+};
+extern einbauart akteinbart;
 
 #include <string.h> // strlen
 #include <stdlib.h> // malloc
@@ -295,6 +302,12 @@
 #if	!defined(HAVE_GETMAXYX) && !defined(getmaxyx)
 #define getmaxyx(win,y,x)	(y = (win)?(win)->_maxy:ERR, x = (win)?(win)->_maxx:ERR)
 #endif
+
+#define	NONUMBERS	FALSE
+#define	NUMBERS		TRUE
+
+#define SCREENPOS(w,n) (w)->itemPos[n] - (w)->leftChar	/* + scrollbarAdj + BorderOf(w) */
+
 struct CDKOBJS; // CDKOBJS
 
 typedef enum {
@@ -467,10 +480,18 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
 			      *object GCC_UNUSED,
 			      void *clientData,
 			      chtype key);
+static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED,
+			   void *clientData,
+			   chtype key GCC_UNUSED);
 char *chtype2Char (const chtype *string);
+int searchList(CDK_CSTRING2 list, int listSize, const char *pattern);
+unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned used);
+void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
+void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
+void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
 
 typedef struct SScreen CDKSCREEN;
-void registerCDKObject (CDKSCREEN *screen, EObjectType cdktype, void *object);
+void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype, void *object);
 
 
 /*
@@ -547,6 +568,8 @@ struct CDKOBJS
 	 bool isCDKObjectBind(chtype key);
 	 //	 void setCdkExitType(chtype ch);
 	 void setExitType(chtype ch);
+	 void setCDKObjectPreProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data);
+	 void setCDKObjectPostProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data);
 	 CDKOBJS();
 	 ~CDKOBJS();
 	 void unregisterCDKObject(EObjectType cdktype/*, void *object*/);
@@ -593,7 +616,7 @@ struct SEntry:CDKOBJS
    void settoend(); // GSchade
    void schreibl(chtype); // GSchade, callbackfn
    void zeichneFeld(); // GSchade
-	 void setCDKEntry( const char *value, int min, int max, bool Box GCC_UNUSED);
+	 void setCDKEntry(const char *value, int min, int max, bool Box GCC_UNUSED);
 	 char* getCDKEntryValue();
 	 void setBKattrEntry(chtype attrib);
 	 void setCDKEntryHighlight(chtype highlight, bool cursor);
@@ -631,7 +654,7 @@ struct SEntry:CDKOBJS
 	 void drawObj(bool);
 	 void cleanCDKEntry();
 	 int injectObj(chtype);
-	 void setCDKEntryValue (const char *newValue);
+	 void setCDKEntryValue(const char *newValue);
 	 void eraseObj();
 	 char* activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
 	 void moveObj(int,int,bool,bool);
@@ -676,24 +699,23 @@ struct SScroll_basis:CDKOBJS
 	EExitType    exitType; 
 	bool  shadow; 
 	chtype   highlight;
-	virtual void nix()=0;
 	void updateViewWidth(int widest);
 	int MaxViewSize();
 	void SetPosition(int item);
 	void scroll_KEY_HOME();
 	void scroll_KEY_END();
+	void scroll_FixCursorPosition();
+	void scroll_KEY_UP();
+	void scroll_KEY_DOWN();
+	void scroll_KEY_LEFT();
+	void scroll_KEY_RIGHT();
+	void scroll_KEY_PPAGE();
+	void scroll_KEY_NPAGE();
 	void setViewSize(int listSize);
 };
 
 struct SScroller:SScroll_basis
 {
-	void scroller_KEY_UP();
-	void scroller_KEY_DOWN();
-	void scroller_KEY_LEFT();
-	void scroller_KEY_RIGHT();
-	void scroller_KEY_PPAGE();
-	void scroller_KEY_NPAGE();
-	void scroller_FixCursorPosition();
 };
 typedef struct SScroller CDKSCROLLER;
 
@@ -726,7 +748,11 @@ struct SScroll:SScroll_basis
 	 bool allocListArrays(int oldSize, int newSize);
 	 bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
 	 int injectObj(/*CDKOBJS *object, */chtype input);
-	 static void drawCDKScrollList(bool Box);
+	 void drawCDKScrollList(bool Box);
+	 int activateCDKScroll(chtype *actions);
+	 void setCDKScrollPosition(int item);
+	 void drawCDKScroll(bool Box);
+	 void drawCDKScrollCurrent();
 };
 typedef struct SScroll CDKSCROLL;
 
@@ -742,11 +768,11 @@ typedef struct SFileSelector CDKFSELECT;
 
 struct SAlphalist:CDKOBJS
 {
-   WINDOW *	parent;
-   WINDOW *	win;
-   WINDOW *	shadowWin;
-   CDKENTRY *	entryField;
-   CDKSCROLL *	scrollField;
+   WINDOW*	parent;
+   WINDOW*	win;
+   WINDOW*	shadowWin;
+   CDKENTRY*	entryField;
+   CDKSCROLL*	scrollField;
    char **	list;
    int		listSize;
    int		xpos;
@@ -779,7 +805,13 @@ struct SAlphalist:CDKOBJS
 			 // GSchade Ende
 			 );
 	 ~SAlphalist();
+	 void drawMyScroller(/*CDKALPHALIST *widget*/);
+	 void drawCDKAlphalist(bool Box GCC_UNUSED);
 	 void injectMyScroller(chtype key);
+	 /*
+	 void focusCDKAlphalist()//CDKOBJS *object
+	 void unfocusCDKAlphalist()//CDKOBJS *object
+	 */
 	 void eraseObj();
 	 void destroyInfo();
 };

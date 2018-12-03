@@ -2,6 +2,8 @@
 #include <vector>
 #include <cctype> // isdigit
 using namespace std;
+// GSchade 17.11.18; s. cdk.h
+einbauart akteinbart;
 
 vector<CDKOBJS*> all_objects;
 
@@ -905,7 +907,7 @@ void CDKfreeChtypes (chtype **list)
  * This takes an x and y position and realigns the values iff they sent in
  * values like CENTER, LEFT, RIGHT, ...
  */
-void alignxy (WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight)
+void alignxy(WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight)
 {
 	int first, gap, last;
 
@@ -1114,7 +1116,7 @@ void attrbox (WINDOW *win,
 /*
  * This draws a shadow around a window.
  */
-void drawShadow (WINDOW *shadowWin)
+void drawShadow(WINDOW *shadowWin)
 {
 	if (shadowWin != 0) {
 		int x_hi = getmaxx (shadowWin) - 1;
@@ -1150,7 +1152,7 @@ int getcCDKBind(EObjectType cdktype GCC_UNUSED,
  * FIXME: this should be rewritten to use the panel library, so it would not
  * be necessary to touch the window to ensure that it covers other windows.
  */
-void refreshCDKWindow (WINDOW *win)
+void refreshCDKWindow(WINDOW *win)
 {
    touchwin (win);
    wrefresh (win);
@@ -1160,7 +1162,7 @@ void refreshCDKWindow (WINDOW *win)
  * This performs a safe copy of a string. This means it adds the null
  * terminator on the end of the string, like strdup().
  */
-char *copyChar (const char *original)
+char *copyChar(const char *original)
 {
 	char *newstring = 0;
 	if (original != 0) {
@@ -1307,6 +1309,134 @@ void sortList(CDK_CSTRING *list, int length)
 	if (length > 1)
 		qsort (list, (unsigned)length, sizeof (list[0]), comparSort);
 }
+
+/*
+ * This looks for a subset of a word in the given list.
+ */
+int searchList(CDK_CSTRING2 list, int listSize, const char *pattern)
+{
+	int Index = -1;
+	/* Make sure the pattern isn't null. */
+	if (pattern != 0) {
+		size_t len = strlen (pattern);
+		int x;
+		/* Cycle through the list looking for the word. */
+		for (x = 0; x < listSize; x++) {
+			/* Do a string compare. */
+			int ret = strncmp (list[x], pattern, len);
+			/*
+			 * If 'ret' is less than 0, then the current word is alphabetically
+			 * less than the provided word.  At this point we will set the index
+			 * to the current position.  If 'ret' is greater than 0, then the
+			 * current word is alphabetically greater than the given word.  We
+			 * should return with index, which might contain the last best match. 
+			 * If they are equal, then we've found it.
+			 */
+			if (ret < 0) {
+				Index = ret;
+			} else {
+				if (ret == 0)
+					Index = x;
+				break;
+			}
+		}
+	}
+	return Index;
+}
+
+/*
+ * Add a new string to a list.  Keep a null pointer on the end so we can use
+ * CDKfreeStrings() to deallocate the whole list.
+ */
+unsigned CDKallocStrings(char ***list, char *item, unsigned length, unsigned used)
+{
+	unsigned need = 1;
+	while (need < length + 2)
+		need *= 2;
+	if (need > used) {
+		used = need;
+		if (*list == 0) {
+			*list = typeMallocN (char *, used);
+		} else {
+			*list = typeReallocN (char *, *list, used);
+		}
+	}
+	(*list)[length++] = copyChar (item);
+	(*list)[length] = 0;
+	return used;
+}
+
+/*
+ * Write a string of blanks, using writeChar().
+ */
+void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end)
+{
+	if (start < end) {
+		unsigned want = (unsigned)(end - start) + 1000;
+		char *blanks = (char *)malloc (want);
+		if (blanks != 0) {
+			cleanChar (blanks, (int)(want - 1), ' ');
+			writeChar(window, xpos, ypos, blanks, align, start, end);
+			freeChecked(blanks);
+		}
+	}
+}
+
+/*
+ * This writes out a char * string with no attributes.
+ */
+void writeChar (WINDOW *window,
+		int xpos,
+		int ypos,
+		char *string,
+		int align,
+		int start,
+		int end)
+{
+	writeCharAttrib(window, xpos, ypos, string, A_NORMAL, align, start, end);
+}
+
+/*
+ * This writes out a char * string with attributes.
+ */
+void writeCharAttrib (WINDOW *window,
+		int xpos,
+		int ypos,
+		char *string,
+		chtype attr,
+		int align,
+		int start,
+		int end)
+{
+	int display = end - start;
+	int x;
+
+	if (align == HORIZONTAL)
+	{
+		/* Draw the message on a horizontal axis. */
+		display = MINIMUM (display, getmaxx (window) - 1);
+		for (x = 0; x < display; x++)
+		{
+			(void)mvwaddch (window,
+					ypos,
+					xpos + x,
+					CharOf (string[x + start]) | attr);
+		}
+	}
+	else
+	{
+		/* Draw the message on a vertical axis. */
+		display = MINIMUM (display, getmaxy (window) - 1);
+		for (x = 0; x < display; x++)
+		{
+			(void)mvwaddch (window,
+					ypos + x,
+					xpos,
+					CharOf (string[x + start]) | attr);
+		}
+	}
+}
+
 
 /*
  * This registers a CDK object with a screen.
@@ -1529,6 +1659,27 @@ SAlphalist::~SAlphalist()
       /* Unregister the object. */
       unregisterCDKObject(vALPHALIST);
 }
+
+/*
+ * This function draws the scrolling list widget.
+ */
+void SScroll::drawCDKScroll(bool Box)
+{
+//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+
+   /* Draw in the shadow if we need to. */
+   if (this->shadowWin != 0)
+      drawShadow(this->shadowWin);
+
+   drawCdkTitle(this->win);
+
+   /* Draw in the scolling list items. */
+	 // Kommentar GSchade 0 11.11.18
+	 // GSchade: auskommentieren und dann noch vor dem Wechsel zu anderem alle übrigen zeichnen
+	 if (akteinbart==einb_alphalist)
+		 drawCDKScrollList(Box);
+}
+
 
 /*
  * This function destroys
@@ -2817,14 +2968,303 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
       alphalist->injectMyScroller(key);
       /* Set the value in the entry field. */
       current = chtype2Char(scrollp->item[scrollp->currentItem]);
-      setCDKEntryValue(entry, current);
-      drawCDKEntry(entry, ObjOf (entry)->box);
-      freeChar(current);
+      entry->setCDKEntryValue(current);
+      entry->drawObj(box);
+      freeChecked(current);
       return TRUE;
    }
    Beep();
    return FALSE;
 }
+
+/*
+ * This tries to complete the word in the entry field.
+ */
+static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED, void *clientData, chtype key GCC_UNUSED)
+{
+   /* *INDENT-EQLS* */
+   CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
+   CDKENTRY *entry         = (CDKENTRY *)alphalist->entryField;
+   CDKSCROLL *scrollp      = 0;
+   int wordLength          = 0;
+   int Index               = 0;
+   int ret                 = 0;
+   char **altWords         = 0;
+
+   if (entry->info == 0) {
+      Beep ();
+      return TRUE;
+   }
+   wordLength = (int)strlen (entry->info);
+
+   /* If the word length is equal to zero, just leave. */
+   if (wordLength == 0) {
+      Beep ();
+      return TRUE;
+   }
+
+   /* Look for a unique word match. */
+   Index = searchList((CDK_CSTRING2)alphalist->list, alphalist->listSize, entry->info);
+
+   /* If the index is less than zero, return we didn't find a match. */
+   if (Index < 0) {
+      Beep ();
+      return TRUE;
+   }
+
+   /* Did we find the last word in the list? */
+   if (Index == alphalist->listSize - 1) {
+      entry->setCDKEntryValue(alphalist->list[Index]);
+      entry->drawObj(box);
+      return TRUE;
+   }
+
+   /* Ok, we found a match, is the next item similar? */
+   ret = strncmp (alphalist->list[Index + 1], entry->info, (size_t) wordLength);
+	 if (!ret) {
+		 int currentIndex = Index;
+		 int altCount = 0;
+		 unsigned used = 0;
+		 int selected;
+		 int height;
+		 int match;
+		 int x;
+
+		 /* Start looking for alternate words. */
+		 /* FIXME: bsearch would be more suitable */
+		 while ((currentIndex < alphalist->listSize)
+				 && (strncmp (alphalist->list[currentIndex],
+						 entry->info,
+						 (size_t) wordLength) == 0)) {
+			 used = CDKallocStrings(&altWords,
+					 alphalist->list[currentIndex++],
+					 (unsigned)altCount++,
+					 used);
+		 }
+
+		 /* Determine the height of the scrolling list. */
+		 height = (altCount < 8 ? altCount + 3 : 11);
+
+		 /* Create a scrolling list of close matches. */
+		 scrollp = new SScroll(entry->/*obj.*/screen,
+				 CENTER, CENTER, RIGHT, height, -30,
+				 "<C></B/5>Possible Matches.",
+				 (CDK_CSTRING2)altWords, altCount,
+				 NUMBERS, A_REVERSE, TRUE, FALSE);
+
+		 /* Allow them to select a close match. */
+		 match = scrollp->activateCDKScroll(0);
+		 selected = scrollp->currentItem;
+
+		 /* Check how they exited the list. */
+		 if (scrollp->exitType == vESCAPE_HIT) {
+			 /* Destroy the scrolling list. */
+			// scrollp->destroyCDKScroll();
+			 scrollp->destroyObj();
+
+
+			 /* Clean up. */
+			 CDKfreeStrings (altWords);
+
+			 /* Beep at the user. */
+			 Beep ();
+
+			 /* Redraw the alphalist and return. */
+			 alphalist->drawCDKAlphalist(box);
+			 return (TRUE);
+		 }
+
+		 /* Destroy the scrolling list. */
+//		 destroyCDKScroll(scrollp);
+		 scrollp->destroyObj();
+
+		 /* Set the entry field to the selected value. */
+		 entry->setCDKEntry(
+				 altWords[match],
+				 entry->min,
+				 entry->max,
+				 box);
+
+		 /* Move the highlight bar down to the selected value. */
+		 for (x = 0; x < selected; x++) {
+			 alphalist->injectMyScroller(KEY_DOWN);
+		 }
+
+		 /* Clean up. */
+		 CDKfreeStrings (altWords);
+
+		 /* Redraw the alphalist. */
+		 alphalist->drawCDKAlphalist(box);
+	 } else {
+		 /* Set the entry field with the found item. */
+		 entry->setCDKEntry(
+				 alphalist->list[Index],
+				 entry->min,
+				 entry->max,
+				 ObjOf (entry)->box);
+		 entry->drawObj(box);
+	 }
+	 return (TRUE);
+}
+
+static int createList(CDKALPHALIST *alphalist, CDK_CSTRING *list, int listSize)
+{
+	int status = 0;
+	if (listSize >= 0) {
+		char **newlist = typeCallocN (char *, listSize + 1);
+		if (newlist != 0) {
+			int x;
+			/*
+			 * We'll sort the list before we use it.  It would have been better to
+			 * declare list[] const and only modify the copy, but there may be
+			 * clients that rely on the old behavior.
+			 */
+			sortList (list, listSize);
+			/* Copy in the new information. */
+			status = 1;
+			for (x = 0; x < listSize; x++) {
+				if ((newlist[x] = copyChar (list[x])) == 0) {
+					status = 0;
+					break;
+				}
+			}
+			if (status) {
+				alphalist->destroyInfo();
+				alphalist->listSize = listSize;
+				alphalist->list = newlist;
+			} else {
+				CDKfreeStrings (newlist);
+			}
+		}
+	} else {
+		alphalist->destroyInfo();
+		status = TRUE;
+	}
+	return status;
+}
+
+/*
+void SAlphalist::focusCDKAlphalist()
+{
+//   CDKALPHALIST *widget = (CDKALPHALIST *)object;
+   FocusObj(entryField);
+}
+
+void SAlphalist::unfocusCDKAlphalist()
+{
+//   CDKALPHALIST *widget = (CDKALPHALIST *)object;
+   UnfocusObj(ObjOf (entryField));
+}
+*/
+
+/*
+ * Set data for preprocessing.
+ */
+void CDKOBJS::setCDKObjectPreProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data)
+{
+   preProcessFunction = fn;
+   preProcessData = data;
+}
+
+/*
+ * Set data for postprocessing.
+ */
+void CDKOBJS::setCDKObjectPostProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data)
+{
+   postProcessFunction = fn;
+   postProcessData = data;
+}
+
+/*
+ * This is the heart-beat of the widget.
+ */
+static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
+				 *object GCC_UNUSED,
+				 void *clientData,
+				 chtype input)
+{
+	/* *INDENT-EQLS* */
+	CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
+	CDKSCROLL *scrollp      = alphalist->scrollField;
+	CDKENTRY *entry         = alphalist->entryField;
+	int infoLen             = ((entry->info != 0)
+			? (int)strlen (entry->info)
+			: 0);
+	int result              = 1;
+	bool empty              = FALSE;
+
+	/* Make sure the entry field isn't empty. */
+	if (entry->info == 0) {
+		empty = TRUE;
+	} else if (alphalist->isCDKObjectBind(input)) {
+		result = 1;		/* don't try to use this key in editing */
+	} else if ((isChar (input) &&
+				(isalnum (CharOf (input)) ||
+				 ispunct (input))) ||
+			input == KEY_BACKSPACE ||
+			input == KEY_DC) {
+		int Index, difference, absoluteDifference, x;
+		int currPos = (entry->screenCol + entry->leftChar);
+		char *pattern = (char *)malloc ((size_t) infoLen + 2);
+
+		if (pattern != 0) {
+			strcpy (pattern, entry->info);
+
+			if (input == KEY_BACKSPACE || input == KEY_DC) {
+				if (input == KEY_BACKSPACE)
+					--currPos;
+				if (currPos >= 0)
+					strcpy (pattern + currPos, entry->info + currPos + 1);
+			} else {
+				pattern[currPos] = (char)input;
+				strcpy (pattern + currPos + 1, entry->info + currPos);
+			}
+		}
+		if (pattern == 0) {
+			Beep ();
+		} else if (strlen (pattern) == 0) {
+			empty = TRUE;
+		} else if ((Index = searchList ((CDK_CSTRING2)alphalist->list,
+						alphalist->listSize,
+						pattern)) >= 0) {
+			/* *INDENT-EQLS* */
+			difference           = Index - scrollp->currentItem;
+			absoluteDifference   = abs (difference);
+
+			/*
+			 * If the difference is less than zero, then move up.
+			 * Otherwise move down.
+			 *
+			 * If the difference is greater than 10 jump to the new
+			 * index position.  Otherwise provide the nice scroll.
+			 */
+			if (absoluteDifference <= 10) {
+				for (x = 0; x < absoluteDifference; x++) {
+					alphalist->injectMyScroller(
+							(chtype)((difference <= 0)
+								? KEY_UP
+								: KEY_DOWN));
+				}
+			} else {
+				scrollp->SetPosition(Index);
+			}
+			alphalist->drawMyScroller();
+		} else {
+			/* Kommentar G.Schade 17.11.18, erlaubt nicht in der Liste vertretene Eingaben
+			Beep ();
+			result = 0;
+			*/
+		}
+		if (pattern != 0)
+			free (pattern);
+	}
+	if (empty) {
+		scrollp->SetPosition(0);
+		alphalist->drawMyScroller();
+	}
+	return result;
+} // static int preProcessEntryField(
+
 
 /*
  * This creates the alphalist widget.
@@ -2956,34 +3396,29 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
    LRChar=ACS_RTEE;		/* lines: lower-right */
 
 	/* Set the key bindings for the entry field. */
-	bindCDKObject (vENTRY,
-			this->entryField,
+	entryField->bindCDKObject (
 			KEY_UP,
 			adjustAlphalistCB,
 			this);
-	bindCDKObject (vENTRY,
-			this->entryField,
+	entryField->bindCDKObject (
 			KEY_DOWN,
 			adjustAlphalistCB,
 			this);
-	bindCDKObject (vENTRY,
-			this->entryField,
+	entryField->bindCDKObject (
 			KEY_NPAGE,
 			adjustAlphalistCB,
 			this);
-	bindCDKObject (vENTRY,
-			this->entryField,
+	entryField->bindCDKObject (
 			KEY_PPAGE,
 			adjustAlphalistCB,
 			this);
-	bindCDKObject (vENTRY,
-			this->entryField,
+	entryField->bindCDKObject (
 			KEY_TAB,
 			completeWordCB,
 			this);
 
 	/* Set up the post-process function for the entry field. */
-	setCDKEntryPreProcess (this->entryField, preProcessEntryField, this);
+	entryField->setCDKObjectPreProcess(preProcessEntryField, this);
 
 	/*
 	 * Create the scrolling list.  It overlaps the entry field by one line if
@@ -2993,7 +3428,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	tempWidth = (isFullWidth (width)
 			? FULL
 			: boxWidth - 1);
-	this->scrollField = newCDKScroll (cdkscreen,
+	this->scrollField = new SScroll(cdkscreen,
 			getbegx (this->win),
 			getbegy (this->entryField->win)
 			+ tempHeight,
@@ -3003,23 +3438,47 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 			0, (CDK_CSTRING2)list, listSize,
 			NONUMBERS, A_REVERSE,
 			Box, FALSE);
-	setCDKScrollULChar (this->scrollField, ACS_LTEE);
-	setCDKScrollURChar (this->scrollField, ACS_RTEE);
+//	setCDKScrollULChar (this->scrollField, ACS_LTEE);
+   ULChar=ACS_LTEE;
+//	setCDKScrollURChar (this->scrollField, ACS_RTEE);
+   URChar=ACS_LTEE;	
 
 	/* Setup the key bindings. */
 	for (x = 0; x < (int)SIZEOF (bindings); ++x)
-		bindCDKObject (vthis,
-				this,
+		bindCDKObject(
 				(chtype)bindings[x].from,
 				getcCDKBind,
 				(void *)(long)bindings[x].to);
-
-	registerCDKObject (cdkscreen, vALPHALIST, this);
-
+	registerCDKObject(cdkscreen, vALPHALIST);
 //	return (this);
 }
 
-void SScroller::scroller_KEY_UP()
+void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
+{
+   SaveFocus(this);
+   scrollField->drawCDKScroll(box);
+   RestoreFocus(this);
+}
+
+/*
+ * This draws the file selector widget.
+ */
+void SAlphalist::drawCDKAlphalist(bool Box GCC_UNUSED)
+{
+//   CDKALPHALIST *alphalist = (CDKALPHALIST *)obj;
+   /* Does this widget have a shadow? */
+   if (!shadowWin) {
+      drawShadow(shadowWin);
+   }
+   /* Draw in the entry field. */
+   entryField->drawObj(entryField->box);
+   /* Draw in the scroll field. */
+	 // Kommentar GSchade 11.11.18: bewirkt, dass der Scroller erst gezeichnet wird, wenn in ihm ein Tastendruck erfolgt, z.B. Pfeil nach unten
+   this->drawMyScroller();
+}
+
+
+void SScroll_basis::scroll_KEY_UP()
 {
 	if (listSize <= 0 || currentItem <= 0) {
 		Beep();
@@ -3034,7 +3493,7 @@ void SScroller::scroller_KEY_UP()
    }
 }
 
-void SScroller::scroller_KEY_DOWN()
+void SScroll_basis::scroll_KEY_DOWN()
 {
    if (listSize <= 0 || currentItem >= lastItem) {
       Beep();
@@ -3049,7 +3508,7 @@ void SScroller::scroller_KEY_DOWN()
    }
 }
 
-void SScroller::scroller_KEY_LEFT()
+void SScroll_basis::scroll_KEY_LEFT()
 {
    if (listSize <= 0 || leftChar <= 0) {
       Beep();
@@ -3058,7 +3517,7 @@ void SScroller::scroller_KEY_LEFT()
    leftChar--;
 }
 
-void SScroller::scroller_KEY_RIGHT()
+void SScroll_basis::scroll_KEY_RIGHT()
 {
    if (listSize <= 0 || leftChar >= maxLeftChar) {
       Beep();
@@ -3067,7 +3526,7 @@ void SScroller::scroller_KEY_RIGHT()
    leftChar++;
 }
 
-void SScroller::scroller_KEY_PPAGE()
+void SScroll_basis::scroll_KEY_PPAGE()
 {
    int viewSize = viewSize - 1;
    if (listSize <= 0 || currentTop <= 0) {
@@ -3082,7 +3541,7 @@ void SScroller::scroller_KEY_PPAGE()
    }
 }
 
-void SScroller::scroller_KEY_NPAGE()
+void SScroll_basis::scroll_KEY_NPAGE()
 {
    int viewSize = viewSize - 1;
    if (listSize <= 0 || currentTop >= maxTopItem) {
@@ -3111,7 +3570,7 @@ void SScroll_basis::scroll_KEY_END()
    currentHigh = viewSize - 1;
 }
 
-void SScroller::scroller_FixCursorPosition()
+void SScroll_basis::scroll_FixCursorPosition()
 {
    int scrollbarAdj = (scrollbarPlacement == LEFT) ? 1 : 0;
    int ypos = SCREEN_YPOS(this,currentItem - currentTop);
@@ -3338,13 +3797,68 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 //   return this;
 }
 
+/*
+ * This actually does all the 'real' work of managing the scrolling list.
+ */
+int SScroll::activateCDKScroll(chtype *actions)
+{
+	/* Draw the scrolling list */
+	this->drawCDKScroll(box);
+	if (!actions) {
+		chtype input;
+		bool functionKey;
+		for (;;) {
+			int ret;
+			scroll_FixCursorPosition();
+			input = (chtype)this->getchCDKObject(&functionKey);
+			/* Inject the character into the widget. */
+			ret = this->injectObj(input);
+			if (this->exitType != vEARLY_EXIT) {
+				return ret;
+			}
+		}
+	} else {
+		int length = chlen(actions);
+		/* Inject each character one at a time. */
+		for (int i = 0; i < length; i++) {
+			int ret = injectObj(actions[i]);
+			if (this->exitType != vEARLY_EXIT)
+				return ret;
+		}
+	}
+	/* Set the exit type for the widget and return. */
+	setExitType(0);
+	return -1;
+}
+
+void SScroll::drawCDKScrollCurrent()
+{
+   /* Rehighlight the current menu item. */
+   int screenPos = this->itemPos[this->currentItem] - this->leftChar;
+   chtype highlight = HasFocusObj(this) ? this->highlight : 
+		 // Anfang G.Schade 2.10.18
+		 this->highlight
+		 /*A_NORMAL*/
+		 // Ende G.Schade 2.10.18
+		 ;
+
+   writeChtypeAttrib(this->listWin,
+		      (screenPos >= 0) ? screenPos : 0,
+		      this->currentHigh,
+		      this->item[this->currentItem],
+		      highlight,
+		      HORIZONTAL,
+		      (screenPos >= 0) ? 0 : (1 - screenPos),
+		      this->itemLen[this->currentItem]);
+}
+
 #undef  SCREEN_YPOS		/* because listWin is separate */
 #define SCREEN_YPOS(w,n) (n)
 
 /*
  * This redraws the scrolling list.
  */
-static void SScroll::drawCDKScrollList(bool Box)
+void SScroll::drawCDKScrollList(bool Box)
 {
 	/* If the list is empty, don't draw anything. */
 	if (this->listSize > 0) {
@@ -3354,12 +3868,12 @@ static void SScroll::drawCDKScrollList(bool Box)
 			int k;
 			int xpos = SCREEN_YPOS (this, 0);
 			int ypos = SCREEN_YPOS (this, j);
-			writeBlanks (this->listWin, xpos, ypos,
+			writeBlanks(this->listWin, xpos, ypos,
 					HORIZONTAL, 0, this->boxWidth - 2 * BorderOf (this));
 			k = j + this->currentTop;
 			/* Draw the elements in the scroll list. */
 			if (k < this->listSize) {
-				int screenPos = SCREENPOS (this, k);
+				int screenPos = SCREENPOS(this, k);
 				/* Write in the correct line. */
 				writeChtype (this->listWin,
 						(screenPos >= 0) ? screenPos : 1,
@@ -3370,7 +3884,7 @@ static void SScroll::drawCDKScrollList(bool Box)
 						this->itemLen[k]);
 			}
 		}
-		drawCDKScrollCurrent(this);
+		this->drawCDKScrollCurrent();
 		/* Determine where the toggle is supposed to be. */
 		if (this->scrollbarWin != 0) {
 			this->togglePos = floorCDK (this->currentItem * (double)this->step);
@@ -3390,12 +3904,13 @@ static void SScroll::drawCDKScrollList(bool Box)
 	}
 	/* Box it if needed. */
 	if (Box) {
-		drawObjBox (this->win, ObjOf (this));
+		drawObjBox(win);
 	} else {
 		touchwin (this->win);
 	}
 	wrefresh (this->win);
 } // static void drawCDKScrollList
+
 
 /*
  * This injects a single character into the widget.
@@ -3409,58 +3924,58 @@ int SScroll::injectObj(/*CDKOBJS *object, */chtype input)
 	bool complete = FALSE;
 
 	/* Set the exit type for the widget. */
-	setExitType(widget, 0);
+	setExitType(0);
 
 	/* Draw the scrolling list */
 	drawCDKScrollList(box);
 
 	/* Check if there is a pre-process function to be called. */
-	if (PreProcessFuncOf(widget) != 0) {
+	if (PreProcessFuncOf(this) != 0) {
 		/* Call the pre-process function. */
-		ppReturn = PreProcessFuncOf(widget) (vSCROLL,
-				widget,
-				PreProcessDataOf(widget),
+		ppReturn = PreProcessFuncOf(this) (vSCROLL,
+				this,
+				PreProcessDataOf(this),
 				input);
 	}
 
 	/* Should we continue? */
 	if (ppReturn != 0) {
 		/* Check for a predefined key binding. */
-		if (checkCDKObjectBind (vSCROLL, widget, input) != 0) {
-			checkEarlyExit (widget);
+		if (checkCDKObjectBind(input) != 0) {
+			checkEarlyExit (this);
 			complete = TRUE;
 		} else {
 			switch (input) {
 				case KEY_UP:
-					scroller_KEY_UP (widget);
+					scroll_KEY_UP();
 					break;
 
 				case KEY_DOWN:
-					scroller_KEY_DOWN (widget);
+					scroll_KEY_DOWN();
 					break;
 
 				case KEY_RIGHT:
-					scroller_KEY_RIGHT (widget);
+					scroll_KEY_RIGHT();
 					break;
 
 				case KEY_LEFT:
-					scroller_KEY_LEFT (widget);
+					scroll_KEY_LEFT();
 					break;
 
 				case KEY_PPAGE:
-					scroller_KEY_PPAGE (widget);
+					scroll_KEY_PPAGE();
 					break;
 
 				case KEY_NPAGE:
-					scroller_KEY_NPAGE (widget);
+					scroll_KEY_NPAGE ();
 					break;
 
 				case KEY_HOME:
-					scroller_KEY_HOME (widget);
+					scroll_KEY_HOME ();
 					break;
 
 				case KEY_END:
-					scroller_KEY_END (widget);
+					scroll_KEY_END ();
 					break;
 
 				case '$':
@@ -3472,23 +3987,23 @@ int SScroll::injectObj(/*CDKOBJS *object, */chtype input)
 					break;
 
 				case KEY_ESC:
-					setExitType (widget, input);
+					setExitType(input);
 					complete = TRUE;
 					break;
 
 				case KEY_ERROR:
-					setExitType (widget, input);
+					setExitType(input);
 					complete = TRUE;
 					break;
 
 				case CDK_REFRESH:
-					eraseCDKScreen (ScreenOf (widget));
-					refreshCDKScreen (ScreenOf (widget));
+					screen->eraseCDKScreen ();
+					refreshCDKScreen();
 					break;
 
 				case KEY_TAB:
 				case KEY_ENTER:
-					setExitType (widget, input);
+					setExitType(input);
 					ret = widget->currentItem;
 					complete = TRUE;
 					break;
@@ -3507,11 +4022,11 @@ int SScroll::injectObj(/*CDKOBJS *object, */chtype input)
 		}
 	}
 	if (!complete) {
-		drawCDKScrollList(myself, ObjOf (widget)->box);
-		setExitType (widget, 0);
+		drawCDKScrollList(box);
+		setExitType(0);
 	}
-	fixCursorPosition (myself);
-	ResultOf (widget).valueInt = ret;
+	scroll_FixCursorPosition();
+	ResultOf(widget).valueInt = ret;
 	return (ret != unknownInt);
 } // static int _injectCDKScroll
 
@@ -3659,12 +4174,11 @@ CDKOBJS *SScreen::setCDKFocusNext()
 	CDKOBJS *curobj;
 	int n = getFocusIndex();
 	int first = n;
-
 	for (;;) {
 		if (++n >= this->objectCount)
 			n = 0;
 		curobj = this->object[n];
-		if (curobj != 0 && AcceptsFocusObj (curobj)) {
+		if (curobj != 0 && AcceptsFocusObj(curobj)) {
 			result = curobj;
 			break;
 		} else {
