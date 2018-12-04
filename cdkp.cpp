@@ -3467,20 +3467,25 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 	 return (TRUE);
 }
 
-/*
 void SAlphalist::focusCDKAlphalist()
 {
 //   CDKALPHALIST *widget = (CDKALPHALIST *)object;
-   FocusObj(entryField);
-	 focusCDK
+	/*
+	FocusObj(entryField);
+	MethodPtr(entryField,focusObj)(entryField);
+	((ObjPtr(entryField))->focusObj)(entryField);
+	(((CDKOBJS*)(entryField))->focusObj)(entryField);
+	entryField->focusObj(entryField);
+	*/
+	entryField->focusCDKEntry();
 }
 
 void SAlphalist::unfocusCDKAlphalist()
 {
 //   CDKALPHALIST *widget = (CDKALPHALIST *)object;
-   UnfocusObj(ObjOf (entryField));
+//   UnfocusObj(ObjOf(entryField));
+	entryField->unfocusCDKEntry();
 }
-*/
 
 /*
  * Set data for preprocessing.
@@ -4243,7 +4248,7 @@ void SScroll::drawCDKScrollList(bool Box)
 int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 {
 	//   CDKSCROLL *myself = (CDKSCROLL *)object;
-	CDKSCROLLER *widget = (CDKSCROLLER *)this;
+//	CDKSCROLLER *widget = (CDKSCROLLER *)this;
 	int ppReturn = 1;
 	int ret = unknownInt;
 	bool complete = FALSE;
@@ -4304,11 +4309,11 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 					break;
 
 				case '$':
-					widget->leftChar = widget->maxLeftChar;
+					/*widget->*/leftChar = /*widget->*/maxLeftChar;
 					break;
 
 				case '|':
-					widget->leftChar = 0;
+					/*widget->*/leftChar = 0;
 					break;
 
 				case KEY_ESC:
@@ -4329,7 +4334,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 				case KEY_TAB:
 				case KEY_ENTER:
 					setExitType(input);
-					ret = widget->currentItem;
+					ret = /*widget->*/currentItem;
 					complete = TRUE;
 					break;
 
@@ -4338,11 +4343,11 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 			}
 		}
 		/* Should we call a post-process? */
-		if (!complete && (PostProcessFuncOf (widget) != 0))
+		if (!complete && (PostProcessFuncOf (this/*widget*/) != 0))
 		{
-			PostProcessFuncOf (widget) (vSCROLL,
-					widget,
-					PostProcessDataOf (widget),
+			PostProcessFuncOf (this/*widget*/) (vSCROLL,
+					this/*widget*/,
+					PostProcessDataOf (this/*widget*/),
 					input);
 		}
 	}
@@ -4351,7 +4356,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 		setExitType(0);
 	}
 	scroll_FixCursorPosition();
-	ResultOf(widget).valueInt = ret;
+	ResultOf(this/*widget*/).valueInt = ret;
 	return (ret != unknownInt);
 } // static int _injectCDKScroll
 

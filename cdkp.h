@@ -222,9 +222,11 @@ extern einbauart akteinbart;
 /* The cast is needed because traverse.c wants to use CDKOBJS pointers */
 #define ObjPtr(p)           ((CDKOBJS*)(p))
 
-#define MethodPtr(p,m)      ((ObjPtr(p))->fn->m)
+//#define MethodPtr(p,m)      ((ObjPtr(p))->fn->m)
+//#define MethodPtr(p,m)      ((ObjPtr(p))->m)
 
 /* Use these when we're certain it is a CDKOBJS pointer */
+/*
 #define ObjTypeOf(p)            MethodPtr(p,objectType)
 #define DataTypeOf(p)           MethodPtr(p,returnType)
 #define DrawObj(p)              MethodPtr(p,drawObj)         (p,p->box)
@@ -237,6 +239,7 @@ extern einbauart akteinbart;
 #define SaveDataObj(p)          MethodPtr(p,saveDataObj)     (p)
 #define RefreshDataObj(p)       MethodPtr(p,refreshDataObj)  (p)
 #define SetBackAttrObj(p,c)     MethodPtr(p,setBKattrObj)    (p,c)
+*/
 
 #define AcceptsFocusObj(p)      (ObjPtr(p)->acceptsFocus)
 #define HasFocusObj(p)          (ObjPtr(p)->hasFocus)
@@ -415,8 +418,6 @@ typedef struct CDKBINDING {
 } CDKBINDING;
 
 
-struct CDKOBJS;
-
 // typedef struct _all_objects { struct _all_objects *link; CDKOBJS *object; } ALL_OBJECTS;
 
 /*
@@ -540,11 +541,11 @@ struct CDKOBJS
 	 virtual void drawObj(bool);
 	 virtual void eraseObj();
 	 virtual void destroyObj();
+	 virtual void focusObj(CDKOBJS*);
+	 virtual void unfocusObj(CDKOBJS*);
 	 /*
 	 virtual void moveObj(int,int,bool,bool);
 	 virtual int injectObj(chtype);
-	 virtual void focusObj();
-	 virtual void unfocusObj();
 	 virtual void saveDataObj();
 	 virtual void refreshDataObj();
 	 */
@@ -623,7 +624,9 @@ struct SEntry:CDKOBJS
 	 void setBKattrEntry(chtype attrib);
 	 void setCDKEntryHighlight(chtype highlight, bool cursor);
 	 void focusCDKEntry();
+	 void focusObj(CDKOBJS*){focusCDKEntry();}
 	 void unfocusCDKEntry();
+	 void unfocusObj(CDKOBJS*){unfocusCDKEntry();}
 	 EExitType exitType;
    EDisplayType dispType;
    bool	shadow;
@@ -719,10 +722,12 @@ struct SScroll_basis:CDKOBJS
 	void setViewSize(int listSize);
 };
 
+/*
 struct SScroller:SScroll_basis
 {
 };
 typedef struct SScroller CDKSCROLLER;
+*/
 
 /*
  * Declare scrolling list definitions.
@@ -859,6 +864,8 @@ struct SAlphalist:CDKOBJS
 	 void setMyBKattr(chtype character);
 	 void setCDKAlphalistPreProcess(PROCESSFN callback, void *data);
 	 void setCDKAlphalistPostProcess(PROCESSFN callback, void *data);
+	 void focusCDKAlphalist();
+	 void unfocusCDKAlphalist();
 };
 typedef struct SAlphalist CDKALPHALIST;
 
