@@ -480,7 +480,7 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
 			      *object GCC_UNUSED,
 			      void *clientData,
 			      chtype key);
-static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED,
+static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED,
 			   void *clientData,
 			   chtype key GCC_UNUSED);
 char *chtype2Char (const chtype *string);
@@ -539,14 +539,16 @@ struct CDKOBJS
    //CDKDataType  returnType;
 	 virtual void drawObj(bool);
 	 virtual void eraseObj();
+	 virtual void destroyObj();
+	 /*
 	 virtual void moveObj(int,int,bool,bool);
 	 virtual int injectObj(chtype);
 	 virtual void focusObj();
 	 virtual void unfocusObj();
 	 virtual void saveDataObj();
 	 virtual void refreshDataObj();
-	 virtual void destroyObj();
-   /* line-drawing */
+	 */
+   // line-drawing 
 	 virtual void setULcharObj(chtype);
 	 virtual void setURcharObj(chtype);
 	 virtual void setLLcharObj(chtype);
@@ -555,7 +557,7 @@ struct CDKOBJS
 	 virtual void setHZcharObj(chtype);
 	 virtual void setBXattrObj(chtype);
 	 void setBox(bool Box);
-   /* background attribute */
+   // background attribute
 	 virtual void setBKattrObj(chtype);
 	 void refreshDataCDK();
 	 void saveDataCDK();
@@ -651,13 +653,16 @@ struct SEntry:CDKOBJS
 			 // Ende GSchade 17.11.18
 			 );
 	 ~SEntry();
-	 void drawObj(bool);
+	 void destroyObj(){this->~SEntry();}
+	 void drawCDKEntry(bool);
+	 void drawObj(bool box){drawCDKEntry(box);}
 	 void cleanCDKEntry();
 	 int injectCDKEntry(chtype);
 	 void setCDKEntryValue(const char *newValue);
-	 void eraseObj();
+	 void eraseCDKEntry();
+	 void eraseObj(){eraseCDKEntry();}
 	 char* activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
-	 void moveObj(int,int,bool,bool);
+	 void moveCDKEntry(int,int,bool,bool);
 	 void CDKEntryCallBack(chtype character);
 	 void (SEntry::*callbfn)(chtype character)=NULL;
 }; // struct SEntry:CDKOBJS
@@ -742,28 +747,40 @@ struct SScroll:SScroll_basis
 			 bool		/* Box */,
 			 bool		/* shadow */);
 	 ~SScroll();
-	 void eraseObj/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
+	 void destroyObj(){this->~SScroll();}
+	 void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
+	 void eraseObj(){eraseCDKScroll();}
 	 void setCDKScrollBox(bool Box);
 	 int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
 	 bool allocListArrays(int oldSize, int newSize);
 	 bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
-	 int injectObj(/*CDKOBJS *object, */chtype input);
+	 int injectCDKScroll(/*CDKOBJS *object, */chtype input);
 	 void drawCDKScrollList(bool Box);
 	 int activateCDKScroll(chtype *actions);
 	 void setCDKScrollPosition(int item);
 	 void drawCDKScroll(bool Box);
+	 void drawObj(bool box){drawCDKScroll(box);}
 	 void drawCDKScrollCurrent();
-	 void moveObj(int xplace, int yplace, bool relative, bool refresh_flag);
-};
+	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
+	 void setCDKScroll(CDK_CSTRING2 list, int listSize, bool numbers, chtype hl, bool Box);
+	 void setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers);
+	 void setCDKScrollCurrent(int item);
+	 void setBKattrScroll(chtype attrib);
+}; // struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 
 
 struct SFileSelector:CDKOBJS
 {
-   CDKENTRY *	entryField;
-	 CDKOBJS* bindableObject();
+	CDKENTRY *	entryField;
+	CDKOBJS* bindableObject();
 	SFileSelector();
-	 void eraseObj();
+	~SFileSelector();
+	void destroyObj(){this->~SFileSelector();}
+	void eraseCDKFselect();
+	void eraseObj(){eraseCDKFselect();}
+	void drawCDKFselect(bool Box);
+	void drawObj(bool box){drawCDKFselect(box);}
 }; // struct SFileSelector:CDKOBJS
 typedef struct SFileSelector CDKFSELECT;
 
@@ -806,8 +823,10 @@ struct SAlphalist:CDKOBJS
 			 // GSchade Ende
 			 );
 	 ~SAlphalist();
+	 void destroyObj(){this->~SAlphalist();}
 	 void drawMyScroller(/*CDKALPHALIST *widget*/);
 	 void drawCDKAlphalist(bool Box GCC_UNUSED);
+	 void drawObj(bool box){drawCDKAlphalist(box);}
 	 void moveCDKAlphalist(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void injectMyScroller(chtype key);
 	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
@@ -816,8 +835,30 @@ struct SAlphalist:CDKOBJS
 	 void focusCDKAlphalist()//CDKOBJS *object
 	 void unfocusCDKAlphalist()//CDKOBJS *object
 	 */
-	 void eraseObj();
+	 void eraseCDKAlphalist();
+	 void eraseObj(){eraseCDKAlphalist();}
 	 void destroyInfo();
+	 void setCDKAlphalist(CDK_CSTRING *list, int listSize, chtype fillerChar, chtype highlight, bool Box);
+	 void setCDKAlphalistContents (CDK_CSTRING *list, int listSize);
+	 char **getCDKAlphalistContents(int *size);
+	 int getCDKAlphalistCurrentItem();
+	 void setCDKAlphalistCurrentItem(int item);
+	 void setCDKAlphalistFillerChar(chtype fillerCharacter);
+	 chtype getCDKAlphalistFillerChar();
+	 void setCDKAlphalistHighlight(chtype hl);
+	 chtype getCDKAlphalistHighlight();
+	 void setCDKAlphalistBox(bool Box);
+	 bool getCDKAlphalistBox();
+	 void setMyULchar(chtype character);
+	 void setMyURchar(chtype character);
+	 void setMyLLchar(chtype character);
+	 void setMyLRchar(chtype character);
+	 void setMyVTchar(chtype character);
+	 void setMyHZchar(chtype character);
+	 void setMyBXattr(chtype character);
+	 void setMyBKattr(chtype character);
+	 void setCDKAlphalistPreProcess(PROCESSFN callback, void *data);
+	 void setCDKAlphalistPostProcess(PROCESSFN callback, void *data);
 };
 typedef struct SAlphalist CDKALPHALIST;
 

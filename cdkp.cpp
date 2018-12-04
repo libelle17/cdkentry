@@ -1536,12 +1536,11 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 		CDKSCREEN *screen = (this)->screen;
 		if (screen != 0) {
 			int Index = (this)->screenIndex;
-			int x;
 			this->screenIndex = -1;
 			/*
 			 * Resequence the objects.
 			 */
-			for (x = Index; x < screen->objectCount - 1; x++) {
+			for (int x = Index; x < screen->objectCount - 1; x++) {
 				screen->object[x+1]->setScreenIndex(screen, x/*, screen->object[x + 1]*/);
 			}
 			if (screen->objectCount <= 1) {
@@ -1586,7 +1585,7 @@ SEntry::~SEntry()
 /*
  * This moves the entry field to the given location.
  */
-void SEntry::moveObj(/*CDKOBJS *object,*/
+void SEntry::moveCDKEntry(/*CDKOBJS *object,*/
 		int xplace,
 		int yplace,
 		bool relative,
@@ -1622,7 +1621,7 @@ void SEntry::moveObj(/*CDKOBJS *object,*/
 	refreshCDKWindow (WindowOf (this));
 	/* Redraw the window, if they asked for it. */
 	if (refresh_flag) {
-		drawObj(box);
+		drawCDKEntry(box);
 	}
 }
 
@@ -1666,8 +1665,8 @@ void SAlphalist::moveCDKAlphalist(
    moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
 
    /* Move the sub-widgets. */
-   entryField->moveObj(xplace, yplace, relative, FALSE);
-   scrollField->moveObj(xplace, yplace, relative, FALSE);
+   entryField->moveCDKEntry(xplace, yplace, relative, FALSE);
+   scrollField->moveCDKScroll(xplace, yplace, relative, FALSE);
 
    /* Touch the windows so they 'move'. */
    refreshCDKWindow (WindowOf (this));
@@ -1681,7 +1680,7 @@ void SAlphalist::moveCDKAlphalist(
 /*
  * This moves the scroll field to the given location.
  */
-void SScroll::moveObj(
+void SScroll::moveCDKScroll(
 			    int xplace,
 			    int yplace,
 			    bool relative,
@@ -1746,6 +1745,28 @@ SAlphalist::~SAlphalist()
       /* Unregister the object. */
       unregisterCDKObject(vALPHALIST);
 }
+
+/*
+ * This function sets the pre-process function.
+ */
+void SAlphalist::setCDKAlphalistPreProcess (
+				PROCESSFN callback,
+				void *data)
+{
+   entryField->setCDKObjectPreProcess(callback, data);
+}
+
+/*
+ * This function sets the post-process function.
+ */
+void SAlphalist::setCDKAlphalistPostProcess(
+				 PROCESSFN callback,
+				 void *data)
+{
+   entryField->setCDKObjectPostProcess(callback, data);
+}
+
+
 
 /*
  * This function draws the scrolling list widget.
@@ -2390,7 +2411,7 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 	int zweit;
 	if (!Zweitzeichen) Zweitzeichen=&zweit;
 	/* Draw the widget. */
-	drawObj(/*entry, ObjOf (entry)->*/box);
+	drawCDKEntry(/*entry, ObjOf (entry)->*/box);
 	if (!actions) {
 		for (;;) {
 			//static int y=2;
@@ -2434,7 +2455,7 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 			}
 			wrefresh(entry->parent); // gleichbedeutend: wrefresh(entry->obj.screen->window);
       */
-      drawObj(/*entry, ObjOf (entry)->*/box);
+      drawCDKEntry(/*entry, ObjOf (entry)->*/box);
       // GSchade Ende
 
 			if (this->exitType != vEARLY_EXIT||*Zweitzeichen==-8||*Zweitzeichen==-9||*Zweitzeichen==-10||*Zweitzeichen==-11) {
@@ -2490,7 +2511,7 @@ char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,i
  * This draws the entry field.
  */
 //void SEntry::drawCDKEntry(bool Box)
-void SEntry::drawObj(bool Box)
+void SEntry::drawCDKEntry(bool Box)
 {
 //	CDKENTRY *entry = (CDKENTRY *)object;
 	/* Did we ask for a shadow? */
@@ -2856,7 +2877,7 @@ void SEntry::cleanCDKEntry()
 /*
  * This erases an entry widget from the screen.
  */
-void SEntry::eraseObj() // _eraseCDKEntry
+void SEntry::eraseCDKEntry()
 {
 //	if (validCDKObject (object))
 	{
@@ -2870,15 +2891,14 @@ void SEntry::eraseObj() // _eraseCDKEntry
 /*
  * This erases the file selector from the screen.
  */
-void SAlphalist::eraseObj/*_eraseCDKAlphalist*/()
+void SAlphalist::eraseCDKAlphalist/*_eraseCDKAlphalist*/()
 {
 	//   if (validCDKObject (object))
 	{
 		//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
-		//      eraseCDKScroll (scrollField);
-		scrollField->eraseObj();
+		scrollField->eraseCDKScroll();
 		//      eraseCDKEntry (entryField);
-		entryField->eraseObj();
+		entryField->eraseCDKEntry();
 		eraseCursesWindow(shadowWin);
 		eraseCursesWindow(win);
 	}
@@ -2887,7 +2907,7 @@ void SAlphalist::eraseObj/*_eraseCDKAlphalist*/()
 /*
  * This function erases the scrolling list from the screen.
  */
-void SScroll::eraseObj/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
+void SScroll::eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
 {
 //   if (validCDKObject (object))
    {
@@ -2917,7 +2937,7 @@ void CDKOBJS::refreshCDKScreen()
 	 * be drawn after all the invisible ones are erased */
 	for (x = 0; x < objectCount; x++) {
 		CDKOBJS *obj = screen->object[x];
-//		if (validObjType (obj, ObjTypeOf (obj))) {
+//		if (validObjType (obj, ObjTypeOf (obj))) KLA
 			if (obj->validObjType(obj->cdktype)) {
 			if (obj->isVisible) {
 				if (visible < 0)
@@ -2931,7 +2951,7 @@ void CDKOBJS::refreshCDKScreen()
 	}
 	for (x = 0; x < objectCount; x++) {
 		CDKOBJS *obj = screen->object[x];
-		//		if (validObjType (obj, ObjTypeOf (obj))) {
+		//		if (validObjType (obj, ObjTypeOf (obj))) KLA
 		if (obj->validObjType(obj->cdktype)) {
 			obj->hasFocus = (x == focused);
 			if (obj->isVisible) {
@@ -2940,7 +2960,7 @@ void CDKOBJS::refreshCDKScreen()
 			}
 		}
 	}
-}
+} // void CDKOBJS::refreshCDKScreen()
 
 
 /*
@@ -3055,7 +3075,7 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 void SAlphalist::injectMyScroller(chtype key)
 {
 	SaveFocus(this);
-	scrollField->injectObj(key);
+	scrollField->injectCDKScroll(key);
 	RestoreFocus(this);
 }
 
@@ -3079,16 +3099,226 @@ int SAlphalist::injectCDKAlphalist(chtype input)
    return (ret != unknownString);
 }
 
+/*
+ * This sets multiple attributes of the widget.
+ */
+void SAlphalist::setCDKAlphalist(
+		      CDK_CSTRING *list,
+		      int listSize,
+		      chtype fillerChar,
+		      chtype highlight,
+		      bool Box)
+{
+   setCDKAlphalistContents(list, listSize);
+   setCDKAlphalistFillerChar(fillerChar);
+   setCDKAlphalistHighlight(highlight);
+   setCDKAlphalistBox(Box);
+}
+
+/*
+ * This sets certain attributes of the scrolling list.
+ */
+void SScroll::setCDKScroll(
+		   CDK_CSTRING2 list,
+		   int listSize,
+		   bool numbers,
+		   chtype hl,
+		   bool Box)
+{
+   setCDKScrollItems(list, listSize, numbers);
+	 highlight=hl;
+	 box=Box;
+}
+
+/*
+ * This sets the scrolling list items.
+ */
+void SScroll::setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers)
+{
+   if (createCDKScrollItemList(numbers, list, listSize) <= 0)
+      return;
+   /* Clean up the display. */
+   for (int x = 0; x < this->viewSize; x++) {
+      writeBlanks (this->win, 1, SCREEN_YPOS (this, x),
+		   HORIZONTAL, 0, this->boxWidth - 2);
+   }
+   setViewSize(listSize);
+   setCDKScrollPosition(0);
+   this->leftChar = 0;
+}
+
+/*
+ * This allows the user to accelerate to a position in the scrolling list.
+ */
+void SScroll::setCDKScrollPosition(int item)
+{
+ SetPosition(item);
+}
+
+/*
+ * This function sets the information inside the file selector.
+ */
+void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
+{
+   CDKSCROLL *scrollp = this->scrollField;
+   CDKENTRY *entry = this->entryField;
+
+   if (!createList(list, listSize))
+      return;
+
+   /* Set the information in the scrolling list. */
+   scrollp->setCDKScroll(
+		 (CDK_CSTRING2)this->list,
+		 this->listSize,
+		 NONUMBERS,
+		 scrollp->highlight,
+		 ObjOf (scrollp)->box);
+
+   /* Clean out the entry field. */
+   setCDKAlphalistCurrentItem(0);
+   entry->cleanCDKEntry();
+
+   /* Redraw the this. */
+   this->eraseCDKAlphalist();
+   this->drawCDKAlphalist(box);
+}
+
+/*
+ * This returns the contents of the widget.
+ */
+char **SAlphalist::getCDKAlphalistContents(int *size)
+{
+   (*size) = listSize;
+   return list;
+}
+
+/*
+ * Get/set the current position in the scroll-widget.
+ */
+int SAlphalist::getCDKAlphalistCurrentItem()
+{
+   return scrollField->currentItem;
+}
+
+void SAlphalist::setCDKAlphalistCurrentItem(int item)
+{
+   if (this->listSize) {
+      scrollField->setCDKScrollCurrent(item);
+      entryField->setCDKEntryValue(this->list[scrollField->currentItem]);
+   }
+}
+
+void SScroll::setCDKScrollCurrent(int item)
+{
+	SetPosition(item);
+}
+
+/*
+ * This sets the filler character of the entry field of the alphalist.
+ */
+void SAlphalist::setCDKAlphalistFillerChar(chtype fillerCharacter)
+{
+	fillerChar = fillerCharacter;
+	entryField->filler=fillerCharacter;
+}
+
+chtype SAlphalist::getCDKAlphalistFillerChar()
+{
+   return fillerChar;
+}
+
+/*
+ * This sets the highlight bar attributes.
+ */
+void SAlphalist::setCDKAlphalistHighlight(chtype hl)
+{
+   highlight = hl;
+}
+
+chtype SAlphalist::getCDKAlphalistHighlight()
+{
+   return highlight;
+}
+
+/*
+ * This sets whether or not the widget will be drawn with a box.
+ */
+void SAlphalist::setCDKAlphalistBox(bool Box)
+{
+   box = Box;
+   borderSize = Box ? 1 : 0;
+}
+
+bool SAlphalist::getCDKAlphalistBox()
+{
+   return box;
+}
+
+/*
+ * These functions set the drawing characters of the widget.
+ */
+void SAlphalist::setMyULchar(chtype character)
+{
+	 entryField->ULChar=character;
+}
+void SAlphalist::setMyURchar (chtype character)
+{
+	 entryField->URChar=character;
+}
+void SAlphalist::setMyLLchar(chtype character)
+{
+	 scrollField->LLChar=character;
+}
+void SAlphalist::setMyLRchar(chtype character)
+{
+	 scrollField->LRChar=character;
+}
+void SAlphalist::setMyVTchar(chtype character)
+{
+   entryField->VTChar=character;// setCDKEntryVerticalChar (character);
+   scrollField->VTChar=character;//setCDKScrollVerticalChar (character);
+}
+void SAlphalist::setMyHZchar(chtype character)
+{
+   entryField->HZChar=character;//setCDKEntryHorizontalChar (character);
+   scrollField->HZChar=character;//setCDKScrollHorizontalChar (character);
+}
+void SAlphalist::setMyBXattr(chtype character)
+{
+   entryField->BXAttr=character; //setCDKEntryBoxAttribute (character);
+   scrollField->BXAttr=character; // setCDKScrollBoxAttribute (character);
+}
+/*
+ * This sets the background attribute of the widget.
+ */
+void SAlphalist::setMyBKattr(chtype character)
+{
+	 entryField->setBKattrEntry(character);//setCDKEntryBoxAttribute (character);
+	 scrollField->setBKattrScroll(character);// setCDKScrollBoxAttribute (character);
+}
+
+/*
+ * This sets the background attribute of the widget.
+ */
+void SScroll::setBKattrScroll(chtype attrib)
+{
+	//      CDKSCROLL *widget = (CDKSCROLL *)object;
+	wbkgd (this->win, attrib);
+	wbkgd (this->listWin, attrib);
+	if (this->scrollbarWin) {
+		wbkgd (this->scrollbarWin, attrib);
+	}
+}
 
 /*
  * Start of callback functions.
  */
 static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
-			      *object GCC_UNUSED,
-			      void *clientData,
-			      chtype key)
+		*object GCC_UNUSED,
+		void *clientData,
+		chtype key)
 {
-   /* *INDENT-EQLS* */
+	/* *INDENT-EQLS* */
    CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
    CDKSCROLL *scrollp      = alphalist->scrollField;
    CDKENTRY *entry         = alphalist->entryField;
@@ -3237,47 +3467,12 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 	 return (TRUE);
 }
 
-static int createList(CDKALPHALIST *alphalist, CDK_CSTRING *list, int listSize)
-{
-	int status = 0;
-	if (listSize >= 0) {
-		char **newlist = typeCallocN (char *, listSize + 1);
-		if (newlist != 0) {
-			int x;
-			/*
-			 * We'll sort the list before we use it.  It would have been better to
-			 * declare list[] const and only modify the copy, but there may be
-			 * clients that rely on the old behavior.
-			 */
-			sortList (list, listSize);
-			/* Copy in the new information. */
-			status = 1;
-			for (x = 0; x < listSize; x++) {
-				if ((newlist[x] = copyChar (list[x])) == 0) {
-					status = 0;
-					break;
-				}
-			}
-			if (status) {
-				alphalist->destroyInfo();
-				alphalist->listSize = listSize;
-				alphalist->list = newlist;
-			} else {
-				CDKfreeStrings (newlist);
-			}
-		}
-	} else {
-		alphalist->destroyInfo();
-		status = TRUE;
-	}
-	return status;
-}
-
 /*
 void SAlphalist::focusCDKAlphalist()
 {
 //   CDKALPHALIST *widget = (CDKALPHALIST *)object;
    FocusObj(entryField);
+	 focusCDK
 }
 
 void SAlphalist::unfocusCDKAlphalist()
@@ -3438,7 +3633,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	/* *INDENT-ON* */
 
 	::CDKOBJS();
-	if (/*(alphalist = newCDKObject (CDKALPHALIST, &my_funcs)) == 0 || */ !createList (list, listSize)) {
+	if (/*(alphalist = newCDKObject (CDKALPHALIST, &my_funcs)) == 0 || */ !createList(list, listSize)) {
 		destroyCDKObject();
 		return;
 	}
@@ -3942,7 +4137,7 @@ int SScroll::activateCDKScroll(chtype *actions)
 			scroll_FixCursorPosition();
 			input = (chtype)this->getchCDKObject(&functionKey);
 			/* Inject the character into the widget. */
-			ret = this->injectObj(input);
+			ret = this->injectCDKScroll(input);
 			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -3951,7 +4146,7 @@ int SScroll::activateCDKScroll(chtype *actions)
 		int length = chlen(actions);
 		/* Inject each character one at a time. */
 		for (int i = 0; i < length; i++) {
-			int ret = injectObj(actions[i]);
+			int ret = injectCDKScroll(actions[i]);
 			if (this->exitType != vEARLY_EXIT)
 				return ret;
 		}
@@ -4045,7 +4240,7 @@ void SScroll::drawCDKScrollList(bool Box)
 /*
  * This injects a single character into the widget.
  */
-int SScroll::injectObj(/*CDKOBJS *object, */chtype input)
+int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 {
 	//   CDKSCROLL *myself = (CDKSCROLL *)object;
 	CDKSCROLLER *widget = (CDKSCROLLER *)this;
