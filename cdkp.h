@@ -417,6 +417,9 @@ typedef struct CDKBINDING {
    PROCESSFN    callbackfn;
 } CDKBINDING;
 
+EDisplayType char2DisplayType (const char *string);
+bool isHiddenDisplayType (EDisplayType type);
+int filterByDisplayType (EDisplayType type, chtype input);
 
 // typedef struct _all_objects { struct _all_objects *link; CDKOBJS *object; } ALL_OBJECTS;
 
@@ -780,7 +783,9 @@ struct SScroll:SScroll_basis
 	 void insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item);
 	 void deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position);
 	 void focusCDKScroll(/*CDKOBJS *object*/);
+	 void focusObj(CDKOBJS*){focusCDKScroll();}
 	 void unfocusCDKScroll(/*CDKOBJS *object*/);
+	 void unfocusObj(CDKOBJS*){unfocusCDKScroll();}
 }; // struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 

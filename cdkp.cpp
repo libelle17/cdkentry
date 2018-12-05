@@ -1230,74 +1230,6 @@ void moveCursesWindow (WINDOW *window, int xdiff, int ydiff)
 	}
 }
 
-/*
- * Given a character input, check if it is allowed by the display type,
- * and return the character to apply to the display, or ERR if not.
- */
-int filterByDisplayType (EDisplayType type, chtype input)
-{
-	int result = CharOf(input);
-	if (!isChar(input)) {
-		result = ERR;
-	} else if ((type == vINT ||
-				type == vHINT) &&
-			!isdigit (CharOf (result))) {
-		result = ERR;
-	} else if ((type == vCHAR ||
-				type == vUCHAR ||
-				type == vLCHAR ||
-				type == vUHCHAR ||
-				type == vLHCHAR) &&
-			isdigit (CharOf (result))) {
-		result = ERR;
-	} else if (type == vVIEWONLY) {
-		result = ERR;
-	} else if ((type == vUCHAR ||
-				type == vUHCHAR ||
-				type == vUMIXED ||
-				type == vUHMIXED) &&
-			isalpha (CharOf (result))) {
-		result = toupper (result);
-	} else if ((type == vLCHAR ||
-				type == vLHCHAR ||
-				type == vLMIXED ||
-				type == vLHMIXED) &&
-			isalpha (CharOf (result))) {
-		result = tolower (result);
-	}
-	return result;
-}
-
-/*
- * Tell if a display type is "hidden"
- */
-bool isHiddenDisplayType(EDisplayType type)
-{
-	bool result = FALSE;
-	switch (type) {
-		case vHCHAR:
-		case vHINT:
-		case vHMIXED:
-		case vLHCHAR:
-		case vLHMIXED:
-		case vUHCHAR:
-		case vUHMIXED:
-			result = TRUE;
-			break;
-		case vCHAR:
-		case vINT:
-		case vINVALID:
-		case vLCHAR:
-		case vLMIXED:
-		case vMIXED:
-		case vUCHAR:
-		case vUMIXED:
-		case vVIEWONLY:
-			result = FALSE;
-			break;
-	}
-	return result;
-}
 
 int comparSort(const void *a, const void *b)
 {
@@ -1437,6 +1369,112 @@ void writeCharAttrib (WINDOW *window,
 	}
 }
 
+// die nächsten 3 aus display.c
+/*
+ * Given a character pointer, returns the equivalent display type.
+ */
+EDisplayType char2DisplayType(const char *string)
+{
+	/* *INDENT-OFF* */
+	static const struct {
+		const char *name;
+		EDisplayType code;
+	} table[] = {
+		{ "CHAR",		vCHAR },
+		{ "HCHAR",	vHCHAR },
+		{ "INT",		vINT },
+		{ "HINT",		vHINT },
+		{ "UCHAR",	vUCHAR },
+		{ "LCHAR",	vLCHAR },
+		{ "UHCHAR",	vUHCHAR },
+		{ "LHCHAR",	vLHCHAR },
+		{ "MIXED",	vMIXED },
+		{ "HMIXED",	vHMIXED },
+		{ "UMIXED",	vUMIXED },
+		{ "LMIXED",	vLMIXED },
+		{ "UHMIXED",	vUHMIXED },
+		{ "LHMIXED",	vLHMIXED },
+		{ "VIEWONLY",	vVIEWONLY },
+		{ 0,		vINVALID },
+	};
+	/* *INDENT-ON* */
+	if (string) {
+		for (int n = 0; table[n].name != 0; n++) {
+			if (!strcmp (string, table[n].name))
+				return table[n].code;
+		}
+	}
+	return (EDisplayType) vINVALID;
+}
+
+/*
+ * Tell if a display type is "hidden"
+ */
+bool isHiddenDisplayType(EDisplayType type)
+{
+	bool result = FALSE;
+	switch (type) {
+		case vHCHAR:
+		case vHINT:
+		case vHMIXED:
+		case vLHCHAR:
+		case vLHMIXED:
+		case vUHCHAR:
+		case vUHMIXED:
+			result = TRUE;
+			break;
+		case vCHAR:
+		case vINT:
+		case vINVALID:
+		case vLCHAR:
+		case vLMIXED:
+		case vMIXED:
+		case vUCHAR:
+		case vUMIXED:
+		case vVIEWONLY:
+			result = FALSE;
+			break;
+	}
+	return result;
+}
+
+/*
+ * Given a character input, check if it is allowed by the display type,
+ * and return the character to apply to the display, or ERR if not.
+ */
+int filterByDisplayType(EDisplayType type, chtype input)
+{
+	int result = CharOf(input);
+	if (!isChar(input)) {
+		result = ERR;
+	} else if ((type == vINT ||
+				type == vHINT) &&
+			!isdigit (CharOf (result))) {
+		result = ERR;
+	} else if ((type == vCHAR ||
+				type == vUCHAR ||
+				type == vLCHAR ||
+				type == vUHCHAR ||
+				type == vLHCHAR) &&
+			isdigit (CharOf (result))) {
+		result = ERR;
+	} else if (type == vVIEWONLY) {
+		result = ERR;
+	} else if ((type == vUCHAR ||
+				type == vUHCHAR ||
+				type == vUMIXED ||
+				type == vUHMIXED) &&
+			isalpha (CharOf (result))) {
+		result = toupper (result);
+	} else if ((type == vLCHAR ||
+				type == vLHCHAR ||
+				type == vLMIXED ||
+				type == vLHMIXED) &&
+			isalpha (CharOf (result))) {
+		result = tolower (result);
+	}
+	return result;
+}
 
 /*
  * This registers a CDK object with a screen.
@@ -1576,11 +1614,11 @@ void SScroll::resequence(/*CDKSCROLL *scrollp*/)
 			char source[80];
 			chtype *target = /*scrollp->*/item[j];
 			sprintf (source, NUMBER_FMT, j + 1, "");
-			for (k = 0; source[k] != 0; ++k) {
+			for (k = 0; source[k]; ++k) {
 				/* handle deletions that change the length of number */
 				if (source[k] == '.' && CharOf (target[k]) != '.') {
 					int k2 = k;
-					while ((target[k2] = target[k2 + 1]) != 0)
+					while ((target[k2] = target[k2 + 1]))
 						++k2;
 					/*scrollp->*/itemLen[j] -= 1;
 				}
@@ -1902,7 +1940,7 @@ void SScroll::drawCDKScroll(bool Box)
 //   CDKSCROLL *scrollp = (CDKSCROLL *)object;
 
    /* Draw in the shadow if we need to. */
-   if (this->shadowWin != 0)
+   if (this->shadowWin)
       drawShadow(this->shadowWin);
 
    drawCdkTitle(this->win);
@@ -3258,7 +3296,7 @@ void SScroll::setCDKScroll(
 // wird bisher nicht gebraucht
 int SScroll::getCDKScrollItems(/*CDKSCROLL *scrollp, */char **list)
 {
-	if (list != 0) {
+	if (list) {
 		for (int x = 0; x < /*scrollp->*/listSize; x++) {
 			list[x] = chtype2Char (/*scrollp->*/item[x]);
 		}
@@ -4385,7 +4423,7 @@ void SScroll::drawCDKScrollList(bool Box)
 		}
 		this->drawCDKScrollCurrent();
 		/* Determine where the toggle is supposed to be. */
-		if (this->scrollbarWin != 0) {
+		if (this->scrollbarWin) {
 			this->togglePos = floorCDK (this->currentItem * (double)this->step);
 			/* Make sure the toggle button doesn't go out of bounds. */
 			if (this->togglePos >= getmaxy (this->scrollbarWin))
@@ -4429,7 +4467,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 	drawCDKScrollList(box);
 
 	/* Check if there is a pre-process function to be called. */
-	if (PreProcessFuncOf(this) != 0) {
+	if (PreProcessFuncOf(this)) {
 		/* Call the pre-process function. */
 		ppReturn = PreProcessFuncOf(this) (vSCROLL,
 				this,
@@ -4438,9 +4476,9 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 	}
 
 	/* Should we continue? */
-	if (ppReturn != 0) {
+	if (ppReturn) {
 		/* Check for a predefined key binding. */
-		if (checkCDKObjectBind(input) != 0) {
+		if (checkCDKObjectBind(input)) {
 			checkEarlyExit (this);
 			complete = TRUE;
 		} else {
@@ -4512,7 +4550,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 			}
 		}
 		/* Should we call a post-process? */
-		if (!complete && (PostProcessFuncOf (this/*widget*/) != 0))
+		if (!complete && (PostProcessFuncOf (this/*widget*/)))
 		{
 			PostProcessFuncOf (this/*widget*/) (vSCROLL,
 					this/*widget*/,
@@ -4588,9 +4626,7 @@ bool SScroll::allocListArrays(int oldSize, int newSize)
 	chtype **newList     = typeCallocN (chtype *, nchunk);
 	int *newLen          = typeCallocN (int, nchunk);
 	int *newPos          = typeCallocN (int, nchunk);
-	if (newList != 0 &&
-			newLen != 0 &&
-			newPos != 0) {
+	if (newList && newLen && newPos ) {
 		for (int n = 0; n < oldSize; ++n) {
 			newList[n] = this->item[n];
 			newLen[n] = this->itemLen[n];
@@ -4623,11 +4659,11 @@ bool SScroll::allocListItem(
 		size_t need = NUMBER_LEN(value);
 		if (need > *used) {
 			*used = ((need + 2) * 2);
-			if (*work == 0) {
-				if ((*work = (char*)malloc(*used)) == 0)
+			if (!*work) {
+				if (!(*work = (char*)malloc(*used)))
 					return FALSE;
 			} else {
-				if ((*work = (char*)realloc(*work, *used)) == 0)
+				if (!(*work = (char*)realloc(*work, *used)))
 					return FALSE;
 			}
 		}
