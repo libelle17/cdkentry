@@ -1565,6 +1565,132 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 	}
 }
 
+/*
+ * Resequence the numbers after a insertion/deletion.
+ */
+void SScroll::resequence(/*CDKSCROLL *scrollp*/)
+{
+	if (/*scrollp->*/numbers) {
+		int j, k;
+		for (j = 0; j < /*scrollp->*/listSize; ++j) {
+			char source[80];
+			chtype *target = /*scrollp->*/item[j];
+			sprintf (source, NUMBER_FMT, j + 1, "");
+			for (k = 0; source[k] != 0; ++k) {
+				/* handle deletions that change the length of number */
+				if (source[k] == '.' && CharOf (target[k]) != '.') {
+					int k2 = k;
+					while ((target[k2] = target[k2 + 1]) != 0)
+						++k2;
+					/*scrollp->*/itemLen[j] -= 1;
+				}
+				target[k] &= A_ATTRIBUTES;
+				target[k] |= (chtype)(unsigned char)source[k];
+			}
+		}
+	}
+}
+
+bool SScroll::insertListItem(/*CDKSCROLL *scrollp, */int inr)
+{
+	for (int x = /*scrollp->*/listSize; x > inr; --x) {
+		/*scrollp->*/item[x] = /*scrollp->*/item[x - 1];
+		/*scrollp->*/itemLen[x] = /*scrollp->*/itemLen[x - 1];
+		/*scrollp->*/itemPos[x] = /*scrollp->*/itemPos[x - 1];
+	}
+	return TRUE;
+}
+
+/*
+ * This adds a single item to a scrolling list, at the end of the list.
+ */
+#define AvailableWidth(w)  ((w)->boxWidth - 2 * BorderOf (w))
+#define WidestItem(w)      ((w)->maxLeftChar + AvailableWidth (w))
+void SScroll::addCDKScrollItem(/*CDKSCROLL *scrollp,*/ const char *item)
+{
+   int itemNumber = /*scrollp->*/listSize;
+   int widestItem = WidestItem(/*scrollp*/this);
+   char *temp = 0;
+   size_t have = 0;
+   if (allocListArrays (/*scrollp, *//*scrollp->*/listSize, /*scrollp->*/listSize + 1) &&
+       allocListItem (/*scrollp,*/
+		      itemNumber,
+		      &temp,
+		      &have,
+		      /*scrollp->*/numbers ? (itemNumber + 1) : 0,
+		      item)) {
+      /* Determine the size of the widest item. */
+      widestItem = MAXIMUM (/*scrollp->*/itemLen[itemNumber], widestItem);
+      updateViewWidth(/*scrollp, */widestItem);
+      setViewSize(/*scrollp, *//*scrollp->*/listSize + 1);
+   }
+   freeChecked (temp);
+}
+
+/*
+ * This adds a single item to a scrolling list, before the current item.
+ */
+void SScroll::insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item)
+{
+   int widestItem = WidestItem (/*scrollp*/this);
+   char *temp = 0;
+   size_t have = 0;
+   if (allocListArrays (/*scrollp, *//*scrollp->*/listSize, /*scrollp->*/listSize + 1) &&
+       insertListItem (/*scrollp, *//*scrollp->*/currentItem) &&
+       allocListItem (/*scrollp,*/
+		      /*scrollp->*/currentItem,
+		      &temp,
+		      &have,
+		      /*scrollp->*/numbers ? (/*scrollp->*/currentItem + 1) : 0,
+		      item))
+   {
+      /* Determine the size of the widest item. */
+      widestItem = MAXIMUM (/*scrollp->*/itemLen[/*scrollp->*/currentItem], widestItem);
+      updateViewWidth (/*scrollp, */widestItem);
+      setViewSize (/*scrollp, *//*scrollp->*/listSize + 1);
+      resequence(/*scrollp*/);
+   }
+   freeChecked (temp);
+}
+
+/*
+ * This removes a single item from a scrolling list.
+ */
+void SScroll::deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position)
+{
+	if (position >= 0 && position < /*scrollp->*/listSize) {
+		freeChtype (/*scrollp->*/item[position]);
+		/* Adjust the list. */
+		for (int x = position; x < /*scrollp->*/listSize; x++) {
+			/*scrollp->*/item[x] = /*scrollp->*/item[x + 1];
+			/*scrollp->*/itemLen[x] = /*scrollp->*/itemLen[x + 1];
+			/*scrollp->*/itemPos[x] = /*scrollp->*/itemPos[x + 1];
+		}
+		setViewSize (/*scrollp, *//*scrollp->*/listSize - 1);
+		if (/*scrollp->*/listSize > 0)
+			resequence (/*scrollp*/);
+		if (/*scrollp->*/listSize < /*m*/MaxViewSize(/*scrollp*/))
+			werase (/*scrollp->*/win);	/* force the next redraw to be complete */
+		/* do this to update the view size, etc. */
+		setCDKScrollPosition (/*scrollp, *//*scrollp->*/currentItem);
+	}
+}
+
+void SScroll::focusCDKScroll(/*CDKOBJS *object*/)
+{
+//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+   drawCDKScrollCurrent(/*scrollp*/);
+   wrefresh(/*scrollp->*/listWin);
+}
+
+void SScroll::unfocusCDKScroll(/*CDKOBJS *object*/)
+{
+//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+   drawCDKScrollCurrent(/*scrollp*/);
+   wrefresh(/*scrollp->*/listWin);
+}
+
+
 SEntry::~SEntry()
 {
 //		CDKENTRY *entry = (CDKENTRY *)object;
@@ -2403,7 +2529,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 {
 	chtype input = 0;
 	bool functionKey;
@@ -2483,7 +2609,7 @@ char* SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen
 	} else {
 		return 0;
 	}
-} // char * SEntry::activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+} // char * SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 
 
 /*
@@ -2495,7 +2621,7 @@ char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,i
    /* Draw the widget. */
    drawCDKAlphalist(box);
    /* Activate the widget. */
-   ret = entryField->activate(actions,Zweitzeichen,Drittzeichen,obpfeil);
+   ret = entryField->activateCDKEntry(actions,Zweitzeichen,Drittzeichen,obpfeil);
    /* Copy the exit type from the entry field. */
    copyExitType (this, this->entryField);
    /* Determine the exit status. */
@@ -3112,7 +3238,7 @@ void SAlphalist::setCDKAlphalist(
    setCDKAlphalistContents(list, listSize);
    setCDKAlphalistFillerChar(fillerChar);
    setCDKAlphalistHighlight(highlight);
-   setCDKAlphalistBox(Box);
+   setBox/*setCDKAlphalistBox*/(Box);
 }
 
 /*
@@ -3129,6 +3255,36 @@ void SScroll::setCDKScroll(
 	 highlight=hl;
 	 box=Box;
 }
+// wird bisher nicht gebraucht
+int SScroll::getCDKScrollItems(/*CDKSCROLL *scrollp, */char **list)
+{
+	if (list != 0) {
+		for (int x = 0; x < /*scrollp->*/listSize; x++) {
+			list[x] = chtype2Char (/*scrollp->*/item[x]);
+		}
+	}
+	return /*scrollp->*/listSize;
+}
+
+/*
+ * This sets the box attribute of the scrolling list.
+ */
+/*
+	 // statt dessen: setBox
+void SScroll::setCDKScrollBox(//CDKSCROLL *scrollp, 
+							bool Box)
+{
+   //ObjOf (scrollp)->
+	box = Box;
+   //ObjOf (scrollp)->
+	borderSize = Box ? 1 : 0;
+}
+bool SScroll::getCDKScrollBox()
+{
+	return //ObjOf (scrollp)->
+		box;
+}
+*/
 
 /*
  * This sets the scrolling list items.
@@ -3146,6 +3302,17 @@ void SScroll::setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers)
    setCDKScrollPosition(0);
    this->leftChar = 0;
 }
+
+void SScroll::setCDKScrollCurrentTop(/*CDKSCROLL *widget, */int item)
+{
+   if (item < 0)
+      item = 0;
+   else if (item > /*widget->*/maxTopItem)
+      item = /*widget->*/maxTopItem;
+   /*widget->*/currentTop = item;
+   SetPosition(/*(CDKSCROLLER *)widget,*/ item);
+}
+
 
 /*
  * This allows the user to accelerate to a position in the scrolling list.
@@ -3243,11 +3410,13 @@ chtype SAlphalist::getCDKAlphalistHighlight()
 /*
  * This sets whether or not the widget will be drawn with a box.
  */
+/*
 void SAlphalist::setCDKAlphalistBox(bool Box)
 {
    box = Box;
    borderSize = Box ? 1 : 0;
 }
+*/
 
 bool SAlphalist::getCDKAlphalistBox()
 {
@@ -3643,7 +3812,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 		return;
 	}
 
-	setBox (Box);
+	setBox(Box);
 
 	/*
 	 * If the height is a negative value, the height will

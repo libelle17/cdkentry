@@ -664,7 +664,7 @@ struct SEntry:CDKOBJS
 	 void setCDKEntryValue(const char *newValue);
 	 void eraseCDKEntry();
 	 void eraseObj(){eraseCDKEntry();}
-	 char* activate(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
+	 char* activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
 	 void moveCDKEntry(int,int,bool,bool);
 	 void CDKEntryCallBack(chtype character);
 	 void (SEntry::*callbfn)(chtype character)=NULL;
@@ -755,7 +755,6 @@ struct SScroll:SScroll_basis
 	 void destroyObj(){this->~SScroll();}
 	 void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
 	 void eraseObj(){eraseCDKScroll();}
-	 void setCDKScrollBox(bool Box);
 	 int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
 	 bool allocListArrays(int oldSize, int newSize);
 	 bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
@@ -768,9 +767,20 @@ struct SScroll:SScroll_basis
 	 void drawCDKScrollCurrent();
 	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void setCDKScroll(CDK_CSTRING2 list, int listSize, bool numbers, chtype hl, bool Box);
+	 int getCDKScrollItems(/*CDKSCROLL *scrollp, */char **list);
 	 void setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers);
+	 void setCDKScrollCurrentTop(/*CDKSCROLL *widget, */int item);
 	 void setCDKScrollCurrent(int item);
 	 void setBKattrScroll(chtype attrib);
+	 //void setCDKScrollBox(/*CDKSCROLL *scrollp, */bool Box);
+	 //bool getCDKScrollBox();
+	 void resequence(/*CDKSCROLL *scrollp*/);
+	 bool insertListItem (/*CDKSCROLL *scrollp, */int item);
+	 void addCDKScrollItem(/*CDKSCROLL *scrollp,*/ const char *item);
+	 void insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item);
+	 void deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position);
+	 void focusCDKScroll(/*CDKOBJS *object*/);
+	 void unfocusCDKScroll(/*CDKOBJS *object*/);
 }; // struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 
@@ -852,7 +862,7 @@ struct SAlphalist:CDKOBJS
 	 chtype getCDKAlphalistFillerChar();
 	 void setCDKAlphalistHighlight(chtype hl);
 	 chtype getCDKAlphalistHighlight();
-	 void setCDKAlphalistBox(bool Box);
+//	 void setCDKAlphalistBox(bool Box);
 	 bool getCDKAlphalistBox();
 	 void setMyULchar(chtype character);
 	 void setMyURchar(chtype character);
