@@ -2354,7 +2354,7 @@ void SEntry::zeichneFeld()
 	(void)mvwhline (fieldWin, 0, x, filler | fieldAttr, fieldWidth);
 	/* If there is information in the field. Then draw it in. */
 	if (info) {
-		int infoLength = (int)strlen (info);
+		int infoLength = (int)strlen(info);
 		/* Redraw the field. */
 		if (isHiddenDisplayType(dispType)) {
 			for (x = leftChar; x < infoLength; x++) {
@@ -2455,7 +2455,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	// GSchade
 
 	/* Translate the label char *pointer to a chtype pointer. */
-	if (labelp != 0) {
+	if (labelp) {
 		label = char2Chtypeh(labelp, &labelLen, &junk
 				// GSchade Anfang
 				,highnr
@@ -2490,7 +2490,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 
 	/* Make the label window. */
 	win = newwin (boxHeight, boxWidth, ypos, xpos);
-	if (win == 0) {
+	if (!win) {
 		destroyCDKObject();
 		return;
 	} else {
@@ -2508,7 +2508,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 			keypad (fieldWin, TRUE);
 
 			/* Make the label win, if we need to. */
-			if (labelp != 0) {
+			if (labelp) {
 				labelWin = subwin (win, 1, labelLen,
 						ypos + TitleLinesOf (this) + BorderOf (this),
 						xpos + horizontalAdjust + BorderOf (this));
@@ -2679,7 +2679,7 @@ void SEntry::drawCDKEntry(bool Box)
 {
 //	CDKENTRY *entry = (CDKENTRY *)object;
 	/* Did we ask for a shadow? */
-	if (this->shadowWin != 0) {
+	if (this->shadowWin) {
 		drawShadow(this->shadowWin);
 	}
 	/* Box the widget if asked. */
@@ -2728,14 +2728,14 @@ int SEntry::injectCDKEntry(chtype input)
 	/* Refresh the widget field. */
 	this->zeichneFeld();
 	/* Check if there is a pre-process function to be called. */
-	if (PreProcessFuncOf (this) != 0) {
+	if (PreProcessFuncOf(this)) {
 		ppReturn = PreProcessFuncOf (this) (vENTRY,
 				this,
 				PreProcessDataOf (this),
 				input);
 	}
 	/* Should we continue? */
-	if (ppReturn != 0) {
+	if (ppReturn) {
 		/* Check a predefined binding... */
 		if (checkCDKObjectBind(input)) {
 			checkEarlyExit(this);
@@ -2775,7 +2775,7 @@ int SEntry::injectCDKEntry(chtype input)
 				case KEY_LEFT:
 					if (currPos <= 0) {
 						Beep ();
-					} else if (this->screenCol == 0) {
+					} else if (!this->screenCol) {
 						/* Scroll left.  */
 						if (currPos>1) if (this->info[currPos-2]==-61 || this->info[currPos-2]==-62) this->leftChar--;
 						this->leftChar--;
@@ -2867,13 +2867,13 @@ int SEntry::injectCDKEntry(chtype input)
 					mvwprintw(this->parent,2,2,"Key_esc");
 					break;
 				case CDK_ERASE:
-					if (infoLength != 0) {
+					if (infoLength) {
 						cleanCDKEntry();
 						this->zeichneFeld();
 					}
 					break;
 				case CDK_CUT:
-					if (infoLength != 0) {
+					if (infoLength) {
 						freeChecked(GPasteBuffer);
 						GPasteBuffer = copyChar (this->info);
 						cleanCDKEntry();
@@ -2883,7 +2883,7 @@ int SEntry::injectCDKEntry(chtype input)
 					}
 					break;
 				case CDK_COPY:
-					if (infoLength != 0) {
+					if (infoLength) {
 						freeChecked(GPasteBuffer);
 						GPasteBuffer = copyChar (this->info);
 					} else {
@@ -2891,7 +2891,7 @@ int SEntry::injectCDKEntry(chtype input)
 					}
 					break;
 				case CDK_PASTE:
-					if (GPasteBuffer != 0) {
+					if (GPasteBuffer) {
 						setCDKEntryValue(GPasteBuffer);
 						this->zeichneFeld();
 					} else {
@@ -2936,7 +2936,7 @@ int SEntry::injectCDKEntry(chtype input)
 			}
 		}
 		/* Should we do a post-process? */
-		if (!complete && (PostProcessFuncOf (this) != 0))
+		if (!complete && (PostProcessFuncOf(this)))
 		{
 			PostProcessFuncOf (this) (vENTRY,
 					this,
@@ -2958,7 +2958,7 @@ void SEntry::setCDKEntryValue(const char *newValue)
 	/* If the pointer sent in is the same pointer as before, do nothing. */
 	if (this->info != newValue) {
 		/* Just to be sure, if lets make sure the new value isn't null. */
-		if (newValue == 0) {
+		if (!newValue) {
 			/* Then we want to just erase the old value. */
 			cleanChar (this->info, this->infoWidth, '\0');
 
@@ -2969,12 +2969,10 @@ void SEntry::setCDKEntryValue(const char *newValue)
       this->sbuch=0;
 		} else {
 			/* Determine how many characters we need to copy. */
-			int copychars = MINIMUM ((int)strlen (newValue), this->max);
-
+			int copychars = MINIMUM ((int)strlen(newValue), this->max);
 			/* OK, erase the old value, and copy in the new value. */
 			cleanChar (this->info, this->max, '\0');
 			strncpy (this->info, newValue, (unsigned)copychars);
-
       this->settoend();
 		}
 	}
@@ -3143,7 +3141,7 @@ void SEntry::setBKattrEntry(chtype attrib)
 {
 		wbkgd (win, attrib);
 		wbkgd (fieldWin, attrib);
-		if (labelWin != 0) {
+		if (labelWin) {
 			wbkgd (labelWin, attrib);
 		}
 }
@@ -3192,8 +3190,7 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 	int status = 0;
 	if (listSize >= 0) {
 		char **newlist = typeCallocN (char *, listSize + 1);
-		if (newlist != 0) {
-			int x;
+		if (newlist) {
 			/*
 			 * We'll sort the list before we use it.  It would have been better to
 			 * declare list[] const and only modify the copy, but there may be
@@ -3202,8 +3199,8 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 			sortList(list, listSize);
 			/* Copy in the new information. */
 			status = 1;
-			for (x = 0; x < listSize; x++) {
-				if ((newlist[x] = copyChar(list[x])) == 0) {
+			for (int x = 0; x < listSize; x++) {
+				if (!(newlist[x] = copyChar(list[x]))) {
 					status = 0;
 					break;
 				}
@@ -3558,14 +3555,14 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
    int ret                 = 0;
    char **altWords         = 0;
 
-   if (entry->info == 0) {
+   if (!entry->info) {
       Beep ();
       return TRUE;
    }
    wordLength = (int)strlen (entry->info);
 
    /* If the word length is equal to zero, just leave. */
-   if (wordLength == 0) {
+   if (!wordLength) {
       Beep ();
       return TRUE;
    }
@@ -3724,14 +3721,12 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
 	CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
 	CDKSCROLL *scrollp      = alphalist->scrollField;
 	CDKENTRY *entry         = alphalist->entryField;
-	int infoLen             = ((entry->info != 0)
-			? (int)strlen (entry->info)
-			: 0);
+	int infoLen             = (entry->info ? (int)strlen(entry->info) : 0);
 	int result              = 1;
 	bool empty              = FALSE;
 
 	/* Make sure the entry field isn't empty. */
-	if (entry->info == 0) {
+	if (!entry->info) {
 		empty = TRUE;
 	} else if (alphalist->isCDKObjectBind(input)) {
 		result = 1;		/* don't try to use this key in editing */
@@ -3744,7 +3739,7 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
 		int currPos = (entry->screenCol + entry->leftChar);
 		char *pattern = (char *)malloc ((size_t) infoLen + 2);
 
-		if (pattern != 0) {
+		if (pattern) {
 			strcpy (pattern, entry->info);
 
 			if (input == KEY_BACKSPACE || input == KEY_DC) {
@@ -3757,9 +3752,9 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
 				strcpy (pattern + currPos + 1, entry->info + currPos);
 			}
 		}
-		if (pattern == 0) {
+		if (!pattern) {
 			Beep ();
-		} else if (strlen (pattern) == 0) {
+		} else if (!strlen (pattern)) {
 			empty = TRUE;
 		} else if ((Index = searchList ((CDK_CSTRING2)alphalist->list,
 						alphalist->listSize,
@@ -3792,7 +3787,7 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
 			result = 0;
 			*/
 		}
-		if (pattern != 0)
+		if (pattern)
 			free (pattern);
 	}
 	if (empty) {
@@ -3849,26 +3844,21 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 		destroyCDKObject();
 		return;
 	}
-
 	setBox(Box);
-
 	/*
 	 * If the height is a negative value, the height will
 	 * be ROWS-height, otherwise, the height will be the
 	 * given height.
 	 */
 	boxHeight = setWidgetDimension (parentHeight, height, 0);
-
 	/*
 	 * If the width is a negative value, the width will
 	 * be COLS-width, otherwise, the width will be the
 	 * given width.
 	 */
 	boxWidth = setWidgetDimension (parentWidth, width, 0);
-
 	/* Translate the label char *pointer to a chtype pointer. */
-	if (label != 0)
-	{
+	if (label) {
 		chtype *chtypeLabel = char2Chtypeh(label, &labelLen, &junk2
 				// GSchade Anfang
 				,highnr
@@ -3876,20 +3866,15 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 				);
 		freeChtype (chtypeLabel);
 	}
-
 	/* Rejustify the x and y positions if we need to. */
 	alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
-
 	/* Make the file selector window. */
 	this->win = newwin (boxHeight, boxWidth, ypos, xpos);
-
-	if (this->win == 0)
-	{
+	if (!this->win) {
 		destroyCDKObject();
 		return;
 	}
 	keypad (this->win, TRUE);
-
 	/* *INDENT-EQLS* Set some variables. */
 	ScreenOf (this)         = cdkscreen;
 	this->parent            = cdkscreen->window;
@@ -3900,10 +3885,8 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	initExitType (this);
 	this->shadow            = shadow;
 	this->shadowWin         = 0;
-
 	/* Do we want a shadow? */
-	if (shadow)
-	{
+	if (shadow) {
 		this->shadowWin = newwin (boxHeight, boxWidth, ypos + 1, xpos + 1);
 	}
 
@@ -3922,8 +3905,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 			,highnr
 			// GSchade Ende
 			);
-	if (this->entryField == 0)
-	{
+	if (!this->entryField) {
 //		destroyCDKObject (this);
 		return;
 	}
