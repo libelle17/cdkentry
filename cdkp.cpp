@@ -1,10 +1,15 @@
 #include "cdkp.h"
+#ifdef HAVE_SETLOCALE
+#include <locale.h>
+#endif
 #include <vector>
 #include <cctype> // isdigit
 using namespace std;
 // GSchade 17.11.18; s. cdk.h
 einbauart akteinbart;
 
+//ALL_SCREENS *all_screens;
+vector<SSreen*> all_screens;
 vector<CDKOBJS*> all_objects;
 
 /*
@@ -1492,6 +1497,56 @@ void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
 }
 
 /*
+ * This registers a CDK object with a screen.
+ */
+void CDKOBJS::reRegisterCDKObject (EObjectType cdktype/*, void *object*/)
+{
+//   CDKOBJS *obj = (CDKOBJS *)object;
+   registerCDKObject(/*obj->*/screen, cdktype/*, object*/);
+}
+
+//#define validIndex(screen, n) ((n) >= 0 && (n) < (screen)->objectCount)
+#define validIndex(n)((n) >= 0 && (n) < (this)->objectCount)
+
+void SScreen::swapCDKIndices(/*CDKSCREEN *screen, */int n1, int n2)
+{
+	if (n1 != n2 && validIndex (n1) && validIndex (n2)) {
+		object[n2]->setScreenIndex(this, n1);
+		object[n1]->setScreenIndex(this, n2);
+		if (this->objectFocus == n1)
+			this->objectFocus = n2;
+		else if (this->objectFocus == n2)
+			this->objectFocus = n1;
+	}
+}
+
+/*
+ * This 'brings' a CDK object to the top of the stack.
+ */
+void CDKOBJS::raiseCDKObject(EObjectType cdktype/*, void *object*/)
+{
+//   CDKOBJS *obj = (CDKOBJS *)object;
+//   if (validObjType (obj, cdktype)) {
+//      CDKSCREEN *screen = obj->screen;
+      screen->swapCDKIndices(screenIndex, screen->objectCount - 1);
+//   }
+}
+
+/*
+ * This 'lowers' an object.
+ */
+void CDKOBJS::lowerCDKObject(EObjectType cdktype/*, void *object*/)
+{
+//   CDKOBJS *obj = (CDKOBJS *)object;
+//   if (validObjType (obj, cdktype)) {
+//      CDKSCREEN *screen = obj->screen;
+      screen->swapCDKIndices(screenIndex, 0);
+//   }
+}
+
+
+
+/*
  * Set the object's exit-type based on the input.
  * The .exitType field should have been part of the CDKOBJS struct, but it
  * is used too pervasively in older applications to move (yet).
@@ -1554,15 +1609,23 @@ CDKOBJS::CDKOBJS() // void *_newCDKObject(unsigned size, const CDKFUNCS * funcs)
 
 CDKOBJS::~CDKOBJS()
 {
+	destroyCDKObject();
+}
+
+void CDKOBJS::destroyCDKObject()
+{
 	size_t pos{0};
 	for(auto akt:all_objects) {
 		if (akt==this) {
 			all_objects.erase(all_objects.begin()+pos);
 			break;
+			akt->destroyObj();
+			free(akt);
 		}
 		pos++;
 	}
 }
+
 
 /*
  * This removes an object from the CDK screen.
@@ -1960,14 +2023,14 @@ SScroll::~SScroll(/*CDKOBJS *object*/)
 {
 		//CDKSCROLL *scrollp = (CDKSCROLL *)object;
 		cleanCdkTitle();
-		CDKfreeChtypes (this->item);
-		freeChecked (this->itemPos);
-		freeChecked (this->itemLen);
+		CDKfreeChtypes(this->item);
+		freeChecked(this->itemPos);
+		freeChecked(this->itemLen);
 		/* Clean up the windows. */
-		deleteCursesWindow (this->scrollbarWin);
-		deleteCursesWindow (this->shadowWin);
-		deleteCursesWindow (this->listWin);
-		deleteCursesWindow (this->win);
+		deleteCursesWindow(this->scrollbarWin);
+		deleteCursesWindow(this->shadowWin);
+		deleteCursesWindow(this->listWin);
+		deleteCursesWindow(this->win);
 		/* Clean the key bindings. */
 		cleanCDKObjectBindings();
 		/* Unregister this object. */
@@ -2298,7 +2361,7 @@ void SEntry::CDKEntryCallBack(chtype character)
 void SEntry::schreibl(chtype character)
 {
   static bool altobuml=0;
-  const bool obuml=character==(chtype)-61||character==(chtype)-62;
+  const bool obuml=(character==(chtype)-61||character==(chtype)-62);
   int plainchar;
   if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
 	// wenn Ende erreicht wuerde, dann von 2-Buchstabenlaengen langen Buchstaben keinen schreiben
@@ -2475,7 +2538,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	boxWidth = setCdkTitle (title, boxWidth);
 	horizontalAdjust = (boxWidth - oldWidth) / 2;
 
-	boxHeight += TitleLinesOf (this);
+	boxHeight += TitleLinesOf(this);
 
 	/*
 	 * Make sure we didn't extend beyond the dimensions of the window.
@@ -3079,6 +3142,13 @@ void SScroll::eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
    }
 }
 
+/*
+ * This calls refreshCDKScreen. (made consistent with widgets)
+ */
+void CDKOBJS::drawCDKScreen()
+{
+   refreshCDKScreen();
+}
 
 /*
  * This refreshes all the objects in the screen.
@@ -4663,6 +4733,53 @@ bool SScroll::allocListItem(
 }
 
 
+/*
+ * Destroy all of the objects on a screen
+ */
+void SScreen::destroyCDKScreenObjects()
+{
+	for (int x = 0; x < this->objectCount; x++) {
+		CDKOBJS *obj = this->object[x];
+		int before = this->objectCount;
+//		if (validObjType (obj, ObjTypeOf (obj))) {
+//			MethodPtr (obj, eraseObj) (obj);
+			obj->eraseObj();
+			obj->destroyCDKObject();
+			x -= (this->objectCount - before);
+//		}
+	}
+}
+
+/*
+ * This destroys a CDK screen.
+ */
+void SScreen::destroyCDKScreen()
+{
+	size_t pos{0};
+	for(auto akt:all_screens) {
+		if (akt==this) {
+			all_screens.erase(all_screens.begin()+pos);
+			break;
+//			akt->destroyObj();
+			free(akt);
+		}
+		pos++;
+	}
+	/*
+	ALL_SCREENS *p, *q;
+	for (p = all_screens, q = 0; p != 0; q = p, p = p->link) {
+		if (screen == p->screen) {
+			if (q != 0)
+				q->link = p->link;
+			else
+				all_screens = p->link;
+			free (p);
+			free (screen);
+			break;
+		}
+	}
+	*/
+}
 
 /*
  * This clears all the objects in the screen.
@@ -4723,5 +4840,48 @@ int SScreen::getFocusIndex()
 void SScreen::setFocusIndex(int value)
 {
    objectFocus = limitFocusIndex(this, value);
+}
+
+
+/*
+ * This creates a new CDK screen.
+ */
+//CDKSCREEN *initCDKScreen (WINDOW *window)
+SScreen::SScreen(WINDOW *window)
+{
+	ALL_SCREENS *item;
+//	CDKSCREEN *screen = 0;
+	/* initialization, for the first time */
+	if (all_screens == 0 || stdscr == 0 || window == 0) {
+		/* Set up basic curses settings. */
+#ifdef HAVE_SETLOCALE
+		setlocale(LC_ALL, "");
+#endif
+		/* Initialize curses after setting the locale, since curses depends
+		 * on having a correct locale to reflect the terminal's encoding.
+		 */
+		if (stdscr == 0 || window == 0) {
+			window = initscr ();
+		}
+		noecho();
+		cbreak();
+	}
+
+	if ((item = typeMalloc (ALL_SCREENS)) != 0) {
+//		if ((screen = typeCalloc (CDKSCREEN)) != 0) {
+			item->link = all_screens;
+			item->screen = this;
+			all_screens = item;
+
+			/* Initialize the CDKSCREEN pointer. */
+			this->objectCount = 0;
+			this->objectLimit = 2;
+			this->object = typeMallocN (CDKOBJS *, this->objectLimit);
+			this->window = window;
+
+			/* OK, we are done. */
+//		} else { free (item); }
+	}
+//	return(screen);
 }
 

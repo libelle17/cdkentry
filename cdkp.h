@@ -422,7 +422,6 @@ bool isHiddenDisplayType (EDisplayType type);
 int filterByDisplayType (EDisplayType type, chtype input);
 
 // typedef struct _all_objects { struct _all_objects *link; CDKOBJS *object; } ALL_OBJECTS;
-
 /*
  * Define the CDK screen structure.
  */
@@ -437,6 +436,9 @@ struct SScreen { // SScreen
 	 CDKOBJS* setCDKFocusNext();
 	 int getFocusIndex();
 	 void setFocusIndex(int value);
+	 SScreen(WINDOW *window);
+	 void swapCDKIndices(/*CDKSCREEN *screen, */int n1, int n2);
+	 void destroyCDKScreenObjects();
 };
 
 /*
@@ -495,6 +497,14 @@ void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int 
 void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
 
 typedef struct SScreen CDKSCREEN;
+
+typedef struct _all_screens
+{
+   struct _all_screens *link;
+   CDKSCREEN *screen;
+}
+ALL_SCREENS;
+
 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype, void *object);
 
 
@@ -566,6 +576,7 @@ struct CDKOBJS
 	 void refreshDataCDK();
 	 void saveDataCDK();
 	 void refreshCDKScreen();
+	 void drawCDKScreen();
 	 virtual CDKOBJS* bindableObject();
 	 void bindCDKObject(chtype key, BINDFN function, void *data);
 	 void unbindCDKObject(chtype key);
@@ -585,10 +596,13 @@ struct CDKOBJS
 	 void cleanCdkTitle();
 	 bool validObjType(EObjectType type);
 	 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype);
+	 void reRegisterCDKObject(EObjectType cdktype/*, void *object*/);
 	 void setScreenIndex(CDKSCREEN *pscreen, int number);
 	 void drawObjBox(WINDOW *win);
 	 int getcCDKObject();
 	 int getchCDKObject(bool *functionKey);
+	 void raiseCDKObject(EObjectType cdktype/*, void *object*/);
+	 void lowerCDKObject(EObjectType cdktype/*, void *object*/);
 }; // struct CDKOBJS
 
 /*
