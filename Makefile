@@ -17,5 +17,7 @@ git:
 	git commit -m"aus Makefile"
 	git push
 
-neu:
-	g++-7 -o eingabe -I. -I$$HOME/cdk/include -I/usr/include/ncursesw eingabe.cpp zeichne.cpp cdkp.cpp -lncursesw
+.PHONY: neu
+neu: eingabep
+eingabep: *.cpp cdkp.h
+	F=fehler.txt; g++-7 -o $@ -I. -I$$HOME/cdk/include -I/usr/include/ncursesw eingabe.cpp cdkp.cpp -lncursesw >$$F 2>&1; test -s $$F && vi $$F||:

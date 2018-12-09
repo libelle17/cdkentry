@@ -15,6 +15,48 @@
 #else
 #include <curses.h>
 #endif
+//#include "cdk_test.h"
+#ifndef CDKINCLUDES
+#ifndef CDK_TEST_H
+#define CDK_TEST_H
+/*
+ * The whole point of this header is to define ExitProgram(), which is used for
+ * leak-checking when ncurses's _nc_free_and_exit() function is available. 
+ * Invoking that rather than 'exit()' tells ncurses to free all of the
+ * "permanent" memory leaks, making analysis much simpler.
+ */
+#ifdef HAVE_NC_ALLOC_H
+
+#ifndef HAVE_LIBDBMALLOC
+#define HAVE_LIBDBMALLOC 0
+#endif
+
+#ifndef HAVE_LIBDMALLOC
+#define HAVE_LIBDMALLOC 0
+#endif
+
+#ifndef HAVE_LIBMPATROL
+#define HAVE_LIBMPATROL 0
+#endif
+
+#include <nc_alloc.h>
+
+#else
+
+#if defined(NCURSES_VERSION) && defined(HAVE__NC_FREE_AND_EXIT)
+/* nc_alloc.h normally not installed */
+extern void _nc_free_and_exit(int) GCC_NORETURN;
+#define ExitProgram(code) _nc_free_and_exit(code)
+#endif
+
+#endif /* HAVE_NC_ALLOC_H */
+
+#ifndef ExitProgram
+#define ExitProgram(code) exit(code)
+#endif
+
+#endif /* CDK_TEST_H */
+#endif /* CDKINCLUDES */
 // GSchade 17.11.18
 enum einbauart {
 	einb_direkt,
@@ -524,6 +566,10 @@ void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int 
 void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
 static bool checkMenuKey(int keyCode, int functionKey);
 CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
+char **copyCharList (const char **list);
+int lenCharList(const char **list);
+void initCDKColor(void);
+void endCDK(void);
 
 typedef struct SScreen CDKSCREEN;
 
@@ -542,7 +588,7 @@ void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype, void *object);
  * each widget's struct to allow us to use generic functions in binding.c,
  * cdkscreen.c, position.c, etc.
  */
-struct CDKOBJS 
+struct CDKOBJS
 {
    int          screenIndex;
    SScreen *  screen;
@@ -673,6 +719,7 @@ struct SEntry:CDKOBJS
 	 void setCDKEntry(const char *value, int min, int max, bool Box GCC_UNUSED);
 	 char* getCDKEntryValue();
 	 void setBKattrEntry(chtype attrib);
+	 void setBKattrObj(chtype);
 	 void setCDKEntryHighlight(chtype highlight, bool cursor);
 	 void focusCDKEntry();
 	 void focusObj(){focusCDKEntry();}
@@ -709,7 +756,7 @@ struct SEntry:CDKOBJS
 	 ~SEntry();
 	 void destroyObj(){this->~SEntry();}
 	 void drawCDKEntry(bool);
-	 void drawObj(bool box){drawCDKEntry(box);}
+	 void drawObj(bool box);
 	 void cleanCDKEntry();
 	 int injectCDKEntry(chtype);
 	 int injectObj(chtype ch){return injectCDKEntry(ch);}
@@ -816,7 +863,7 @@ struct SScroll:SScroll_basis
 	 int activateCDKScroll(chtype *actions);
 	 void setCDKScrollPosition(int item);
 	 void drawCDKScroll(bool Box);
-	 void drawObj(bool box){drawCDKScroll(box);}
+	 void drawObj(bool Box);
 	 void drawCDKScrollCurrent();
 	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void setCDKScroll(CDK_CSTRING2 list, int listSize, bool numbers, chtype hl, bool Box);
@@ -825,6 +872,7 @@ struct SScroll:SScroll_basis
 	 void setCDKScrollCurrentTop(/*CDKSCROLL *widget, */int item);
 	 void setCDKScrollCurrent(int item);
 	 void setBKattrScroll(chtype attrib);
+	 void setBKattrObj(chtype attrib);
 	 //void setCDKScrollBox(/*CDKSCROLL *scrollp, */bool Box);
 	 //bool getCDKScrollBox();
 	 void resequence(/*CDKSCROLL *scrollp*/);
@@ -850,7 +898,7 @@ struct SFileSelector:CDKOBJS
 	void eraseCDKFselect();
 	void eraseObj(){eraseCDKFselect();}
 	void drawCDKFselect(bool Box);
-	void drawObj(bool box){drawCDKFselect(box);}
+	void drawObj(bool Box);
 }; // struct SFileSelector:CDKOBJS
 typedef struct SFileSelector CDKFSELECT;
 
@@ -896,7 +944,7 @@ struct SAlphalist:CDKOBJS
 	 void destroyObj(){this->~SAlphalist();}
 	 void drawMyScroller(/*CDKALPHALIST *widget*/);
 	 void drawCDKAlphalist(bool Box GCC_UNUSED);
-	 void drawObj(bool box){drawCDKAlphalist(box);}
+	 void drawObj(bool box);
 	 void moveCDKAlphalist(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void injectMyScroller(chtype key);
 	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
@@ -918,7 +966,8 @@ struct SAlphalist:CDKOBJS
 	 chtype getCDKAlphalistFillerChar();
 	 void setCDKAlphalistHighlight(chtype hl);
 	 chtype getCDKAlphalistHighlight();
-//	 void setCDKAlphalistBox(bool Box);
+	 void setBKattrObj(chtype attrib);
+	 //	 void setCDKAlphalistBox(bool Box);
 	 bool getCDKAlphalistBox();
 	 void setMyULchar(chtype character);
 	 void setMyURchar(chtype character);
@@ -1019,6 +1068,7 @@ struct SLabel:CDKOBJS {
 	 void setCDKLabelMessage (/*CDKLABEL *label, */CDK_CSTRING2 info, int infoSize);
 	 chtype **getCDKLabelMessage(/*CDKLABEL *label, */int *size);
 	 void setBKattrLabel(chtype attrib);
+	 void setBKattrObj(chtype attrib);
 	 void drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED);
 	 void eraseCDKLabel(/*CDKOBJS *object*/);
 	 void moveCDKLabel(/*CDKOBJS *object,*/ int xplace, int yplace, bool relative, bool refresh_flag);

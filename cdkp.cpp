@@ -373,7 +373,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 											lastChar = ACS_S9;
 								}
 
-								if (lastChar != 0) {
+								if (lastChar) {
 									adjust = 1;
 									from += 2;
 
@@ -1501,6 +1501,67 @@ static bool checkMenuKey (int keyCode, int functionKey)
 {
 	return (keyCode == KEY_ESC && !functionKey);
 }
+// aus cdk.c:
+
+/*
+ * Copy the given lists.
+ */
+char **copyCharList(const char **list)
+{
+	size_t size = (size_t) lenCharList (list) + 1;
+	char **result = typeMallocN (char *, size);
+	if (result) {
+		unsigned n;
+		for (n = 0; n < size; ++n)
+			result[n] = copyChar (list[n]);
+	}
+	return result;
+}
+
+/*
+ * Return the length of the given lists.
+ */
+int lenCharList(const char **list)
+{
+	int result = 0;
+	if (list) {
+		while (*list++ != 0)
+			++result;
+	}
+	return result;
+}
+
+void initCDKColor (void)
+{
+#ifdef HAVE_START_COLOR
+	if (has_colors ())
+	{
+		int color[] =
+		{
+			COLOR_WHITE, COLOR_RED, COLOR_GREEN,
+			COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA,
+			COLOR_CYAN, COLOR_BLACK
+		};
+		int pair = 1;
+		int fg, bg;
+		int limit;
+
+		start_color ();
+
+		limit = (COLORS < MAX_COLORS) ? COLORS : MAX_COLORS;
+
+		/* Create the color pairs. */
+		for (fg = 0; fg < limit; fg++)
+		{
+			for (bg = 0; bg < limit; bg++)
+			{
+				init_pair ((short)pair++, (short)color[fg], (short)color[bg]);
+			}
+		}
+	}
+#endif
+}
+
 
 /*
  * Returns the object on which the focus lies.
@@ -2365,7 +2426,7 @@ int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
 			int maxWidth = 0;
 			/* We need to determine the widest title line. */
 			for (x = 0; x < titleLines; x++) {
-				chtype *holder = char2Chtype(temp[x], &len, &align);
+				chtype *holder = char2Chtypeh(temp[x], &len, &align);
 				maxWidth = MAXIMUM (maxWidth, len);
 				freeChtype(holder);
 			}
@@ -2377,7 +2438,7 @@ int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
 		/* For each line in the title, convert from char * to chtype * */
 		titleWidth = boxWidth - (2 * borderSize);
 		for (x = 0; x < titleLines; x++) {
-			title[x] = char2Chtype(temp[x], &titleLen[x], &titlePos[x]);
+			title[x] = char2Chtypeh(temp[x], &titleLen[x], &titlePos[x]);
 			titlePos[x] = justifyString(titleWidth, titleLen[x], titlePos[x]);
 		}
 		CDKfreeStrings (temp);
@@ -3514,11 +3575,11 @@ void CDKOBJS::setBox(bool Box)
  */
 void SEntry::setBKattrEntry(chtype attrib)
 {
-		wbkgd (win, attrib);
-		wbkgd (fieldWin, attrib);
-		if (labelWin) {
-			wbkgd (labelWin, attrib);
-		}
+	wbkgd(win, attrib);
+	wbkgd(fieldWin, attrib);
+	if (labelWin) {
+		wbkgd (labelWin, attrib);
+	}
 }
 
 /*
@@ -5552,3 +5613,59 @@ void CDKOBJS::setCDKObjectBackgroundColor (/*CDKOBJS *obj, */const char *color)
    freeChtype (holder);
 }
 
+
+void CDKOBJS::setULcharObj(chtype ch)
+{
+	ULChar=ch;
+}
+
+void CDKOBJS::drawObj(bool box)
+{
+}
+void SEntry::drawObj(bool box)
+{
+	drawCDKEntry(box);
+}
+void SScroll::drawObj(bool box)
+{
+	drawCDKScroll(box);
+}
+void SFileSelector::drawObj(bool box)
+{
+	drawCDKFselect(box);
+}
+void SAlphalist::drawObj(bool box)
+{
+	drawCDKAlphalist(box);
+}
+
+//void CDKOBJS::setBKattrObj(chtype attrib) { wbkgd(win, attrib); }
+
+void SLabel::setBKattrObj(chtype attrib)
+{
+	setBKattrLabel(attrib);
+}
+/*
+ * This sets the background attribute of the widget.
+ */
+void SEntry::setBKattrObj(chtype attrib)
+{
+	setBKattrEntry(attrib);
+}
+
+/*
+ * This sets the background attribute of the widget.
+ */
+void SAlphalist::setBKattrObj(chtype attrib)
+{
+	entryField->setBKattrObj(attrib);
+	scrollField->setBKattrObj(attrib);
+}
+
+/*
+ * This sets the background attribute of the widget.
+ */
+void SScroll::setBKattrObj(chtype attrib)
+{
+	setBKattrScroll(attrib);
+}
