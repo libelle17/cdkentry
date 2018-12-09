@@ -16,3 +16,6 @@ git:
 	git add -u
 	git commit -m"aus Makefile"
 	git push
+
+neu:
+	g++-7 -o eingabe -I. -I$$HOME/cdk/include -I/usr/include/ncursesw eingabe.cpp zeichne.cpp cdkp.cpp -lncursesw
