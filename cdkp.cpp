@@ -9,7 +9,7 @@ using namespace std;
 einbauart akteinbart;
 
 //ALL_SCREENS *all_screens;
-vector<SSreen*> all_screens;
+vector<SScreen*> all_screens;
 vector<CDKOBJS*> all_objects;
 
 /*
@@ -1482,6 +1482,311 @@ int filterByDisplayType(EDisplayType type, chtype input)
 }
 
 /*
+ * This is added to remain consistent.
+ */
+void endCDK(void)
+{
+   /* Turn echoing back on. */
+   echo();
+   /* Turn off cbreak. */
+   nocbreak();
+   /* End the curses windows. */
+   endwin();
+#ifdef HAVE_XCURSES
+   XCursesExit();
+#endif
+}
+
+static bool checkMenuKey (int keyCode, int functionKey)
+{
+	return (keyCode == KEY_ESC && !functionKey);
+}
+
+/*
+ * Returns the object on which the focus lies.
+ */
+CDKOBJS* SScreen::getCDKFocusCurrent()
+{
+   CDKOBJS *result = 0;
+   int n = this->objectFocus;
+   if (n >= 0 && n < this->objectCount)
+      result = this->object[n];
+   return result;
+}
+
+/*
+ * Set focus to the next object, returning it.
+ */
+CDKOBJS *SScreen::setCDKFocusNext()
+{
+	CDKOBJS *result = 0;
+	CDKOBJS *curobj;
+	int n = getFocusIndex();
+	int first = n;
+	for (;;) {
+		if (++n >= this->objectCount)
+			n = 0;
+		curobj = this->object[n];
+		if (curobj && AcceptsFocusObj(curobj)) {
+			result = curobj;
+			break;
+		} else {
+			if (n == first) {
+				break;
+			}
+		}
+	}
+	setFocusIndex((result) ? n : -1);
+	return result;
+}
+
+/*
+ * Set focus to the previous object, returning it.
+ */
+CDKOBJS* SScreen::setCDKFocusPrevious()
+{
+	CDKOBJS *result = 0;
+	CDKOBJS *curobj;
+	int n = getFocusIndex();
+	int first = n;
+	for (;;) {
+		if (--n < 0)
+			n = this->objectCount - 1;
+		curobj = this->object[n];
+		if (curobj != 0 && AcceptsFocusObj (curobj)) {
+			result = curobj;
+			break;
+		} else if (n == first) {
+			break;
+		}
+	}
+	setFocusIndex((result != 0) ? n : -1);
+	return result;
+}
+
+/*
+ * Set focus to a specific object, returning it.
+ * If the object cannot be found, return null.
+ */
+CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
+{
+	CDKOBJS *result = 0;
+	CDKOBJS *curobj;
+	int n = getFocusIndex ();
+	int first = n;
+	for (;;) {
+		if (++n >= this->objectCount)
+			n = 0;
+		curobj = this->object[n];
+		if (curobj == newobj) {
+			result = curobj;
+			break;
+		} else if (n == first) {
+			break;
+		}
+	}
+	setFocusIndex (/*this, */(result != 0) ? n : -1);
+	return result;
+}
+
+/*
+ * Set focus to the first object in the screen.
+ */
+CDKOBJS* SScreen::setCDKFocusFirst(/*CDKSCREEN *screen*/)
+{
+   setFocusIndex(/*screen, screen->*/objectCount - 1);
+   return switchFocus(setCDKFocusNext (/*screen*/), 0);
+}
+
+/*
+ * Set focus to the last object in the screen.
+ */
+/*CDKOBJS **/void SScreen::setCDKFocusLast (/*CDKSCREEN *screen*/)
+{
+   setFocusIndex(/*screen, */0);
+   /*return */switchFocus(setCDKFocusPrevious(/*screen*/), 0);
+}
+
+/*
+ * Save data in widgets on a screen
+ */
+void SScreen::saveDataCDKScreen(/*CDKSCREEN *screen*/)
+{
+   for (int i = 0; i < /*screen->*/objectCount; ++i)
+      object[i]->/*saveDataObj*/saveDataCDK(/*screen->*//*object[i]*/);
+}
+
+/*
+ * Refresh data in widgets on a screen
+ */
+void SScreen::refreshDataCDKScreen(/*CDKSCREEN *screen*/)
+{
+   for (int i = 0; i < /*screen->*/objectCount; ++i)
+      object[i]->/*refreshDataObj*/refreshDataCDK(/*screen->*//*object[i]*/);
+}
+
+void SScreen::resetCDKScreen(/*CDKSCREEN *screen*/)
+{
+   refreshDataCDKScreen(/*screen*/);
+}
+
+void SScreen::exitOKCDKScreen(/*CDKSCREEN *screen*/)
+{
+   /*screen->*/exitStatus = CDKSCREEN_EXITOK;
+}
+
+void SScreen::exitCancelCDKScreen(/*CDKSCREEN *screen*/)
+{
+   /*screen->*/exitStatus = CDKSCREEN_EXITCANCEL;
+}
+
+void CDKOBJS::exitOKCDKScreenOf(/*CDKOBJS *obj*/)
+{
+   screen->exitOKCDKScreen(/*obj->screen*/);
+}
+
+void CDKOBJS::exitCancelCDKScreenOf(/*CDKOBJS *obj*/)
+{
+   screen->exitCancelCDKScreen(/*obj->screen*/);
+}
+
+void CDKOBJS::resetCDKScreenOf(/*CDKOBJS *obj*/)
+{
+   screen->resetCDKScreen(/*obj->screen*/);
+}
+
+void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
+		CDKOBJS *curobj,
+		int keyCode,
+		bool functionKey,
+		CHECK_KEYCODE funcMenuKey)
+{
+	switch (keyCode) {
+		case KEY_BTAB:
+			switchFocus(setCDKFocusPrevious (/*screen*/), curobj);
+			break;
+		case KEY_TAB:
+			switchFocus(setCDKFocusNext (/*screen*/), curobj);
+			break;
+		case KEY_F (10):
+			/* save data and exit */
+			exitOKCDKScreen(/*screen*/);
+			break;
+		case CTRL ('X'):
+			exitCancelCDKScreen(/*screen*/);
+			break;
+		case CTRL ('R'):
+			/* reset data to defaults */
+			resetCDKScreen(/*screen*/);
+			curobj->setFocus();
+			break;
+		case CDK_REFRESH:
+			/* redraw screen */
+			curobj->refreshCDKScreen(/*screen*/); // oder object-> ?
+			curobj->setFocus();
+			break;
+		default:
+			/* not everyone wants menus, so we make them optional here */
+			if (funcMenuKey != 0 && funcMenuKey (keyCode, functionKey)) {
+				/* find and enable drop down menu */
+				for (int j = 0; j < /*screen->*/objectCount; ++j)
+					if (/*ObjTypeOf (*//*screen->*/object[j]->cdktype/*)*/ == vMENU) {
+						handleMenu (/*screen, *//*screen->*/object[j], curobj);
+						break;
+					}
+			} else {
+				curobj->injectObj(/*curobj, */(chtype)keyCode);
+			}
+			break;
+	}
+}
+
+/*
+ * Traverse the widgets on a screen.
+ */
+int SScreen::traverseCDKScreen(/*CDKSCREEN *screen*/)
+{
+	int result = 0;
+	CDKOBJS *curobj = setCDKFocusFirst(/*screen*/);
+	if (curobj) {
+		refreshDataCDKScreen(/*screen*/);
+		/*screen->*/exitStatus = CDKSCREEN_NOEXIT;
+		while (((curobj = getCDKFocusCurrent(/*screen*/)) != 0) && (/*screen->*/exitStatus == CDKSCREEN_NOEXIT)) {
+			bool function;
+			int key = curobj->getchCDKObject(/*curobj, */&function);
+			traverseCDKOnce (/*screen, */curobj, key, function, checkMenuKey);
+		}
+		if (/*screen->*/exitStatus == CDKSCREEN_EXITOK) {
+			saveDataCDKScreen(/*screen*/);
+			result = 1;
+		}
+	}
+	return result;
+}
+
+
+CDKOBJS* SScreen::handleMenu(/*CDKSCREEN *screen, */CDKOBJS *menu, CDKOBJS *oldobj)
+{
+	bool done = FALSE;
+	CDKOBJS *newobj;
+	switchFocus(menu, oldobj);
+	while (!done) {
+		bool functionKey;
+		int key = menu->getchCDKObject(/*menu, */&functionKey);
+		switch (key) {
+			case KEY_TAB:
+				done = TRUE;
+				break;
+			case KEY_ESC:
+				/* cleanup the menu */
+				//				((CDKMENU*)menu)->injectCDKMenu(/*(CDKMENU *)menu, */(chtype)key);
+				menu->injectObj((chtype)key);
+				done = TRUE;
+				break;
+			default:
+//				done = (menu->injectCDKMenu(/*(CDKMENU *)menu, */(chtype)key) >= 0);
+				done=(menu->injectObj(chtype(key))?menu->resultData.valueInt:unknownInt);
+				break;
+		}
+	}
+	if (!(newobj = this->getCDKFocusCurrent()))
+		newobj = this->setCDKFocusNext();
+	/*return */switchFocus(newobj, menu);
+	return newobj;
+}
+
+
+
+void CDKOBJS::unsetFocus()
+{
+   curs_set(0);
+//   if (obj != 0) {
+//      HasFocusObj(this) = FALSE;
+			hasFocus=0;
+      unfocusObj();
+//   }
+}
+
+void CDKOBJS::setFocus()
+{
+//   if (obj != 0) {
+//      HasFocusObj(this) = TRUE;
+			hasFocus=1;
+      focusObj();
+//   }
+   curs_set (1);
+}
+
+CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj)
+{
+   if (oldobj != newobj) {
+      if (oldobj) oldobj->unsetFocus();
+      if (newobj) newobj->setFocus();
+   }
+ return newobj;
+}
+
+/*
  * This registers a CDK object with a screen.
  */
 void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
@@ -1634,7 +1939,7 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 {
 	//   CDKOBJS *obj = (CDKOBJS *)object;
 	if (validObjType(cdktype) && this->screenIndex >= 0) {
-		CDKSCREEN *screen = (this)->screen;
+//		CDKSCREEN *screen = (this)->screen;
 		if (screen != 0) {
 			int Index = (this)->screenIndex;
 			this->screenIndex = -1;
@@ -2617,7 +2922,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 							ypos + 1,
 							xpos + 1);
 				}
-				registerCDKObject (cdkscreen, vENTRY);
+				registerCDKObject(cdkscreen, vENTRY);
 			}
 		}
 	}
@@ -3153,7 +3458,7 @@ void CDKOBJS::drawCDKScreen()
 /*
  * This refreshes all the objects in the screen.
  */
-void CDKOBJS::refreshCDKScreen()
+void CDKOBJS::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 {
 	int objectCount = screen->objectCount;
 	int x;
@@ -4424,7 +4729,7 @@ void SScroll::drawCDKScrollCurrent()
 {
    /* Rehighlight the current menu item. */
    int screenPos = this->itemPos[this->currentItem] - this->leftChar;
-   chtype highlight = HasFocusObj(this) ? this->highlight : 
+   chtype highlight = /*HasFocusObj(this)*/hasFocus ? this->highlight : 
 		 // Anfang G.Schade 2.10.18
 		 this->highlight
 		 /*A_NORMAL*/
@@ -4799,31 +5104,6 @@ void SScreen::eraseCDKScreen()
 	wrefresh (this->window);
 }
 
-/*
- * Set focus to the next object, returning it.
- */
-CDKOBJS *SScreen::setCDKFocusNext()
-{
-	CDKOBJS *result = 0;
-	CDKOBJS *curobj;
-	int n = getFocusIndex();
-	int first = n;
-	for (;;) {
-		if (++n >= this->objectCount)
-			n = 0;
-		curobj = this->object[n];
-		if (curobj != 0 && AcceptsFocusObj(curobj)) {
-			result = curobj;
-			break;
-		} else {
-			if (n == first) {
-				break;
-			}
-		}
-	}
-	setFocusIndex((result) ? n : -1);
-	return result;
-}
 
 #define limitFocusIndex(screen, value) \
  	(((value) >= (screen)->objectCount || (value) < 0) \
@@ -4849,10 +5129,10 @@ void SScreen::setFocusIndex(int value)
 //CDKSCREEN *initCDKScreen (WINDOW *window)
 SScreen::SScreen(WINDOW *window)
 {
-	ALL_SCREENS *item;
-//	CDKSCREEN *screen = 0;
+	//	ALL_SCREENS *item;
+	//	CDKSCREEN *screen = 0;
 	/* initialization, for the first time */
-	if (all_screens == 0 || stdscr == 0 || window == 0) {
+	if (/*all_screens == 0 || */stdscr == 0 || window == 0) {
 		/* Set up basic curses settings. */
 #ifdef HAVE_SETLOCALE
 		setlocale(LC_ALL, "");
@@ -4867,21 +5147,24 @@ SScreen::SScreen(WINDOW *window)
 		cbreak();
 	}
 
-	if ((item = typeMalloc (ALL_SCREENS)) != 0) {
-//		if ((screen = typeCalloc (CDKSCREEN)) != 0) {
-			item->link = all_screens;
-			item->screen = this;
-			all_screens = item;
+	//	if ((item = typeMalloc (ALL_SCREENS)) != 0) {
+	//		if ((screen = typeCalloc (CDKSCREEN)) != 0) {
+	/*
+		 item->link = all_screens;
+		 item->screen = this;
+		 all_screens = item;
+	 */
+	all_screens.push_back(this);
 
-			/* Initialize the CDKSCREEN pointer. */
-			this->objectCount = 0;
-			this->objectLimit = 2;
-			this->object = typeMallocN (CDKOBJS *, this->objectLimit);
-			this->window = window;
+	/* Initialize the CDKSCREEN pointer. */
+	this->objectCount = 0;
+	this->objectLimit = 2;
+	this->object = typeMallocN (CDKOBJS *, this->objectLimit);
+	this->window = window;
 
-			/* OK, we are done. */
-//		} else { free (item); }
-	}
-//	return(screen);
+	/* OK, we are done. */
+	//		} else { free (item); }
+	//	}
+	//	return(screen);
 }
 

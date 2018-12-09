@@ -176,7 +176,7 @@ extern einbauart akteinbart;
 
 //#define ObjOf(ptr)              (&(ptr)->obj)
 #define ObjOf(ptr)              (ptr)
-#define MethodOf(ptr)           (ObjOf(ptr)->fn)
+//#define MethodOf(ptr)           (ObjOf(ptr)->fn)
 #define ScreenOf(ptr)           (ObjOf(ptr)->screen)
 #define WindowOf(ptr)           (ScreenOf(ptr)->window)
 #define BorderOf(p)             (ObjOf(p)->borderSize)
@@ -311,6 +311,7 @@ extern einbauart akteinbart;
 
 #define SCREENPOS(w,n) (w)->itemPos[n] - (w)->leftChar	/* + scrollbarAdj + BorderOf(w) */
 
+
 struct CDKOBJS; // CDKOBJS
 
 typedef enum {
@@ -332,6 +333,13 @@ typedef union {
 #define unknownFloat    (0.0)
 #define unknownDouble   (0.0)
 #define unknownUnsigned (0)
+
+/*
+ * This injects a single character into the menu widget.
+ */
+//#define injectCDKObject(o,c,type)      (MethodOf(o)->injectObj    (ObjOf(o),c) ? ResultOf(o).value ## type : unknown ## type)
+#define injectCDKObject(/*o,*/c,type)      (injectObj    (/*ObjOf(o),*/c) ? ResultOf(this).value ## type : unknown ## type)
+#define injectCDKMenu(/*obj,*/input) injectCDKObject(/*obj,*/input,Int)
 
 /*
  * This enumerated typedef lists all of the CDK widget types.
@@ -422,10 +430,12 @@ bool isHiddenDisplayType (EDisplayType type);
 int filterByDisplayType (EDisplayType type, chtype input);
 
 // typedef struct _all_objects { struct _all_objects *link; CDKOBJS *object; } ALL_OBJECTS;
+typedef bool (*CHECK_KEYCODE)(int /* keyCode */, int /* functionKey */);
 /*
  * Define the CDK screen structure.
  */
-struct SScreen { // SScreen
+struct SScreen 
+{ // SScreen
    WINDOW *		window;
    CDKOBJS**	object; // CDKOBJS
    int			objectCount;	/* last-used index in object[] */
@@ -434,11 +444,25 @@ struct SScreen { // SScreen
    int			objectFocus;	/* focus index in object[] */
 	 void eraseCDKScreen();
 	 CDKOBJS* setCDKFocusNext();
+	 CDKOBJS* setCDKFocusPrevious();
+	 CDKOBJS* setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj);
+	 CDKOBJS* setCDKFocusFirst(/*CDKSCREEN *screen*/);
+	 /*CDKOBJS **/void setCDKFocusLast(/*CDKSCREEN *screen*/);
 	 int getFocusIndex();
 	 void setFocusIndex(int value);
 	 SScreen(WINDOW *window);
 	 void swapCDKIndices(/*CDKSCREEN *screen, */int n1, int n2);
 	 void destroyCDKScreenObjects();
+	 void destroyCDKScreen();
+	 CDKOBJS* getCDKFocusCurrent();
+	 CDKOBJS* handleMenu(/*CDKSCREEN *screen, */CDKOBJS *menu, CDKOBJS *oldobj);
+	 void saveDataCDKScreen(/*CDKSCREEN *screen*/);
+	 void refreshDataCDKScreen(/*CDKSCREEN *screen*/);
+	 void resetCDKScreen(/*CDKSCREEN *screen*/);
+	 void exitOKCDKScreen(/*CDKSCREEN *screen*/);
+	 void exitCancelCDKScreen(/*CDKSCREEN *screen*/);
+	 void traverseCDKOnce(/*CDKSCREEN *screen,*/ CDKOBJS *curobj, int keyCode, bool functionKey, CHECK_KEYCODE funcMenuKey);
+	 int traverseCDKScreen(/*CDKSCREEN *screen*/);
 };
 
 /*
@@ -495,6 +519,8 @@ unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned us
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
 void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
 void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
+static bool checkMenuKey(int keyCode, int functionKey);
+CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
 
 typedef struct SScreen CDKSCREEN;
 
@@ -514,7 +540,7 @@ void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype, void *object);
  * cdkscreen.c, position.c, etc.
  */
 struct CDKOBJS 
-{ 
+{
    int          screenIndex;
    SScreen *  screen;
 	 EObjectType cdktype; 
@@ -554,11 +580,12 @@ struct CDKOBJS
 	 virtual void drawObj(bool);
 	 virtual void eraseObj();
 	 virtual void destroyObj();
-	 virtual void focusObj(CDKOBJS*);
-	 virtual void unfocusObj(CDKOBJS*);
+	 virtual void focusObj();
+	 virtual void unfocusObj();
+	 virtual void setFocus();
+	 virtual int injectObj(chtype);
 	 /*
 	 virtual void moveObj(int,int,bool,bool);
-	 virtual int injectObj(chtype);
 	 virtual void saveDataObj();
 	 virtual void refreshDataObj();
 	 */
@@ -574,8 +601,8 @@ struct CDKOBJS
    // background attribute
 	 virtual void setBKattrObj(chtype);
 	 void refreshDataCDK();
-	 void saveDataCDK();
-	 void refreshCDKScreen();
+	 virtual void saveDataCDK();
+	 virtual void refreshCDKScreen();
 	 void drawCDKScreen();
 	 virtual CDKOBJS* bindableObject();
 	 void bindCDKObject(chtype key, BINDFN function, void *data);
@@ -603,6 +630,10 @@ struct CDKOBJS
 	 int getchCDKObject(bool *functionKey);
 	 void raiseCDKObject(EObjectType cdktype/*, void *object*/);
 	 void lowerCDKObject(EObjectType cdktype/*, void *object*/);
+	 void unsetFocus();
+	 void exitOKCDKScreenOf(/*CDKOBJS *obj*/);
+	 void exitCancelCDKScreenOf(/*CDKOBJS *obj*/);
+	 void resetCDKScreenOf(/*CDKOBJS *obj*/);
 }; // struct CDKOBJS
 
 /*
@@ -641,9 +672,9 @@ struct SEntry:CDKOBJS
 	 void setBKattrEntry(chtype attrib);
 	 void setCDKEntryHighlight(chtype highlight, bool cursor);
 	 void focusCDKEntry();
-	 void focusObj(CDKOBJS*){focusCDKEntry();}
+	 void focusObj(){focusCDKEntry();}
 	 void unfocusCDKEntry();
-	 void unfocusObj(CDKOBJS*){unfocusCDKEntry();}
+	 void unfocusObj(){unfocusCDKEntry();}
 	 EExitType exitType;
    EDisplayType dispType;
    bool	shadow;
@@ -678,6 +709,7 @@ struct SEntry:CDKOBJS
 	 void drawObj(bool box){drawCDKEntry(box);}
 	 void cleanCDKEntry();
 	 int injectCDKEntry(chtype);
+	 int injectObj(chtype ch){return injectCDKEntry(ch);}
 	 void setCDKEntryValue(const char *newValue);
 	 void eraseCDKEntry();
 	 void eraseObj(){eraseCDKEntry();}
@@ -776,6 +808,7 @@ struct SScroll:SScroll_basis
 	 bool allocListArrays(int oldSize, int newSize);
 	 bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
 	 int injectCDKScroll(/*CDKOBJS *object, */chtype input);
+	 int injectObj(chtype ch){return injectCDKScroll(ch);}
 	 void drawCDKScrollList(bool Box);
 	 int activateCDKScroll(chtype *actions);
 	 void setCDKScrollPosition(int item);
@@ -797,9 +830,9 @@ struct SScroll:SScroll_basis
 	 void insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item);
 	 void deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position);
 	 void focusCDKScroll(/*CDKOBJS *object*/);
-	 void focusObj(CDKOBJS*){focusCDKScroll();}
+	 void focusObj(){focusCDKScroll();}
 	 void unfocusCDKScroll(/*CDKOBJS *object*/);
-	 void unfocusObj(CDKOBJS*){unfocusCDKScroll();}
+	 void unfocusObj(){unfocusCDKScroll();}
 }; // struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 
@@ -865,6 +898,7 @@ struct SAlphalist:CDKOBJS
 	 void injectMyScroller(chtype key);
 	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
 	 int injectCDKAlphalist(chtype input);
+	 int injectObj(chtype ch){return injectCDKAlphalist(ch);}
 	 /*
 	 void focusCDKAlphalist()//CDKOBJS *object
 	 void unfocusCDKAlphalist()//CDKOBJS *object
@@ -894,7 +928,44 @@ struct SAlphalist:CDKOBJS
 	 void setCDKAlphalistPreProcess(PROCESSFN callback, void *data);
 	 void setCDKAlphalistPostProcess(PROCESSFN callback, void *data);
 	 void focusCDKAlphalist();
+	 void focusObj(){focusCDKAlphalist();}
 	 void unfocusCDKAlphalist();
+	 void unfocusObj(){unfocusCDKAlphalist();}
 };
 typedef struct SAlphalist CDKALPHALIST;
 
+/*
+ * Define menu specific values.
+ */
+#define MAX_MENU_ITEMS	30
+#define MAX_SUB_ITEMS	98
+
+/*
+ * Define the CDK menu widget structure.
+ */
+/*
+struct SMenu:CDKOBJS {
+//   CDKOBJS	obj;
+   WINDOW *	parent;
+   WINDOW *	pullWin[MAX_MENU_ITEMS];
+   WINDOW *	titleWin[MAX_MENU_ITEMS];
+   chtype *	title[MAX_MENU_ITEMS];
+   int		titleLen[MAX_MENU_ITEMS];
+   chtype *	sublist[MAX_MENU_ITEMS][MAX_SUB_ITEMS];
+   int		sublistLen[MAX_MENU_ITEMS][MAX_SUB_ITEMS];
+   int		subsize[MAX_MENU_ITEMS];
+   int		menuPos;
+   int		menuItems;
+   chtype	titleAttr;
+   chtype	subtitleAttr;
+   int		currentTitle;
+   int		currentSubtitle;
+   int		lastTitle;
+   int		lastSubtitle;
+   EExitType	exitType;
+   int		lastSelection;
+//	 int injectCDKMenu(chtype);
+//	 int injectObj(chtype ch){return injectCDKMenu(ch);}
+};
+typedef struct SMenu CDKMENU;
+*/
