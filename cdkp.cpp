@@ -1682,7 +1682,7 @@ void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
 			break;
 		case CDK_REFRESH:
 			/* redraw screen */
-			curobj->refreshCDKScreen(/*screen*/); // oder object-> ?
+			refreshCDKScreen(/*screen*/); // oder object-> ?
 			curobj->setFocus();
 			break;
 		default:
@@ -2150,7 +2150,7 @@ void SEntry::moveCDKEntry(/*CDKOBJS *object,*/
 	moveCursesWindow(this->labelWin, -xdiff, -ydiff);
 	moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
 	/* Touch the windows so they 'move'. */
-	refreshCDKWindow (WindowOf (this));
+	refreshCDKWindow(WindowOf (this));
 	/* Redraw the window, if they asked for it. */
 	if (refresh_flag) {
 		drawCDKEntry(box);
@@ -3078,7 +3078,7 @@ int SEntry::injectCDKEntry(chtype input)
 	static char umlaut[3]={0};
 	const int inpint=input;
 	mvwprintw(this->screen->window,2,2,"injectCDKEntry %c %i          ",input,input);
-	 refreshCDKScreen();
+	screen->refreshCDKScreen();
 	if (inpint==194 || inpint==195) {
 //		printf("Eintrag: %i\n",inpint);
 		*umlaut=inpint;
@@ -3283,7 +3283,7 @@ int SEntry::injectCDKEntry(chtype input)
 					break;
 				case CDK_REFRESH:
 					screen->eraseCDKScreen();
-					refreshCDKScreen();
+					screen->refreshCDKScreen();
 					break;
 				default:
 					// printf("%i %i %i\n",umlaut[0],umlaut[1],umlaut[2]);
@@ -3452,28 +3452,28 @@ void SScroll::eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
  */
 void CDKOBJS::drawCDKScreen()
 {
-   refreshCDKScreen();
+   screen->refreshCDKScreen();
 }
 
 /*
  * This refreshes all the objects in the screen.
  */
-void CDKOBJS::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
+void SScreen::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 {
-	int objectCount = screen->objectCount;
+	int objectCount = /*screen->*/objectCount;
 	int x;
 	int focused = -1;
 	int visible = -1;
 #define richtig
 #ifdef richtig
-	refreshCDKWindow (screen->window);
+	refreshCDKWindow (/*screen->*/window);
 #endif
 	/* We erase all the invisible objects, then only
 	 * draw it all back, so that the objects
 	 * can overlap, and the visible ones will always
 	 * be drawn after all the invisible ones are erased */
 	for (x = 0; x < objectCount; x++) {
-		CDKOBJS *obj = screen->object[x];
+		CDKOBJS *obj = /*screen->*/object[x];
 //		if (validObjType (obj, ObjTypeOf (obj))) KLA
 			if (obj->validObjType(obj->cdktype)) {
 			if (obj->isVisible) {
@@ -3487,7 +3487,7 @@ void CDKOBJS::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 		}
 	}
 	for (x = 0; x < objectCount; x++) {
-		CDKOBJS *obj = screen->object[x];
+		CDKOBJS *obj = /*screen->*/object[x];
 		//		if (validObjType (obj, ObjTypeOf (obj))) KLA
 		if (obj->validObjType(obj->cdktype)) {
 			obj->hasFocus = (x == focused);
@@ -3497,7 +3497,7 @@ void CDKOBJS::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 			}
 		}
 	}
-} // void CDKOBJS::refreshCDKScreen()
+} // void SScreen::refreshCDKScreen()
 
 
 /*
@@ -4892,7 +4892,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 
 				case CDK_REFRESH:
 					screen->eraseCDKScreen ();
-					refreshCDKScreen();
+					screen->refreshCDKScreen();
 					break;
 
 				case KEY_TAB:
@@ -5166,5 +5166,389 @@ SScreen::SScreen(WINDOW *window)
 	//		} else { free (item); }
 	//	}
 	//	return(screen);
+}
+
+/*
+ * This creates a label widget.
+ */
+//CDKLABEL *newCDKLabel (CDKSCREEN *cdkscreen,
+SLabel::SLabel(CDKSCREEN *cdkscreen,
+		       int xplace,
+		       int yplace,
+		       CDK_CSTRING2 mesg,
+		       int prows,
+		       bool Box,
+		       bool shadow): xpos(xplace),ypos(yplace),boxWidth(INT_MIN),rows(prows),shadow(shadow)
+{
+   /* *INDENT-EQLS* */
+//   CDKLABEL *label      = 0;
+   int parentWidth      = getmaxx (cdkscreen->window);
+   int parentHeight     = getmaxy (cdkscreen->window);
+//   int boxWidth         = INT_MIN;
+//   int boxHeight;
+   //int xpos             = xplace;
+   //int ypos             = yplace;
+   int x                = 0;
+
+	::CDKOBJS();
+   if (rows <= 0
+       /*|| (label = newCDKObject (CDKLABEL, &my_funcs)) == 0*/
+       || (/*label->*/info = typeCallocN (chtype *, rows + 1)) == 0
+       || (/*label->*/infoLen = typeCallocN (int, rows + 1)) == 0
+       || (/*label->*/infoPos = typeCallocN (int, rows + 1)) == 0)
+   {
+      destroyCDKObject(/*label*/);
+      return /*(0)*/;
+   }
+
+   setCDKLabelBox (/*label, */Box);
+   boxHeight = rows + 2 * /*BorderOf (label)*/ borderSize;
+
+   /* Determine the box width. */
+   for (x = 0; x < rows; x++) {
+      /* Translate the char * to a chtype. */
+      /*label->*/info[x] = char2Chtypeh(mesg[x],
+				    &/*label->*/infoLen[x],
+				    &/*label->*/infoPos[x]);
+      boxWidth = MAXIMUM (boxWidth, /*label->*/infoLen[x]);
+   }
+   boxWidth += 2 * /*BorderOf (label)*/ borderSize;
+
+   /* Create the string alignments. */
+   for (x = 0; x < rows; x++) {
+      /*label->*/infoPos[x] = justifyString (boxWidth - 2 * /*BorderOf (label)*/ borderSize,
+					 /*label->*/infoLen[x],
+					 /*label->*/infoPos[x]);
+   }
+
+   /*
+    * Make sure we didn't extend beyond the dimensions of the window.
+    */
+   boxWidth = (boxWidth > parentWidth ? parentWidth : boxWidth);
+   boxHeight = (boxHeight > parentHeight ? parentHeight : boxHeight);
+
+   /* Rejustify the x and y positions if we need to. */
+   alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+
+   /* *INDENT-EQLS* Create the label. */
+   /*ScreenOf (label)*/screen     = cdkscreen;
+   /*label->*/parent        = cdkscreen->window;
+   /*label->*/win           = newwin (boxHeight, boxWidth, ypos, xpos);
+   /*label->*/shadowWin     = 0;
+//   /*label->*/xpos          = xpos;
+//   /*label->*/ypos          = ypos;
+//   /*label->*/rows          = rows;
+//   /*label->*/boxWidth      = boxWidth;
+//   /*label->*/boxHeight     = boxHeight;
+   /*ObjOf (label)->*/inputWindow = /*label->*/win;
+   /*ObjOf (label)->*/hasFocus = FALSE;
+//   label->shadow        = shadow;
+
+   /* Is the window null? */
+   if (/*label->*/win == 0)
+   {
+      destroyCDKObject (/*label*/);
+      return /*(0)*/;
+   }
+   keypad (/*label->*/win, TRUE);
+
+   /* If a shadow was requested, then create the shadow window. */
+   if (shadow)
+   {
+      /*label->*/shadowWin = newwin (boxHeight, boxWidth, ypos + 1, xpos + 1);
+   }
+
+   /* Register this baby. */
+   registerCDKObject (cdkscreen, vLABEL/*, label*/);
+
+   /* Return the label pointer. */
+//   return (label);
+}
+
+/*
+ * This sets the box flag for the label widget.
+ */
+void SLabel::setCDKLabelBox(/*CDKLABEL *label, */bool Box)
+{
+   /*ObjOf (label)->*/box = Box;
+   /*ObjOf (label)->*/borderSize = Box ? 1 : 0;
+}
+
+bool SLabel::getCDKLabelBox(/*CDKLABEL *label*/)
+{
+   return /*ObjOf (label)->*/box;
+}
+
+/*
+ * This was added for the builder.
+ */
+void SLabel::activateCDKLabel(/*CDKLABEL *label, */chtype *actions GCC_UNUSED)
+{
+   drawCDKLabel(/*label, ObjOf (label)->*/box);
+}
+
+/*
+ * This sets multiple attributes of the widget.
+ */
+void SLabel::setCDKLabel(/*CDKLABEL *label, */CDK_CSTRING2 mesg, int lines, bool Box)
+{
+   setCDKLabelMessage (/*label, */mesg, lines);
+   setCDKLabelBox (/*label, */Box);
+}
+
+/*
+ * This sets the information within the label.
+ */
+void SLabel::setCDKLabelMessage (/*CDKLABEL *label, */CDK_CSTRING2 pinfo, int infoSize)
+{
+   int x;
+   int limit;
+
+   /* Clean out the old message. */
+   for (x = 0; x < /*label->*/rows; x++) {
+      freeChtype (/*label->*/info[x]);
+      /*label->*/info[x] = 0;
+      /*label->*/infoPos[x] = 0;
+      /*label->*/infoLen[x] = 0;
+   }
+
+   /* update the label's length - but taking into account its window size */
+   limit = /*label->*/boxHeight - (2 * /*BorderOf (label)*/ borderSize);
+   if (infoSize > limit)
+      infoSize = limit;
+   /*label->*/rows = infoSize;
+
+   /* Copy in the new message. */
+   for (x = 0; x < /*label->*/rows; x++) {
+      /*label->*/info[x] = char2Chtypeh(pinfo[x],
+				    &/*label->*/infoLen[x],
+				    &/*label->*/infoPos[x]);
+      /*label->*/infoPos[x] = justifyString (/*label->*/boxWidth - 2 * /*BorderOf (label)*/ borderSize,
+					 /*label->*/infoLen[x],
+					 /*label->*/infoPos[x]);
+   }
+
+   /* Redraw the label widget. */
+   eraseCDKLabel(/*label*/);
+   drawCDKLabel(/*label, ObjOf (label)->*/box);
+}
+
+chtype **SLabel::getCDKLabelMessage(/*CDKLABEL *label, */int *size)
+{
+   (*size) = /*label->*/rows;
+   return /*label->*/info;
+}
+
+/*
+ * This sets the background attribute of the widget.
+ */
+void SLabel::setBKattrLabel(/*CDKOBJS *object, */chtype attrib)
+{
+//   if (object != 0) {
+//      CDKLABEL *widget = (CDKLABEL *)object;
+      wbkgd(/*widget->*/win, attrib);
+//   }
+}
+
+/*
+ * This draws the label widget.
+ */
+void SLabel::drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED)
+{
+//   CDKLABEL *label = (CDKLABEL *)object;
+   /* Is there a shadow? */
+   if (/*label->*/shadowWin != 0) {
+      drawShadow(/*label->*/shadowWin);
+   }
+   /* Box the widget if asked. */
+   if (/*ObjOf (label)->*/box) {
+      drawObjBox (/*label->*/win/*, ObjOf (label)*/);
+   }
+   /* Draw in the message. */
+   for (int x = 0; x < /*label->*/rows; x++) {
+      writeChtype (/*label->*/win,
+		   /*label->*/infoPos[x] + /*BorderOf (label)*/ borderSize,
+		   x + /*BorderOf (label)*/ borderSize,
+		   /*label->*/info[x],
+		   HORIZONTAL,
+		   0,
+		   /*label->*/infoLen[x]);
+   }
+   /* Refresh the window. */
+   wrefresh (/*label->*/win);
+}
+
+/*
+ * This erases the label widget.
+ */
+void SLabel::eraseCDKLabel(/*CDKOBJS *object*/)
+{
+//   if (validCDKObject (object)) {
+//      CDKLABEL *label = (CDKLABEL *)object;
+      eraseCursesWindow(/*label->*/win);
+      eraseCursesWindow(/*label->*/shadowWin);
+//   }
+}
+
+/*
+ * This moves the label field to the given location.
+ */
+void SLabel::moveCDKLabel (/*CDKOBJS *object,*/
+			   int xplace,
+			   int yplace,
+			   bool relative,
+			   bool refresh_flag)
+{
+//   CDKLABEL *label = (CDKLABEL *)object;
+   /* *INDENT-EQLS* */
+   int currentX = getbegx (/*label->*/win);
+   int currentY = getbegy (/*label->*/win);
+   int xpos     = xplace;
+   int ypos     = yplace;
+   int xdiff    = 0;
+   int ydiff    = 0;
+
+   /*
+    * If this is a relative move, then we will adjust where we want
+    * to move to.
+    */
+   if (relative) {
+      xpos = getbegx (/*label->*/win) + xplace;
+      ypos = getbegy (/*label->*/win) + yplace;
+   }
+
+   /* Adjust the window if we need to. */
+   alignxy (WindowOf (this), &xpos, &ypos, /*label->*/boxWidth, /*label->*/boxHeight);
+
+   /* Get the difference. */
+   xdiff = currentX - xpos;
+   ydiff = currentY - ypos;
+
+   /* Move the window to the new location. */
+   moveCursesWindow (/*label->*/win, -xdiff, -ydiff);
+   moveCursesWindow (/*label->*/shadowWin, -xdiff, -ydiff);
+
+   /* Touch the windows so they 'move'. */
+   refreshCDKWindow (WindowOf (this));
+
+   /* Redraw the window, if they asked for it. */
+   if (refresh_flag) {
+      drawCDKLabel (/*label, ObjOf (label)->*/box);
+   }
+}
+
+/*
+ * This destroys the label object pointer.
+ */
+void SLabel::destroyCDKLabel(/*CDKOBJS *object*/)
+{
+//   if (object != 0) {
+//      CDKLABEL *label = (CDKLABEL *)object;
+
+      CDKfreeChtypes (/*label->*/info);
+      freeChecked (/*label->*/infoLen);
+      freeChecked (/*label->*/infoPos);
+
+      /* Free up the window pointers. */
+      deleteCursesWindow (/*label->*/shadowWin);
+      deleteCursesWindow (/*label->*/win);
+
+      /* Clean the key bindings. */
+      cleanCDKObjectBindings(/*vLABEL, this*/);
+
+      /* Unregister the object. */
+      unregisterCDKObject(vLABEL/*, this*/);
+//   }
+}
+
+/*
+ * This pauses until a user hits a key...
+ */
+char SLabel::waitCDKLabel(/*CDKLABEL *label, */char key)
+{
+	int code;
+	bool functionKey;
+	/* If the key is null, we'll accept anything. */
+	if (!key) {
+		code = getchCDKObject (/*ObjOf (label), */&functionKey);
+	} else {
+		/* Only exit when a specific key is hit. */
+		for (;;) {
+			code = getchCDKObject (/*ObjOf (label), */&functionKey);
+			if (code == key) {
+				break;
+			}
+		}
+	}
+	return (char)(code);
+}
+
+/*
+ * This pops up a message.
+ */
+void SScreen::popupLabel(/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count)
+{
+//   CDKLABEL *popup = 0;
+   int oldCursState;
+   bool functionKey;
+   /* Create the label. */
+   CDKLABEL popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+   oldCursState = curs_set(0);
+   /* Draw it on the screen. */
+   popup.drawCDKLabel(/*popup, */TRUE);
+   /* Wait for some input. */
+   keypad(popup.win, TRUE);
+   popup.getchCDKObject(/*ObjOf (popup), */&functionKey);
+   /* Kill it. */
+   popup.destroyCDKLabel();
+   /* Clean the screen. */
+   curs_set(oldCursState);
+   eraseCDKScreen();
+   refreshCDKScreen();
+}
+
+/*
+ * This pops up a message.
+ */
+void SScreen::popupLabelAttrib(/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count, chtype attrib)
+{
+//   CDKLABEL *popup = 0;
+   int oldCursState;
+   bool functionKey;
+   /* Create the label. */
+   CDKLABEL popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+//   popup.setCDKLabelBackgroundAttrib(attrib);
+   popup.setBKattrObj(attrib);
+   oldCursState = curs_set(0);
+   /* Draw it on the screen. */
+   popup.drawCDKLabel(TRUE);
+   /* Wait for some input. */
+   keypad (popup.win, TRUE);
+   popup.getchCDKObject (/*ObjOf (popup), */&functionKey);
+   /* Kill it. */
+   popup.destroyCDKLabel();
+   /* Clean the screen. */
+   curs_set (oldCursState);
+   eraseCDKScreen();
+   refreshCDKScreen();
+} 
+
+/*
+ * This sets the background color of the widget.
+ */
+void CDKOBJS::setCDKObjectBackgroundColor (/*CDKOBJS *obj, */const char *color)
+{
+   chtype *holder = 0;
+   int junk1, junk2;
+   /* Make sure the color isn't null. */
+   if (!color) {
+      return;
+   }
+   /* Convert the value of the environment variable to a chtype. */
+   holder = char2Chtypeh(color, &junk1, &junk2);
+   /* Set the widget's background color. */
+   setBKattrObj(/*obj, */holder[0]);
+   /* Clean up. */
+   freeChtype (holder);
 }
 

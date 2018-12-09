@@ -463,6 +463,9 @@ struct SScreen
 	 void exitCancelCDKScreen(/*CDKSCREEN *screen*/);
 	 void traverseCDKOnce(/*CDKSCREEN *screen,*/ CDKOBJS *curobj, int keyCode, bool functionKey, CHECK_KEYCODE funcMenuKey);
 	 int traverseCDKScreen(/*CDKSCREEN *screen*/);
+	 void popupLabel (/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count);
+	 void popupLabelAttrib (/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count, chtype attrib);
+	 virtual void refreshCDKScreen();
 };
 
 /*
@@ -602,7 +605,6 @@ struct CDKOBJS
 	 virtual void setBKattrObj(chtype);
 	 void refreshDataCDK();
 	 virtual void saveDataCDK();
-	 virtual void refreshCDKScreen();
 	 void drawCDKScreen();
 	 virtual CDKOBJS* bindableObject();
 	 void bindCDKObject(chtype key, BINDFN function, void *data);
@@ -618,7 +620,7 @@ struct CDKOBJS
 	 ~CDKOBJS();
 	 void unregisterCDKObject(EObjectType cdktype/*, void *object*/);
 	 void destroyCDKObject(/*CDKOBJS *obj*/);
-	 int setCdkTitle(const char *title, int boxWidth);
+	 int setCdkTitle (/*CDKOBJS *obj, */const char *title, int boxWidth);
 	 void drawCdkTitle(WINDOW *);
 	 void cleanCdkTitle();
 	 bool validObjType(EObjectType type);
@@ -634,6 +636,7 @@ struct CDKOBJS
 	 void exitOKCDKScreenOf(/*CDKOBJS *obj*/);
 	 void exitCancelCDKScreenOf(/*CDKOBJS *obj*/);
 	 void resetCDKScreenOf(/*CDKOBJS *obj*/);
+	 void setCDKObjectBackgroundColor (/*CDKOBJS *obj, */const char *color);
 }; // struct CDKOBJS
 
 /*
@@ -969,3 +972,57 @@ struct SMenu:CDKOBJS {
 };
 typedef struct SMenu CDKMENU;
 */
+
+#ifndef INT_MIN
+#define INT_MIN (-INT_MAX - 1)
+#endif
+#ifndef INT_MAX
+#define INT_MAX 2147483647
+#endif
+
+
+/*
+ * This draws the label.
+ */
+//#define drawCDKObject(/*o,*/box)           /*MethodOf(o)->*/drawObj       (/*ObjOf(o),*/box)
+// #define drawCDKLabel(/*obj,*/Box) drawCDKObject(/*obj,*/Box)
+
+/*
+ * This erases the label.
+ */
+//#define eraseCDKObject(/*o*/)              /*MethodOf(o)->*/eraseObj      (/*ObjOf(o)*/)
+//#define eraseCDKLabel(/*obj*/) eraseCDKObject(/*obj*/)
+
+
+/*
+ * Declare the CDK label structure.
+ */
+struct SLabel:CDKOBJS {
+//   CDKOBJS	obj;
+   WINDOW *	parent;
+   WINDOW *	win;
+   WINDOW *	shadowWin;
+   chtype **	info;
+   int *	infoLen;
+   int *	infoPos;
+   int		boxWidth;
+   int		boxHeight;
+   int		xpos;
+   int		ypos;
+   int		rows;
+   bool	shadow;
+	 SLabel(CDKSCREEN *cdkscreen, int xplace, int yplace, CDK_CSTRING2 mesg, int rows, bool Box, bool shadow);
+	 void setCDKLabelBox(/*CDKLABEL *label, */bool Box);
+	 bool getCDKLabelBox(/*CDKLABEL *label*/);
+	 void activateCDKLabel(/*CDKLABEL *label, */chtype *actions GCC_UNUSED);
+	 void setCDKLabel(/*CDKLABEL *label, */CDK_CSTRING2 mesg, int lines, bool Box);
+	 void setCDKLabelMessage (/*CDKLABEL *label, */CDK_CSTRING2 info, int infoSize);
+	 chtype **getCDKLabelMessage(/*CDKLABEL *label, */int *size);
+	 void setBKattrLabel(chtype attrib);
+	 void drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED);
+	 void eraseCDKLabel(/*CDKOBJS *object*/);
+	 void moveCDKLabel(/*CDKOBJS *object,*/ int xplace, int yplace, bool relative, bool refresh_flag);
+	 void destroyCDKLabel(/*CDKOBJS *object*/);
+	 char waitCDKLabel(/*CDKLABEL *label, */char key);
+};
+typedef struct SLabel CDKLABEL;
