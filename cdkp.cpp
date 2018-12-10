@@ -5669,3 +5669,44 @@ void SScroll::setBKattrObj(chtype attrib)
 {
 	setBKattrScroll(attrib);
 }
+
+/*
+ * This draws the file selector widget.
+ */
+void SFileSelector::drawCDKFselect(/*CDKOBJS *object, */bool Box GCC_UNUSED)
+{
+//   CDKFSELECT *fselect = (CDKFSELECT *)object;
+
+   /* Draw in the shadow if we need to. */
+   if (/*fselect->*/shadowWin) {
+      drawShadow(/*fselect->*/shadowWin);
+   }
+
+   /* Draw in the entry field. */
+   entryField->drawCDKEntry(/*fselect->entryField, ObjOf (fselect->entryField)->*/box);
+
+   /* Draw in the scroll field. */
+   drawMyScroller(/*fselect*/);
+}
+
+/*
+ * The fselect's focus resides in the entry widget.  But the scroll widget
+ * will not draw items highlighted unless it has focus.  Temporarily adjust the
+ * focus of the scroll widget when drawing on it to get the right highlighting.
+ */
+/*
+#define SaveFocus(widget) \
+   boolean save = HasFocusObj (ObjOf (widget->scrollField)); \
+   HasFocusObj (ObjOf (widget->scrollField)) = \
+   HasFocusObj (ObjOf (widget->entryField))
+
+#define RestoreFocus(widget) \
+   HasFocusObj (ObjOf (widget->scrollField)) = save
+	 */
+
+void SFileSelector::drawMyScroller(/*CDKFSELECT *widget*/)
+{
+   SaveFocus(this);
+   scrollField->drawCDKScroll(/*widget->scrollField, ObjOf (widget->scrollField)->*/scrollField->box);
+   RestoreFocus(this);
+}

@@ -3,8 +3,8 @@ VZ=~/cdk
 VZI=$VZ/include
 VZ=$VZ/examples
 VZ=$PWD
-LISTE="cdk_display.c cdk_params.c cdk.c draw.c cdk_objs.c label.c popup_label.c binding.c traverse.c cdkscreen.c entry.c alphalist.c scroll.c scroller.c"
+LISTE="cdk_display.c cdk_params.c cdk.c draw.c cdk_objs.c label.c popup_label.c binding.c traverse.c cdkscreen.c entry.c alphalist.c fselect.c dialog.c scroll.c scroller.c"
 for d in $LISTE; do PAR="$PAR $VZ/$d"; done
 ctags -R . ~/cdk /usr/include/cdk /usr/local/include/cdk /usr/include/ncursesw ~/ncurses
-vi entry_ex.c entry.h alphalist.h cdk.h cdk_objs.h cdk_util.h $VZI/cdk_int.h $PAR eingabe.cpp zeichne.cpp cdkp.cpp cdkp.h ../include/scroll*.h mach.sh $0 -pNu .exrc
+vi entry_ex.c entry.h alphalist.h cdk.h cdk_objs.h cdk_util.h $VZI/cdk_int.h $PAR eingabe.cpp zeichne.cpp cdkp.cpp cdkp.h ../include/scroll*.h Makefile mach.sh $0 -pNu .exrc
 

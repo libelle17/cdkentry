@@ -898,6 +898,7 @@ struct SFileSelector:CDKOBJS
 	void eraseCDKFselect();
 	void eraseObj(){eraseCDKFselect();}
 	void drawCDKFselect(bool Box);
+	void drawMyScroller(/*CDKFSELECT *widget*/);
 	void drawObj(bool Box);
 }; // struct SFileSelector:CDKOBJS
 typedef struct SFileSelector CDKFSELECT;
