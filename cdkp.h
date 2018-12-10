@@ -891,6 +891,7 @@ typedef struct SScroll CDKSCROLL;
 struct SFileSelector:CDKOBJS
 {
 	CDKENTRY *	entryField;
+	CDKSCROLL *	scrollField;
 	CDKOBJS* bindableObject();
 	SFileSelector();
 	~SFileSelector();
