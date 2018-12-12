@@ -2,6 +2,8 @@
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
 #endif
+#include <unistd.h> // getcwd
+#include <sys/stat.h> // struct stat
 #include <vector>
 #include <cctype> // isdigit
 using namespace std;
@@ -59,7 +61,7 @@ int getmaxyf(WINDOW *win)
  * height/width of the parent window - the value of the dimension.  Otherwise,
  * the dimension will be the given value.
  */
-int setWidgetDimension (int parentDim, int proposedDim, int adjustment)
+int setWidgetDimension(int parentDim, int proposedDim, int adjustment)
 {
 	int dimension = 0;
 	/* If the user passed in FULL, return the parent's size. */
@@ -1076,45 +1078,38 @@ void attrbox (WINDOW *win,
 	int count    = 0;
 
 	/* Draw horizontal lines. */
-	if (horz != 0)
-	{
-		(void)mvwhline (win, y1, 0, horz | attr, getmaxx (win));
-		(void)mvwhline (win, y2, 0, horz | attr, getmaxx (win));
+	if (horz) {
+		(void)mvwhline(win, y1, 0, horz | attr, getmaxx (win));
+		(void)mvwhline(win, y2, 0, horz | attr, getmaxx (win));
 		count++;
 	}
 
 	/* Draw vertical lines. */
-	if (vert != 0)
-	{
-		(void)mvwvline (win, 0, x1, vert | attr, getmaxy (win));
-		(void)mvwvline (win, 0, x2, vert | attr, getmaxy (win));
+	if (vert) {
+		(void)mvwvline(win, 0, x1, vert | attr, getmaxy (win));
+		(void)mvwvline(win, 0, x2, vert | attr, getmaxy (win));
 		count++;
 	}
 
 	/* Draw in the corners. */
-	if (tlc != 0)
-	{
-		(void)mvwaddch (win, y1, x1, tlc | attr);
+	if (tlc) {
+		(void)mvwaddch(win, y1, x1, tlc | attr);
 		count++;
 	}
-	if (trc != 0)
-	{
-		(void)mvwaddch (win, y1, x2, trc | attr);
+	if (trc) {
+		(void)mvwaddch(win, y1, x2, trc | attr);
 		count++;
 	}
-	if (blc != 0)
-	{
-		(void)mvwaddch (win, y2, x1, blc | attr);
+	if (blc) {
+		(void)mvwaddch(win, y2, x1, blc | attr);
 		count++;
 	}
-	if (brc != 0)
-	{
-		(void)mvwaddch (win, y2, x2, brc | attr);
+	if (brc) {
+		(void)mvwaddch(win, y2, x2, brc | attr);
 		count++;
 	}
-	if (count != 0)
-	{
-		wrefresh (win);
+	if (count) {
+		wrefresh(win);
 	}
 } // void attrbox(
 
@@ -1180,11 +1175,10 @@ char *copyChar(const char *original)
 chtype *copyChtype (const chtype *original)
 {
 	chtype *newstring = 0;
-	if (original != 0) {
+	if (original) {
 		int len = chlen (original);
-		if ((newstring = typeMallocN (chtype, len + 4)) != 0) {
-			int x;
-			for (x = 0; x < len; x++) {
+		if ((newstring = typeMallocN (chtype, len + 4))) {
+			for (int x = 0; x < len; x++) {
 				newstring[x] = original[x];
 			}
 			newstring[len] = '\0';
@@ -1199,7 +1193,7 @@ chtype *copyChtype (const chtype *original)
  */
 void eraseCursesWindow(WINDOW *window)
 {
-	if (window != 0) {
+	if (window) {
 		werase (window);
 		wrefresh (window);
 	}
@@ -1210,7 +1204,7 @@ void eraseCursesWindow(WINDOW *window)
  */
 void deleteCursesWindow(WINDOW *window)
 {
-	if (window != 0) {
+	if (window) {
 		eraseCursesWindow (window);
 		delwin (window);
 	}
@@ -1222,10 +1216,8 @@ void deleteCursesWindow(WINDOW *window)
  */
 void moveCursesWindow (WINDOW *window, int xdiff, int ydiff)
 {
-	if (window != 0)
-	{
+	if (window) {
 		int xpos, ypos;
-
 		getbegyx (window, ypos, xpos);
 		(void)setbegyx (window, (short)ypos, (short)xpos);
 		xpos += xdiff;
@@ -1292,10 +1284,10 @@ unsigned CDKallocStrings(char ***list, char *item, unsigned length, unsigned use
 		need *= 2;
 	if (need > used) {
 		used = need;
-		if (*list == 0) {
-			*list = typeMallocN (char *, used);
+		if (!*list) {
+			*list = typeMallocN(char *, used);
 		} else {
-			*list = typeReallocN (char *, *list, used);
+			*list = typeReallocN(char *, *list, used);
 		}
 	}
 	(*list)[length++] = copyChar (item);
@@ -1322,7 +1314,7 @@ void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int e
 /*
  * This writes out a char * string with no attributes.
  */
-void writeChar (WINDOW *window,
+void writeChar(WINDOW *window,
 		int xpos,
 		int ypos,
 		char *string,
@@ -1336,7 +1328,7 @@ void writeChar (WINDOW *window,
 /*
  * This writes out a char * string with attributes.
  */
-void writeCharAttrib (WINDOW *window,
+void writeCharAttrib(WINDOW *window,
 		int xpos,
 		int ypos,
 		char *string,
@@ -1347,25 +1339,19 @@ void writeCharAttrib (WINDOW *window,
 {
 	int display = end - start;
 	int x;
-
-	if (align == HORIZONTAL)
-	{
+	if (align == HORIZONTAL) {
 		/* Draw the message on a horizontal axis. */
 		display = MINIMUM (display, getmaxx (window) - 1);
-		for (x = 0; x < display; x++)
-		{
+		for (x = 0; x < display; x++) {
 			(void)mvwaddch (window,
 					ypos,
 					xpos + x,
 					CharOf (string[x + start]) | attr);
 		}
-	}
-	else
-	{
+	} else {
 		/* Draw the message on a vertical axis. */
 		display = MINIMUM (display, getmaxy (window) - 1);
-		for (x = 0; x < display; x++)
-		{
+		for (x = 0; x < display; x++) {
 			(void)mvwaddch (window,
 					ypos + x,
 					xpos,
@@ -3616,11 +3602,6 @@ void CDKOBJS::saveDataCDK()
 }
 
 
-SFileSelector::SFileSelector()
-{
-	cdktype = vFSELECT;
-}
-
 int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 {
 	int status = 0;
@@ -5710,3 +5691,319 @@ void SFileSelector::drawMyScroller(/*CDKFSELECT *widget*/)
    scrollField->drawCDKScroll(/*widget->scrollField, ObjOf (widget->scrollField)->*/scrollField->box);
    RestoreFocus(this);
 }
+
+/*
+ * Store the name of the current working directory.
+ */
+void SFileSelector::setPWD(/*CDKFSELECT *fselect*/)
+{
+   char buffer[512];
+   freeChecked(this->pwd);
+   if (!getcwd(buffer, sizeof (buffer)))
+      strcpy(buffer, ".");
+   this->pwd = copyChar(buffer);
+}
+
+/*
+ * This opens the current directory and reads the contents.
+ */
+int CDKgetDirectoryContents(const char *directory, char ***list)
+{
+	/* Declare local variables.  */
+	struct dirent *dirStruct;
+	int counter = 0;
+	DIR *dp;
+	unsigned used = 0;
+	/* Open the directory.  */
+	dp = opendir (directory);
+	/* Could we open the directory?  */
+	if (!dp) {
+		return -1;
+	}
+	/* Read the directory.  */
+	while ((dirStruct = readdir (dp))) {
+		if (strcmp (dirStruct->d_name, "."))
+			used = CDKallocStrings (list, dirStruct->d_name,
+					(unsigned)counter++, used);
+	}
+	/* Close the directory.  */
+	closedir(dp);
+	/* Sort the info.  */
+	sortList ((CDK_CSTRING *)*list, counter);
+	/* Return the number of files in the directory.  */
+	return counter;
+}
+
+/*
+ * This creates a list of the files in the current directory.
+ */
+int SFileSelector::setCDKFselectDirContents(/*CDKFSELECT *fselect*/)
+{
+	struct stat fileStat;
+	char **dirList = 0;
+	int fileCount;
+	/* Get the directory contents. */
+	fileCount = CDKgetDirectoryContents(this->pwd, &dirList);
+	if (fileCount <= 0) {
+		/* We couldn't read the directory. Return. */
+		CDKfreeStrings(dirList);
+		return 0;
+	}
+	/* Clean out the old directory list. */
+	CDKfreeStrings (this->dirContents);
+	this->dirContents = dirList;
+	this->fileCounter = fileCount;
+	/* Set the properties of the files. */
+	for (int x = 0; x < this->fileCounter; x++) {
+		char *oldItem;
+		const char *attr = "";
+		const char *mode = "?";
+
+		/* FIXME: access() would give a more correct answer */
+		if (!lstat(dirList[x], &fileStat)) {
+			mode = " ";
+			if ((fileStat.st_mode & S_IXUSR) != 0) {
+				mode = "*";
+			}
+#if defined (S_IXGRP) && defined (S_IXOTH)
+			else if (((fileStat.st_mode & S_IXGRP)) ||
+					((fileStat.st_mode & S_IXOTH))) {
+				mode = "*";
+			}
+#endif
+		}
+		switch (mode2Filetype (fileStat.st_mode)) {
+			case 'l':
+				attr = this->linkAttribute;
+				mode = "@";
+				break;
+			case '@':
+				attr = this->sockAttribute;
+				mode = "&";
+				break;
+			case '-':
+				attr = this->fileAttribute;
+				break;
+			case 'd':
+				attr = this->dirAttribute;
+				mode = "/";
+				break;
+			default:
+				break;
+		}
+		oldItem = dirList[x];
+		this->dirContents[x] = format3String ("%s%s%s", attr, dirList[x], mode);
+		free (oldItem);
+	}
+	return 1;
+}
+
+/*
+ * This creates a file selection widget.
+ */
+//CDKFSELECT *newCDKFselect (
+SFileSelector::SFileSelector(
+		CDKSCREEN *cdkscreen,
+		int xplace,
+		int yplace,
+		int height,
+		int width,
+		const char *title,
+		const char *label,
+		chtype fieldAttribute,
+		chtype fillerChar,
+		chtype highlight,
+		const char *dAttribute,
+		const char *fAttribute,
+		const char *lAttribute,
+		const char *sAttribute,
+		bool Box,
+		bool shadow,
+		int highnr)
+{
+	cdktype = vFSELECT;
+	/* *INDENT-EQLS* */
+//	CDKFSELECT *fselect  = 0;
+	int parentWidth      = getmaxx (cdkscreen->window);
+	int parentHeight     = getmaxy (cdkscreen->window);
+	int boxWidth;
+	int boxHeight;
+	int xpos             = xplace;
+	int ypos             = yplace;
+	int tempWidth        = 0;
+	int tempHeight       = 0;
+	int labelLen, junk;
+	chtype *chtypeString;
+	int x;
+	/* *INDENT-OFF* */
+	static const struct
+	{
+		int from;
+		int to;
+	} bindings[] =
+	{
+		{ CDK_BACKCHAR,	KEY_PPAGE },
+		{ CDK_FORCHAR,	KEY_NPAGE },
+	};
+	/* *INDENT-ON* */
+
+//	if ((fselect = newCDKObject (CDKFSELECT, &my_funcs)) == 0) return (0);
+	::CDKOBJS();
+
+	setBox(Box);
+
+	/*
+	 * If the height is a negative value, the height will
+	 * be ROWS-height, otherwise, the height will be the
+	 * given height.
+	 */
+	boxHeight = setWidgetDimension(parentHeight, height, 0);
+
+	/*
+	 * If the width is a negative value, the width will
+	 * be COLS-width, otherwise, the width will be the
+	 * given width.
+	 */
+	boxWidth = setWidgetDimension(parentWidth, width, 0);
+
+	/* Rejustify the x and y positions if we need to. */
+	alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+
+	/* Make sure the box isn't too small. */
+	boxWidth = (boxWidth < 15 ? 15 : boxWidth);
+	boxHeight = (boxHeight < 6 ? 6 : boxHeight);
+
+	/* Make the file selector window. */
+	this->win = newwin(boxHeight, boxWidth, ypos, xpos);
+
+	/* Is the window null? */
+	if (!this->win) {
+		destroyCDKObject();
+		return;
+	}
+	keypad (this->win, TRUE);
+
+	/* *INDENT-EQLS* Set some variables. */
+	ScreenOf (this)           = cdkscreen;
+	this->parent              = cdkscreen->window;
+	this->dirAttribute        = copyChar (dAttribute);
+	this->fileAttribute       = copyChar (fAttribute);
+	this->linkAttribute       = copyChar (lAttribute);
+	this->sockAttribute       = copyChar (sAttribute);
+	this->highlight           = highlight;
+	this->fillerCharacter     = fillerChar;
+	this->fieldAttribute      = fieldAttribute;
+	this->boxHeight           = boxHeight;
+	this->boxWidth            = boxWidth;
+	this->fileCounter         = 0;
+	this->pwd                 = 0;
+	initExitType (this);
+	ObjOf (this)->inputWindow = this->win;
+	this->shadow              = shadow;
+	this->shadowWin           = 0;
+
+   /* Get the present working directory. */
+   setPWD();
+
+   /* Get the contents of the current directory. */
+   setCDKFselectDirContents(this);
+
+   /* Create the entry field in the selector. */
+   chtypeString = char2Chtypeh (label, &labelLen, &junk);
+   freeChtype (chtypeString);
+   tempWidth = (isFullWidth (width)
+		? FULL
+		: boxWidth - 2 - labelLen);
+   this->entryField = newCDKEntry (cdkscreen,
+				      getbegx (this->win),
+				      getbegy (this->win),
+				      title, label,
+				      fieldAttribute, fillerChar,
+				      vMIXED, tempWidth, 0, 512,
+				      Box, FALSE,highnr);
+
+   /* Make sure the widget was created. */
+   if (this->entryField == 0) {
+      destroyCDKObject();
+      return (0);
+   }
+
+   /* Set the lower left/right characters of the entry field. */
+   setCDKEntryLLChar (this->entryField, ACS_LTEE);
+   setCDKEntryLRChar (this->entryField, ACS_RTEE);
+
+   /* Define the callbacks for the entry field. */
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  KEY_UP,
+		  fselectAdjustScrollCB,
+		  this);
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  KEY_PPAGE,
+		  fselectAdjustScrollCB,
+		  this);
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  KEY_DOWN,
+		  fselectAdjustScrollCB,
+		  this);
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  KEY_NPAGE,
+		  fselectAdjustScrollCB,
+		  this);
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  KEY_TAB,
+		  completeFilenameCB,
+		  this);
+   bindCDKObject (vENTRY,
+		  this->entryField,
+		  CTRL ('^'),
+		  displayFileInfoCB,
+		  this);
+
+   /* Put the current working directory in the entry field. */
+   setCDKEntryValue (this->entryField, this->pwd);
+
+   /* Create the scrolling list in the selector. */
+   tempHeight = getmaxy (this->entryField->win) - BorderOf (this);
+   tempWidth = (isFullWidth (width)
+		? FULL
+		: boxWidth - 1);
+   this->scrollField = newCDKScroll (cdkscreen,
+					getbegx (this->win),
+					getbegy (this->win) + tempHeight,
+					RIGHT,
+					boxHeight - tempHeight,
+					tempWidth,
+					0,
+					(CDK_CSTRING2)this->dirContents,
+					this->fileCounter,
+					NONUMBERS, this->highlight,
+					Box, FALSE);
+
+   /* Set the lower left/right characters of the entry field. */
+   setCDKScrollULChar (this->scrollField, ACS_LTEE);
+   setCDKScrollURChar (this->scrollField, ACS_RTEE);
+
+   /* Do we want a shadow? */
+   if (shadow)
+   {
+      this->shadowWin = newwin (boxHeight, boxWidth, ypos + 1, xpos + 1);
+   }
+
+   /* Setup the key bindings. */
+   for (x = 0; x < (int)SIZEOF (bindings); ++x)
+      bindCDKObject (vFSELECT,
+		     this,
+		     (chtype)bindings[x].from,
+		     getcCDKBind,
+		     (void *)(long)bindings[x].to);
+
+   registerCDKObject (cdkscreen, vFSELECT, this);
+
+//   return (this);
+}
+

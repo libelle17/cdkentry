@@ -833,36 +833,36 @@ typedef struct SScroller CDKSCROLLER;
  */
 struct SScroll:SScroll_basis 
 {
-   bool	numbers;	/* */
-   chtype	titlehighlight;	/* */
-	 WINDOW	*listWin;
-	 SScroll(
-			 CDKSCREEN *	/* cdkscreen */,
-			 int		/* xpos */,
-			 int		/* ypos */,
-			 int		/* spos */,
-			 int		/* height */,
-			 int		/* width */,
-			 const char *	/* title */,
-			 CDK_CSTRING2	/* itemList */,
-			 int		/* items */,
-			 bool		/* numbers */,
-			 chtype		/* highlight */,
-			 bool		/* Box */,
-			 bool		/* shadow */);
-	 ~SScroll();
-	 void destroyObj(){this->~SScroll();}
-	 void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
-	 void eraseObj(){eraseCDKScroll();}
-	 int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
-	 bool allocListArrays(int oldSize, int newSize);
-	 bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
-	 int injectCDKScroll(/*CDKOBJS *object, */chtype input);
-	 int injectObj(chtype ch){return injectCDKScroll(ch);}
-	 void drawCDKScrollList(bool Box);
-	 int activateCDKScroll(chtype *actions);
-	 void setCDKScrollPosition(int item);
-	 void drawCDKScroll(bool Box);
+	bool	numbers;	/* */
+	chtype	titlehighlight;	/* */
+	WINDOW	*listWin;
+	SScroll(
+			CDKSCREEN *	/* cdkscreen */,
+			int		/* xpos */,
+			int		/* ypos */,
+			int		/* spos */,
+			int		/* height */,
+			int		/* width */,
+			const char *	/* title */,
+			CDK_CSTRING2	/* itemList */,
+			int		/* items */,
+			bool		/* numbers */,
+			chtype		/* highlight */,
+			bool		/* Box */,
+			bool		/* shadow */);
+	~SScroll();
+	void destroyObj(){this->~SScroll();}
+	void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
+	void eraseObj(){eraseCDKScroll();}
+	int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
+	bool allocListArrays(int oldSize, int newSize);
+	bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
+	int injectCDKScroll(/*CDKOBJS *object, */chtype input);
+	int injectObj(chtype ch){return injectCDKScroll(ch);}
+	void drawCDKScrollList(bool Box);
+	int activateCDKScroll(chtype *actions);
+	void setCDKScrollPosition(int item);
+	void drawCDKScroll(bool Box);
 	 void drawObj(bool Box);
 	 void drawCDKScrollCurrent();
 	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
@@ -888,19 +888,67 @@ struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 
 
+/*
+ * Define the CDK file selector widget structure.
+ */
 struct SFileSelector:CDKOBJS
 {
+	//   CDKOBJS	obj;
+	WINDOW *	parent;
+	WINDOW *	win;
+	WINDOW *	shadowWin;
 	CDKENTRY *	entryField;
 	CDKSCROLL *	scrollField;
 	CDKOBJS* bindableObject();
-	SFileSelector();
+	char **	dirContents;
+	int		fileCounter;
+	char *	pwd;
+	char *	pathname;
+	int		xpos;
+	int		ypos;
+	int		boxHeight;
+	int		boxWidth;
+	chtype	fieldAttribute;
+	chtype	fillerCharacter;
+	chtype	highlight;
+	char *	dirAttribute;
+	char *	fileAttribute;
+	char *	linkAttribute;
+	char *	sockAttribute;
+	EExitType	exitType;
+	bool	shadow;
+/*
+ * This creates a new CDK file selector widget.
+ */
+// CDKFSELECT *newCDKFselect (
+	SFileSelector(
+		CDKSCREEN*	/* cdkscreen */,
+		int		/* xpos */,
+		int		/* ypos */,
+		int		/* height */,
+		int		/* width */,
+		const char *	/* title */,
+		const char *	/* label */,
+		chtype		/* fieldAttribute */,
+		chtype		/* fillerChar */,
+		chtype		/* highlight */,
+		const char *	/* dirAttributes */,
+		const char *	/* fileAttributes */,
+		const char *	/* linkAttribute */,
+		const char *	/* sockAttribute */,
+		bool		/* Box */,
+		bool		/* shadow */,
+		int highnr
+		);
 	~SFileSelector();
 	void destroyObj(){this->~SFileSelector();}
 	void eraseCDKFselect();
 	void eraseObj(){eraseCDKFselect();}
-	void drawCDKFselect(bool Box);
-	void drawMyScroller(/*CDKFSELECT *widget*/);
-	void drawObj(bool Box);
+	 void drawCDKFselect(bool Box);
+	 void drawMyScroller(/*CDKFSELECT *widget*/);
+	 void drawObj(bool Box);
+	 void setPWD(/*CDKFSELECT *fselect*/);
+	 int setCDKFselectDirContents(/*CDKFSELECT *fselect*/);
 }; // struct SFileSelector:CDKOBJS
 typedef struct SFileSelector CDKFSELECT;
 
