@@ -4,6 +4,7 @@
 #endif
 #include <unistd.h> // getcwd
 #include <sys/stat.h> // struct stat
+#include <dirent.h>
 #include <vector>
 #include <cctype> // isdigit
 using namespace std;
@@ -5734,6 +5735,54 @@ int CDKgetDirectoryContents(const char *directory, char ***list)
 	return counter;
 }
 
+int mode2Filetype (mode_t mode)
+{
+	/* *INDENT-OFF* */
+	static const struct {
+		mode_t	mode;
+		char	code;
+	} table[] = {
+#ifdef S_IFBLK
+		{ S_IFBLK,  'b' },  /* Block device */
+#endif
+		{ S_IFCHR,  'c' },  /* Character device */
+		{ S_IFDIR,  'd' },  /* Directory */
+		{ S_IFREG,  '-' },  /* Regular file */
+#ifdef S_IFLNK
+		{ S_IFLNK,  'l' },  /* Socket */
+#endif
+#ifdef S_IFSOCK
+		{ S_IFSOCK, '@' },  /* Socket */
+#endif
+		{ S_IFIFO,  '&' },  /* Pipe */
+	};
+	/* *INDENT-ON* */
+
+	int filetype = '?';
+	for (unsigned n = 0; n < sizeof (table) / sizeof (table[0]); n++) {
+		if ((mode & S_IFMT) == table[n].mode) {
+			filetype = table[n].code;
+			break;
+		}
+	}
+	return filetype;
+}
+
+char *format3String (const char *format,
+			    const char *s1,
+			    const char *s2,
+			    const char *s3)
+{
+	char *result;
+
+	if ((result = (char *)malloc (strlen (format) +
+					strlen (s1) +
+					strlen (s2) +
+					strlen (s3))) != 0)
+		sprintf (result, format, s1, s2, s3);
+	return result;
+}
+
 /*
  * This creates a list of the files in the current directory.
  */
@@ -5906,7 +5955,7 @@ SFileSelector::SFileSelector(
    setPWD();
 
    /* Get the contents of the current directory. */
-   setCDKFselectDirContents(this);
+   setCDKFselectDirContents();
 
    /* Create the entry field in the selector. */
    chtypeString = char2Chtypeh (label, &labelLen, &junk);
@@ -5914,7 +5963,7 @@ SFileSelector::SFileSelector(
    tempWidth = (isFullWidth (width)
 		? FULL
 		: boxWidth - 2 - labelLen);
-   this->entryField = newCDKEntry (cdkscreen,
+   this->entryField = new SEntry(cdkscreen,
 				      getbegx (this->win),
 				      getbegy (this->win),
 				      title, label,
@@ -5925,12 +5974,14 @@ SFileSelector::SFileSelector(
    /* Make sure the widget was created. */
    if (this->entryField == 0) {
       destroyCDKObject();
-      return (0);
+      return ;
    }
 
    /* Set the lower left/right characters of the entry field. */
-   setCDKEntryLLChar (this->entryField, ACS_LTEE);
-   setCDKEntryLRChar (this->entryField, ACS_RTEE);
+	 entryField->LLChar=ACS_LTEE;
+   //setCDKEntryLLChar (this->entryField, ACS_LTEE);
+	 entryField->LRChar=ACS_RTEE;
+   //setCDKEntryLRChar (this->entryField, ACS_RTEE);
 
    /* Define the callbacks for the entry field. */
    bindCDKObject (vENTRY,
