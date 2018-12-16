@@ -2499,7 +2499,7 @@ bool CDKOBJS::validObjType(EObjectType type)
 
 CDKOBJS* CDKOBJS::bindableObject()
 {
-	return 0;
+	return this;
 }
 
 CDKOBJS* SFileSelector::bindableObject()
@@ -4228,13 +4228,13 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 			       CDK_CSTRING *list,
 			       int listSize,
 			       chtype fillerChar,
-			       chtype highlight,
+			       chtype phighlight,
 			       bool Box,
 						 bool shadow,
 						 // GSchade Anfang
 						 int highnr/*=0*/
 						 // GSchade Ende
-		):xpos(xplace),ypos(yplace),highlight(highlight),fillerChar(fillerChar),shadow(shadow)
+		):xpos(xplace),ypos(yplace),highlight(phighlight),fillerChar(fillerChar),shadow(shadow)
 {
 	cdktype = vALPHALIST;
 	/* *INDENT-EQLS* */
@@ -4574,7 +4574,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 			 CDK_CSTRING2 list,
 			 int listSize,
 			 bool numbers,
-			 chtype highlight,
+			 chtype phighlight,
 			 bool Box,
 			 bool pshadow)
 {
@@ -4620,21 +4620,17 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    boxWidth = setCdkTitle(title, boxWidth);
 
    /* Set the box height. */
-   if (titleLines > boxHeight)
-   {
+   if (titleLines > boxHeight) {
       boxHeight = (titleLines 
 		   + MINIMUM(listSize, 8)
 		   + 2 * borderSize);
    }
 
    /* Adjust the box width if there is a scrollp bar. */
-   if ((splace == LEFT) || (splace == RIGHT))
-   {
+   if ((splace == LEFT) || (splace == RIGHT)) {
       scrollbar = TRUE;
       boxWidth += 1;
-   }
-   else
-   {
+   } else {
       scrollbar = FALSE;
    }
 
@@ -4692,17 +4688,18 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 			      + (splace == LEFT ? 1 : 0));
 
    /* *INDENT-EQLS* Set the rest of the variables */
-   ScreenOf (this)           = cdkscreen;
+   //ScreenOf (this)           = cdkscreen;
+	 screen							 = cdkscreen;
    parent              = cdkscreen->window;
    shadowWin           = 0;
    scrollbarPlacement  = splace;
    maxLeftChar         = 0;
    leftChar            = 0;
-   highlight           = highlight;
    initExitType (this);
    ObjOf (this)->acceptsFocus = TRUE;
    ObjOf (this)->inputWindow = win;
    shadow              = pshadow;
+	 highlight						 = phighlight;
    SetPosition(0);
    /* Create the scrolling list item list and needed variables. */
    if (createCDKScrollItemList(numbers, list, listSize) <= 0) {
@@ -4711,7 +4708,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    }
    /* Do we need to create a shadow? */
    if (shadow) {
-      shadowWin = newwin (boxHeight,
+      shadowWin = newwin(boxHeight,
 				   boxWidth,
 				   ypos + 1,
 				   xpos + 1);
@@ -4818,16 +4815,16 @@ void SScroll::drawCDKScrollList(bool Box)
 		this->drawCDKScrollCurrent();
 		/* Determine where the toggle is supposed to be. */
 		if (this->scrollbarWin) {
-			this->togglePos = floorCDK (this->currentItem * (double)this->step);
+			this->togglePos = floorCDK(this->currentItem * (double)this->step);
 			/* Make sure the toggle button doesn't go out of bounds. */
 			if (this->togglePos >= getmaxy (this->scrollbarWin))
-				this->togglePos = getmaxy (this->scrollbarWin) - 1;
+				this->togglePos = getmaxy(this->scrollbarWin) - 1;
 			/* Draw the scrollbar. */
-			(void)mvwvline (this->scrollbarWin,
+			(void)mvwvline(this->scrollbarWin,
 					0, 0,
 					ACS_CKBOARD,
-					getmaxy (this->scrollbarWin));
-			(void)mvwvline (this->scrollbarWin,
+					getmaxy(this->scrollbarWin));
+			(void)mvwvline(this->scrollbarWin,
 					this->togglePos, 0,
 					' ' | A_REVERSE,
 					this->toggleSize);
@@ -6541,7 +6538,7 @@ SFileSelector::SFileSelector(
 		const char *label,
 		chtype fieldAttribute,
 		chtype fillerChar,
-		chtype highlight,
+		chtype phighlight,
 		const char *dAttribute,
 		const char *fAttribute,
 		const char *lAttribute,
@@ -6619,7 +6616,7 @@ SFileSelector::SFileSelector(
 	this->fileAttribute       = copyChar (fAttribute);
 	this->linkAttribute       = copyChar (lAttribute);
 	this->sockAttribute       = copyChar (sAttribute);
-	this->highlight           = highlight;
+	this->highlight           = phighlight;
 	this->fillerCharacter     = fillerChar;
 	this->fieldAttribute      = fieldAttribute;
 	this->boxHeight           = boxHeight;
