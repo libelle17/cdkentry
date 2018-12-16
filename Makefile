@@ -22,7 +22,7 @@ git:
 .PHONY: neu
 neu: eingabep
 eingabep: *.cpp cdkp.h
-	[ -n "$(CC)" ]&&{ F=fehler.txt; $(CC) -o $@ -I. -I$$HOME/cdk/include -I/usr/include/ncursesw eingabe.cpp cdkp.cpp -lncursesw >$$F 2>&1; test -s $$F && vi $$F||:; }||:
+	[ -n "$(CC)" ]&&{ F=fehler.txt; $(CC) -g -o $@ -I. -I$$HOME/cdk/include -I/usr/include/ncursesw eingabe.cpp cdkp.cpp -lncursesw >$$F 2>&1; test -s $$F && vi $$F||:; }||:
 
 .PHONY: comp
 comp:

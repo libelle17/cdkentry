@@ -51,6 +51,10 @@ extern void _nc_free_and_exit(int) GCC_NORETURN;
 
 #endif /* HAVE_NC_ALLOC_H */
 
+#include <pwd.h> // getpwd
+#include <grp.h> // getgrgid
+#include <time.h> // ctime
+
 #ifndef ExitProgram
 #define ExitProgram(code) exit(code)
 #endif
@@ -530,24 +534,23 @@ static unsigned countChar (const char *string, int separator);
 unsigned CDKcountStrings (CDK_CSTRING2 list);
 chtype *char2Chtype(const char *string, int *to, int *align);
 int chlen(const chtype *string);
-void freeChtype (chtype *string);
-int justifyString (int boxWidth, int mesgLength, int justify);
-void CDKfreeStrings (char **list);
-void CDKfreeChtypes (chtype **list);
-void alignxy (WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight);
-void cleanChar (char *s, int len, char character);
+void freeChtype(chtype *string);
+int justifyString(int boxWidth, int mesgLength, int justify);
+void CDKfreeStrings(char **list);
+void CDKfreeChtypes(chtype **list);
+void alignxy(WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight);
+void cleanChar(char *s, int len, char character);
 void writeChtype(WINDOW *window, int xpos, int ypos, chtype *string, int align, int start, int end);
-void writeChtypeAttrib (WINDOW *window, int xpos, int ypos, chtype *string, chtype attr, int align, int start, int end);
-void attrbox (WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
+void writeChtypeAttrib(WINDOW *window, int xpos, int ypos, chtype *string, chtype attr, int align, int start, int end);
+void attrbox(WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
 void drawShadow (WINDOW *shadowWin);
-//int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
+int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
 void refreshCDKWindow(WINDOW *win);
-char *copyChar (const char *original);
-chtype *copyChtype (const chtype *original);
-void eraseCursesWindow (WINDOW *window);
+char *copyChar(const char *original);
+chtype *copyChtype(const chtype *original);
+void eraseCursesWindow(WINDOW *window);
 void deleteCursesWindow(WINDOW *window);
 void moveCursesWindow(WINDOW *window, int xdiff, int ydiff);
-int filterByDisplayType (EDisplayType type, chtype input);
 bool isHiddenDisplayType(EDisplayType type);
 int comparSort(const void *a, const void *b);
 void sortList(CDK_CSTRING *list, int length);
@@ -570,18 +573,22 @@ char **copyCharList (const char **list);
 int lenCharList(const char **list);
 void initCDKColor(void);
 void endCDK(void);
+static char *errorMessage (const char *format);
+void freeCharList (char **list, unsigned size);
+static int displayFileInfoCB (EObjectType objectType GCC_UNUSED, void *object, void *clientData, chtype key GCC_UNUSED);
+int mode2Char (char *string, mode_t mode);
 
 typedef struct SScreen CDKSCREEN;
 
-typedef struct _all_screens
+struct _all_screens
 {
    struct _all_screens *link;
    CDKSCREEN *screen;
-}
-ALL_SCREENS;
+};
+// ALL_SCREENS;
+
 
 void registerCDKObject(CDKSCREEN *screen, EObjectType cdktype, void *object);
-
 
 /*
  * Data common to all objects (widget instances).  This appears first in
@@ -629,10 +636,10 @@ struct CDKOBJS
 	 virtual void drawObj(bool);
 	 virtual void eraseObj();
 	 virtual void destroyObj();
-	 virtual void focusObj();
-	 virtual void unfocusObj();
+	 virtual void focusObj(){};
+	 virtual void unfocusObj(){};
 	 virtual void setFocus();
-	 virtual int injectObj(chtype);
+	 virtual int injectObj(chtype){};
 	 /*
 	 virtual void moveObj(int,int,bool,bool);
 	 virtual void saveDataObj();
@@ -640,12 +647,14 @@ struct CDKOBJS
 	 */
    // line-drawing 
 	 virtual void setULcharObj(chtype);
+	 /*
 	 virtual void setURcharObj(chtype);
 	 virtual void setLLcharObj(chtype);
 	 virtual void setLRcharObj(chtype);
 	 virtual void setVTcharObj(chtype);
 	 virtual void setHZcharObj(chtype);
 	 virtual void setBXattrObj(chtype);
+	 */
 	 void setBox(bool Box);
    // background attribute
 	 virtual void setBKattrObj(chtype);
@@ -725,7 +734,6 @@ struct SEntry:CDKOBJS
 	 void focusObj(){focusCDKEntry();}
 	 void unfocusCDKEntry();
 	 void unfocusObj(){unfocusCDKEntry();}
-	 EExitType exitType;
    EDisplayType dispType;
    bool	shadow;
    chtype	filler;
@@ -744,7 +752,7 @@ struct SEntry:CDKOBJS
 			 chtype		/* fieldAttrib */,
 			 chtype		/* filler */,
 			 EDisplayType	/* disptype */,
-			 int		/* fieldWidth */,
+			 int		/* fWidth */,
 			 int		/* min */,
 			 int		/* max */,
 			 bool   /* Box */,
@@ -770,7 +778,7 @@ struct SEntry:CDKOBJS
 }; // struct SEntry:CDKOBJS
 typedef struct SEntry CDKENTRY;
 
-struct SScroll_basis:CDKOBJS 
+struct SScroll_basis:public CDKOBJS 
 {
 	/* This field must stay on top */
 //	CDKOBJS  obj; 
@@ -803,7 +811,6 @@ struct SScroll_basis:CDKOBJS
 	int      togglePos; /* position of scrollbar thumb/toggle */ 
 	float    step; /* increment for scrollbar */ 
 
-	EExitType    exitType; 
 	bool  shadow; 
 	chtype   highlight;
 	void updateViewWidth(int widest);
@@ -888,6 +895,23 @@ struct SScroll:SScroll_basis
 typedef struct SScroll CDKSCROLL;
 
 
+int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED, void *clientData, chtype key);
+static char *format1String (const char *format, const char *string);
+static char *format1StrVal (const char *format, const char *string, int value);
+static char *format1Number (const char *format, long value);
+static char *format1Date (const char *format, time_t value);
+static char *expandTilde (const char *filename);
+char *dirName(char *pathname);
+static char *trim1Char(char *source);
+static char *make_pathname (const char *directory, const char *filename);
+char *format3String(const char *format, const char *s1, const char *s2, const char *s3);
+int mode2Filetype(mode_t mode);
+int CDKgetDirectoryContents(const char *directory, char ***list);
+static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
+				 *object GCC_UNUSED,
+				 void *clientData,
+				 chtype input);
+
 /*
  * Define the CDK file selector widget structure.
  */
@@ -915,7 +939,6 @@ struct SFileSelector:CDKOBJS
 	char *	fileAttribute;
 	char *	linkAttribute;
 	char *	sockAttribute;
-	EExitType	exitType;
 	bool	shadow;
 /*
  * This creates a new CDK file selector widget.
@@ -949,6 +972,13 @@ struct SFileSelector:CDKOBJS
 	 void drawObj(bool Box);
 	 void setPWD(/*CDKFSELECT *fselect*/);
 	 int setCDKFselectDirContents(/*CDKFSELECT *fselect*/);
+	 void injectMyScroller(chtype key);
+	 void setCDKFselect(/*CDKFSELECT *fselect, */const char *directory, chtype fieldAttrib, chtype filler, chtype highlight, const char *dirAttribute, const char *fileAttribute, const char *linkAttribute, const char *sockAttribute, bool Box GCC_UNUSED);
+	 char *contentToPath (/*CDKFSELECT *fselect, */char *content);
+	 void focusCDKFileSelector();
+	 void focusObj(){focusCDKFileSelector();}
+	 void unfocusCDKFileSelector();
+	 void unfocusObj(){unfocusCDKFileSelector();}
 }; // struct SFileSelector:CDKOBJS
 typedef struct SFileSelector CDKFSELECT;
 
@@ -970,7 +1000,6 @@ struct SAlphalist:CDKOBJS
    chtype	highlight;
    chtype	fillerChar;
    bool	shadow;
-   EExitType	exitType;
 	 CDKOBJS* bindableObject();
 	 int createList(CDK_CSTRING *list, int listSize);
 	 SAlphalist(CDKSCREEN *cdkscreen,
@@ -1000,10 +1029,6 @@ struct SAlphalist:CDKOBJS
 	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
 	 int injectCDKAlphalist(chtype input);
 	 int injectObj(chtype ch){return injectCDKAlphalist(ch);}
-	 /*
-	 void focusCDKAlphalist()//CDKOBJS *object
-	 void unfocusCDKAlphalist()//CDKOBJS *object
-	 */
 	 void eraseCDKAlphalist();
 	 void eraseObj(){eraseCDKAlphalist();}
 	 void destroyInfo();
@@ -1041,36 +1066,6 @@ typedef struct SAlphalist CDKALPHALIST;
  */
 #define MAX_MENU_ITEMS	30
 #define MAX_SUB_ITEMS	98
-
-/*
- * Define the CDK menu widget structure.
- */
-/*
-struct SMenu:CDKOBJS {
-//   CDKOBJS	obj;
-   WINDOW *	parent;
-   WINDOW *	pullWin[MAX_MENU_ITEMS];
-   WINDOW *	titleWin[MAX_MENU_ITEMS];
-   chtype *	title[MAX_MENU_ITEMS];
-   int		titleLen[MAX_MENU_ITEMS];
-   chtype *	sublist[MAX_MENU_ITEMS][MAX_SUB_ITEMS];
-   int		sublistLen[MAX_MENU_ITEMS][MAX_SUB_ITEMS];
-   int		subsize[MAX_MENU_ITEMS];
-   int		menuPos;
-   int		menuItems;
-   chtype	titleAttr;
-   chtype	subtitleAttr;
-   int		currentTitle;
-   int		currentSubtitle;
-   int		lastTitle;
-   int		lastSubtitle;
-   EExitType	exitType;
-   int		lastSelection;
-//	 int injectCDKMenu(chtype);
-//	 int injectObj(chtype ch){return injectCDKMenu(ch);}
-};
-typedef struct SMenu CDKMENU;
-*/
 
 #ifndef INT_MIN
 #define INT_MIN (-INT_MAX - 1)

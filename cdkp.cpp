@@ -1,3 +1,4 @@
+#define HAVE_NCURSESW_NCURSES_H
 #include "cdkp.h"
 #ifdef HAVE_SETLOCALE
 #include <locale.h>
@@ -7,6 +8,7 @@
 #include <dirent.h>
 #include <vector>
 #include <cctype> // isdigit
+#include <errno.h> // errno
 using namespace std;
 // GSchade 17.11.18; s. cdk.h
 einbauart akteinbart;
@@ -18,7 +20,7 @@ vector<CDKOBJS*> all_objects;
 /*
  * Return an integer like 'floor()', which returns a double.
  */
-int floorCDK (double value)
+int floorCDK(double value)
 {
    int result = (int)value;
    if (result > value)		/* e.g., value < 0.0 and value is not an integer */
@@ -29,31 +31,31 @@ int floorCDK (double value)
 /*
  * Return an integer like 'ceil()', which returns a double.
  */
-int ceilCDK (double value)
+int ceilCDK(double value)
 {
-   return -floorCDK (-value);
+   return -floorCDK(-value);
 }
 
 /*
  * This beeps then flushes the stdout stream.
  */
-void Beep (void)
+void Beep(void)
 {
-   beep ();
-   fflush (stdout);
+   beep();
+   fflush(stdout);
 }
 
 int getmaxxf(WINDOW *win)
 {
 	int y, x;
-	getmaxyx (win, y, x);
+	getmaxyx(win, y, x);
 	return x;
 }
 
 int getmaxyf(WINDOW *win)
 {
 	int y, x;
-	getmaxyx (win, y, x);
+	getmaxyx(win, y, x);
 	return y;
 }
 
@@ -89,7 +91,7 @@ int setWidgetDimension(int parentDim, int proposedDim, int adjustment)
 	return dimension;
 }
 
-static int encodeAttribute (const char *string, int from, chtype *mask)
+static int encodeAttribute(const char *string, int from, chtype *mask)
 {
 	int pair = 0;
 	*mask = 0;
@@ -119,22 +121,22 @@ static int encodeAttribute (const char *string, int from, chtype *mask)
 		int digits;
 		pair = 0;
 		for (digits = 1; digits <= 3; ++digits) {
-			if (!isdigit (CharOf (string[1 + from])))
+			if (!isdigit (CharOf(string[1 + from])))
 				break;
 			pair *= 10;
-			pair += DigitOf (string[++from]);
+			pair += DigitOf(string[++from]);
 		}
 #ifdef HAVE_START_COLOR
 #define MAX_PAIR (int) (A_COLOR / (((~A_COLOR) << 1) & A_COLOR))
-		if (pair > MAX_PAIR)
+		if (pair > MAX_PAIR )
 			pair = MAX_PAIR;
-		*mask = (chtype)COLOR_PAIR (pair);
+		*mask = (chtype)COLOR_PAIR(pair);
 #else
 		*mask = A_BOLD;
 #endif
 	}
 	return from;
-} // static int encodeAttribute (const char *string, int from, chtype *mask)
+} // static int encodeAttribute(const char *string, int from, chtype *mask)
 
 /*
  * This function takes a character string, full of format markers
@@ -168,7 +170,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 			int x = 3;
 
 			if (pass != 0) {
-				if ((result = typeMallocN (chtype, used + 2)) == 0) {
+				if ((result = typeMallocN(chtype, used + 2)) == 0) {
 					used = 0;
 					break;
 				}
@@ -212,8 +214,8 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 					x = 0;
 
 					while (string[++from] != R_MARKER && string[from] != 0) {
-						if (isdigit (CharOf (string[from]))) {
-							adjust = (adjust * 10) + DigitOf (string[from]);
+						if (isdigit(CharOf(string[from]))) {
+							adjust = (adjust * 10) + DigitOf(string[from]);
 							x++;
 						}
 					}
@@ -244,7 +246,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 					} else if (string[from] == '\\' && string[from + 1] == L_MARKER) {
 						from++;
 						if (result != 0)
-							result[used] = CharOf (string[from]) | attrib;
+							result[used] = CharOf(string[from]) | attrib;
 						used++;
 						from++;
 					} else if (string[from] == '\t') {
@@ -274,10 +276,10 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 					if (result != 0) {
 							// GSchade 26.9.18
 							if (used==highinr-1) {
-								result[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
+								result[used] = CharOf(string[from]) | attrib|COLOR_PAIR(1);
 							} else {
 								// Ende GSchade 
-								result[used] = CharOf (string[from]) | attrib;
+								result[used] = CharOf(string[from]) | attrib;
 							}
 						}
 						used++;
@@ -388,9 +390,9 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 
 										while (string[++from] != ')' && string[from] != 0)
 										{
-											if (isdigit (CharOf (string[from])))
+											if (isdigit (CharOf(string[from])))
 											{
-												adjust = (adjust * 10) + DigitOf (string[from]);
+												adjust = (adjust * 10) + DigitOf(string[from]);
 											}
 										}
 									}
@@ -402,11 +404,11 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 								break;
 							}
 						case '/':
-							from = encodeAttribute (string, from, &mask);
+							from = encodeAttribute(string, from, &mask);
 							attrib = attrib | mask;
 							break;
 						case '!':
-							from = encodeAttribute (string, from, &mask);
+							from = encodeAttribute(string, from, &mask);
 							attrib = attrib & ~mask;
 							break;
 					} // 					switch (string[from])
@@ -433,7 +435,7 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
 		 * would get a spurious null pointer whenever there is a blank line,
 		 * and CDKfreeChtypes() would fail to free the whole list.
 		 */
-		result = typeCallocN (chtype, 1);
+		result = typeCallocN(chtype, 1);
 	}
 	return result;
 } // chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
@@ -442,14 +444,14 @@ chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr/*=0*/)
  * This returns a pointer to char * of a chtype *
  * Formatting codes are omitted.
  */
-char *chtype2Char (const chtype *string)
+char *chtype2Char(const chtype *string)
 {
 	char *newstring = 0;
 	if (string != 0) {
-		int len = chlen (string);
-		if ((newstring = typeMallocN (char, len + 1)) != 0) {
+		int len = chlen(string);
+		if ((newstring = typeMallocN(char, len + 1)) != 0) {
 			for (int x = 0; x < len; x++) {
-				newstring[x] = (char)CharOf (string[x]);
+				newstring[x] = (char)CharOf(string[x]);
 			}
 			newstring[len] = '\0';
 		}
@@ -467,8 +469,8 @@ char **CDKsplitString(const char *string, int separator)
 	char *temp;
 
 	if (string != 0 && *string != 0) {
-		unsigned need = countChar (string, separator) + 2;
-		if ((result = typeMallocN (char *, need)) != 0) {
+		unsigned need = countChar(string, separator) + 2;
+		if ((result = typeMallocN(char *, need)) != 0) {
 			unsigned item = 0;
 			const char *first = string;
 			for (;;) {
@@ -476,10 +478,10 @@ char **CDKsplitString(const char *string, int separator)
 					string++;
 
 				need = (unsigned)(string - first);
-				if ((temp = typeMallocN (char, need + 1)) == 0)
+				if ((temp = typeMallocN(char, need + 1)) == 0)
 					break;
 
-				memcpy (temp, first, need);
+				memcpy(temp, first, need);
 				temp[need] = 0;
 				result[item++] = temp;
 
@@ -493,7 +495,7 @@ char **CDKsplitString(const char *string, int separator)
 	return result;
 }
 
-static unsigned countChar (const char *string, int separator)
+static unsigned countChar(const char *string, int separator)
 {
 	unsigned result = 0;
 	int ch;
@@ -507,7 +509,7 @@ static unsigned countChar (const char *string, int separator)
 /*
  * Count the number of items in a list of strings.
  */
-unsigned CDKcountStrings (CDK_CSTRING2 list)
+unsigned CDKcountStrings(CDK_CSTRING2 list)
 {
 	unsigned result = 0;
 	if (list != 0)
@@ -524,36 +526,30 @@ unsigned CDKcountStrings (CDK_CSTRING2 list)
  * and translates them into a chtype * array. This is better suited
  * to curses, because curses uses chtype almost exclusively
  */
-chtype *char2Chtype (const char *string, int *to, int *align)
+chtype *char2Chtype(const char *string, int *to, int *align)
 {
 	chtype *result = 0;
 	chtype attrib;
 	chtype lastChar;
 	chtype mask;
-
 	(*to) = 0;
 	*align = LEFT;
-
 	if (string != 0 && *string != 0) {
-		int len = (int)strlen (string);
+		int len = (int)strlen(string);
 		int pass;
 		int used = 0;
 		/*
 		 * We make two passes because we may have indents and tabs to expand, and
 		 * do not know in advance how large the result will be.
 		 */
-		for (pass = 0; pass < 2; pass++)
-		{
+		for (pass = 0; pass < 2; pass++) {
 			int insideMarker;
 			int from;
 			int adjust;
 			int start;
 			int x = 3;
-
-			if (pass != 0)
-			{
-				if ((result = typeMallocN (chtype, used + 2)) == 0)
-				{
+			if (pass != 0) {
+				if ((result = typeMallocN(chtype, used + 2)) == 0) {
 					used = 0;
 					break;
 				}
@@ -562,128 +558,91 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 			attrib = A_NORMAL;
 			start = 0;
 			used = 0;
-
 			/* Look for an alignment marker.  */
-			if (*string == L_MARKER)
-			{
-				if (string[1] == 'C' && string[2] == R_MARKER)
-				{
+			if (*string == L_MARKER) {
+				if (string[1] == 'C' && string[2] == R_MARKER) {
 					(*align) = CENTER;
 					start = 3;
-				}
-				else if (string[1] == 'R' && string[2] == R_MARKER)
-				{
+				} else if (string[1] == 'R' && string[2] == R_MARKER) {
 					(*align) = RIGHT;
 					start = 3;
-				}
-				else if (string[1] == 'L' && string[2] == R_MARKER)
-				{
+				} else if (string[1] == 'L' && string[2] == R_MARKER) {
 					start = 3;
-				}
-				else if (string[1] == 'B' && string[2] == '=')
-				{
+				} else if (string[1] == 'B' && string[2] == '=') {
 					/* Set the item index value in the string.       */
-					if (result != 0)
-					{
+					if (result != 0) {
 						result[0] = ' ';
 						result[1] = ' ';
 						result[2] = ' ';
 					}
-
 					/* Pull out the bullet marker.  */
-					while (string[x] != R_MARKER && string[x] != 0)
-					{
+					while (string[x] != R_MARKER && string[x] != 0) {
 						if (result != 0)
 							result[x] = (chtype)string[x] | A_BOLD;
 						x++;
 					}
 					adjust = 1;
-
 					/* Set the alignment variables.  */
 					start = x;
 					used = x;
-				}
-				else if (string[1] == 'I' && string[2] == '=')
-				{
+				} else if (string[1] == 'I' && string[2] == '=') {
 					from = 2;
 					x = 0;
-
-					while (string[++from] != R_MARKER && string[from] != 0)
-					{
-						if (isdigit (CharOf (string[from])))
-						{
-							adjust = (adjust * 10) + DigitOf (string[from]);
+					while (string[++from] != R_MARKER && string[from] != 0) {
+						if (isdigit(CharOf(string[from]))) {
+							adjust = (adjust * 10) + DigitOf(string[from]);
 							x++;
 						}
 					}
-
 					start = x + 4;
 				}
 			}
-
-			while (adjust-- > 0)
-			{
+			while (adjust-- > 0) {
 				if (result != 0)
 					result[used] = ' ';
 				used++;
 			}
-
 			/* Set the format marker bool to false.  */
 			insideMarker = FALSE;
-
 			/* Start parsing the character string.  */
-			for (from = start; from < len; from++)
-			{
+			for (from = start; from < len; from++) {
 				/* Are we inside a format marker?  */
-				if (!insideMarker)
-				{
+				if (!insideMarker) {
 					if (string[from] == L_MARKER
 							&& (string[from + 1] == '/'
 								|| string[from + 1] == '!'
 								|| string[from + 1] == '#'))
 					{
 						insideMarker = TRUE;
-					}
-					else if (string[from] == '\\' && string[from + 1] == L_MARKER)
-					{
+					} else if (string[from] == '\\' && string[from + 1] == L_MARKER) {
 						from++;
 						if (result != 0)
-							result[used] = CharOf (string[from]) | attrib;
+							result[used] = CharOf(string[from]) | attrib;
 						used++;
 						from++;
-					}
-					else if (string[from] == '\t')
-					{
-						do
-						{
+					} else if (string[from] == '\t') {
+						do {
 							if (result != 0)
 								result[used] = ' ';
 							used++;
 						}
 						while (used & 7);
-					}
-					else
-					{
+					} else {
 						if (result != 0)
-							result[used] = CharOf (string[from]) | attrib;
+							result[used] = CharOf(string[from]) | attrib;
 						used++;
 					}
-				}
-				else
-				{
-					switch (string[from])
-					{
+				} else {
+					switch (string[from]) {
 						case R_MARKER:
 							insideMarker = 0;
 							break;
 						case '#':
 							{
 								lastChar = 0;
-								switch (string[from + 2])
-								{
+								switch (string[from + 2]) {
 									case 'L':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LLCORNER;
 												break;
@@ -702,8 +661,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 										}
 										break;
 									case 'R':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LRCORNER;
 												break;
@@ -713,8 +671,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 										}
 										break;
 									case 'T':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'T':
 												lastChar = ACS_TTEE;
 												break;
@@ -730,8 +687,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 										}
 										break;
 									case 'A':
-										switch (string[from + 1])
-										{
+										switch (string[from + 1]) {
 											case 'L':
 												lastChar = ACS_LARROW;
 												break;
@@ -770,28 +726,21 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 											lastChar = ACS_S9;
 								}
 
-								if (lastChar != 0)
-								{
+								if (lastChar != 0) {
 									adjust = 1;
 									from += 2;
-
-									if (string[from + 1] == '(')
-										/* Check for a possible numeric modifier.  */
-									{
+									if (string[from + 1] == '(') /* Check for a possible numeric modifier.  */ {
 										from++;
 										adjust = 0;
 
-										while (string[++from] != ')' && string[from] != 0)
-										{
-											if (isdigit (CharOf (string[from])))
-											{
-												adjust = (adjust * 10) + DigitOf (string[from]);
+										while (string[++from] != ')' && string[from] != 0) {
+											if (isdigit (CharOf(string[from]))) {
+												adjust = (adjust * 10) + DigitOf(string[from]);
 											}
 										}
 									}
 								}
-								for (x = 0; x < adjust; x++)
-								{
+								for (x = 0; x < adjust; x++) {
 									if (result != 0)
 										result[used] = lastChar | attrib;
 									used++;
@@ -799,19 +748,18 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 								break;
 							}
 						case '/':
-							from = encodeAttribute (string, from, &mask);
+							from = encodeAttribute(string, from, &mask);
 							attrib = attrib | mask;
 							break;
 						case '!':
-							from = encodeAttribute (string, from, &mask);
+							from = encodeAttribute(string, from, &mask);
 							attrib = attrib & ~mask;
 							break;
 					}
 				}
 			}
 
-			if (result != 0)
-			{
+			if (result != 0) {
 				result[used] = 0;
 				result[used + 1] = 0;
 			}
@@ -821,21 +769,18 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 			 * the first character of the array.
 			 */
 			if (used == 0
-					&& result != 0)
-			{
+					&& result != 0) {
 				result[0] = attrib;
 			}
 		}
 		*to = used;
-	}
-	else
-	{
+	} else {
 		/*
 		 * Try always to return something; otherwise lists of chtype strings
 		 * would get a spurious null pointer whenever there is a blank line,
 		 * and CDKfreeChtypes() would fail to free the whole list.
 		 */
-		result = typeCallocN (chtype, 1);
+		result = typeCallocN(chtype, 1);
 	}
 	return result;
 }
@@ -864,7 +809,7 @@ void freeChtype (chtype *string)
  * and returns the adjustment to make, to fill
  * the justification requirement.
  */
-int justifyString (int boxWidth, int mesgLength, int justify)
+int justifyString(int boxWidth, int mesgLength, int justify)
 {
 	/*
 	 * Make sure the message isn't longer than the width.
@@ -885,7 +830,7 @@ int justifyString (int boxWidth, int mesgLength, int justify)
 /*
  * Free a list of strings, terminated by a null pointer.
  */
-void CDKfreeStrings (char **list)
+void CDKfreeStrings(char **list)
 {
 	if (list != 0) {
 		void *base = (void *)list;
@@ -898,13 +843,11 @@ void CDKfreeStrings (char **list)
 /*
  * Free a list of chtype-strings, terminated by a null pointer.
  */
-void CDKfreeChtypes (chtype **list)
+void CDKfreeChtypes(chtype **list)
 {
-	if (list != 0)
-	{
+	if (list != 0) {
 		void *base = (void *)list;
-		while (*list != 0)
-		{
+		while (*list != 0) {
 			freeChtype (*list++);
 		}
 		free (base);
@@ -918,9 +861,8 @@ void CDKfreeChtypes (chtype **list)
 void alignxy(WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight)
 {
 	int first, gap, last;
-
-	first = getbegx (window);
-	last = getmaxx (window);
+	first = getbegx(window);
+	last = getmaxx(window);
 	if ((gap = (last - boxWidth)) < 0)
 		gap = 0;
 	last = first + gap;
@@ -943,8 +885,8 @@ void alignxy(WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight)
 			break;
 	}
 
-	first = getbegy (window);
-	last = getmaxy (window);
+	first = getbegy(window);
+	last = getmaxy(window);
 	if ((gap = (last - boxHeight)) < 0)
 		gap = 0;
 	last = first + gap;
@@ -1001,7 +943,7 @@ void writeChtype(WINDOW *window,
 /*
  * This writes out a chtype * string * with the given attributes added.
  */
-void writeChtypeAttrib (WINDOW *window,
+void writeChtypeAttrib(WINDOW *window,
 		int xpos,
 		int ypos,
 		chtype *string,
@@ -1015,13 +957,11 @@ void writeChtypeAttrib (WINDOW *window,
 	int display          = 0;
 	int x                = 0;
 
-	if (align == HORIZONTAL)
-	{
+	if (align == HORIZONTAL) {
 		/* Draw the message on a horizontal axis. */
-		display = MINIMUM (diff, getmaxx (window) - xpos);
+		display = MINIMUM(diff, getmaxx(window) - xpos);
 		int altumlz=0;
-		for (x = 0; x < display; x++)
-		{
+		for (x = 0; x < display; x++) {
 			// GSchade 25.9.18
 			if (1&&((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195)) {
 				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
@@ -1043,17 +983,14 @@ void writeChtypeAttrib (WINDOW *window,
 				altumlz++;
 			} else {
 //				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
-				(void)mvwaddch (window, ypos, xpos + x-altumlz, string[x + start] |attr);
+				(void)mvwaddch(window, ypos, xpos + x-altumlz, string[x + start] |attr);
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/* Draw the message on a vertical axis. */
-		display = MINIMUM (diff, getmaxy (window) - ypos);
-		for (x = 0; x < display; x++)
-		{
-			(void)mvwaddch (window, ypos + x, xpos, string[x + start] | attr);
+		display = MINIMUM(diff, getmaxy(window) - ypos);
+		for (x = 0; x < display; x++) {
+			(void)mvwaddch(window, ypos + x, xpos, string[x + start] | attr);
 		}
 	}
 } // void writeChtypeAttrib(
@@ -1062,7 +999,7 @@ void writeChtypeAttrib (WINDOW *window,
  * This draws a box with attributes and lets the user define
  * each element of the box.
  */
-void attrbox (WINDOW *win,
+void attrbox(WINDOW *win,
 		chtype tlc,
 		chtype trc,
 		chtype blc,
@@ -1074,21 +1011,21 @@ void attrbox (WINDOW *win,
 	/* *INDENT-EQLS* */
 	int x1       = 0;
 	int y1       = 0;
-	int y2       = getmaxy (win) - 1;
-	int x2       = getmaxx (win) - 1;
+	int y2       = getmaxy(win) - 1;
+	int x2       = getmaxx(win) - 1;
 	int count    = 0;
 
 	/* Draw horizontal lines. */
 	if (horz) {
-		(void)mvwhline(win, y1, 0, horz | attr, getmaxx (win));
-		(void)mvwhline(win, y2, 0, horz | attr, getmaxx (win));
+		(void)mvwhline(win, y1, 0, horz | attr, getmaxx(win));
+		(void)mvwhline(win, y2, 0, horz | attr, getmaxx(win));
 		count++;
 	}
 
 	/* Draw vertical lines. */
 	if (vert) {
-		(void)mvwvline(win, 0, x1, vert | attr, getmaxy (win));
-		(void)mvwvline(win, 0, x2, vert | attr, getmaxy (win));
+		(void)mvwvline(win, 0, x1, vert | attr, getmaxy(win));
+		(void)mvwvline(win, 0, x2, vert | attr, getmaxy(win));
 		count++;
 	}
 
@@ -1120,19 +1057,19 @@ void attrbox (WINDOW *win,
 void drawShadow(WINDOW *shadowWin)
 {
 	if (shadowWin != 0) {
-		int x_hi = getmaxx (shadowWin) - 1;
-		int y_hi = getmaxy (shadowWin) - 1;
+		int x_hi = getmaxx(shadowWin) - 1;
+		int y_hi = getmaxy(shadowWin) - 1;
 
 		/* Draw the line on the bottom. */
-		(void)mvwhline (shadowWin, y_hi, 1, ACS_HLINE | A_DIM, x_hi);
+		(void)mvwhline(shadowWin, y_hi, 1, ACS_HLINE | A_DIM, x_hi);
 
 		/* Draw the line on the right. */
-		(void)mvwvline (shadowWin, 0, x_hi, ACS_VLINE | A_DIM, y_hi);
+		(void)mvwvline(shadowWin, 0, x_hi, ACS_VLINE | A_DIM, y_hi);
 
-		(void)mvwaddch (shadowWin, 0, x_hi, ACS_URCORNER | A_DIM);
-		(void)mvwaddch (shadowWin, y_hi, 0, ACS_LLCORNER | A_DIM);
-		(void)mvwaddch (shadowWin, y_hi, x_hi, ACS_LRCORNER | A_DIM);
-		wrefresh (shadowWin);
+		(void)mvwaddch(shadowWin, 0, x_hi, ACS_URCORNER | A_DIM);
+		(void)mvwaddch(shadowWin, y_hi, 0, ACS_LLCORNER | A_DIM);
+		(void)mvwaddch(shadowWin, y_hi, x_hi, ACS_LRCORNER | A_DIM);
+		wrefresh(shadowWin);
 	}
 }
 
@@ -1155,8 +1092,8 @@ int getcCDKBind(EObjectType cdktype GCC_UNUSED,
  */
 void refreshCDKWindow(WINDOW *win)
 {
-   touchwin (win);
-   wrefresh (win);
+   touchwin(win);
+   wrefresh(win);
 }
 
 /*
@@ -1167,18 +1104,18 @@ char *copyChar(const char *original)
 {
 	char *newstring = 0;
 	if (original != 0) {
-		if ((newstring = typeMallocN (char, strlen (original) + 1)) != 0)
-			strcpy (newstring, original);
+		if ((newstring = typeMallocN(char, strlen(original) + 1)) != 0)
+			strcpy(newstring, original);
 	}
 	return (newstring);
 }
 
-chtype *copyChtype (const chtype *original)
+chtype *copyChtype(const chtype *original)
 {
 	chtype *newstring = 0;
 	if (original) {
-		int len = chlen (original);
-		if ((newstring = typeMallocN (chtype, len + 4))) {
+		int len = chlen(original);
+		if ((newstring = typeMallocN(chtype, len + 4))) {
 			for (int x = 0; x < len; x++) {
 				newstring[x] = original[x];
 			}
@@ -1195,8 +1132,8 @@ chtype *copyChtype (const chtype *original)
 void eraseCursesWindow(WINDOW *window)
 {
 	if (window) {
-		werase (window);
-		wrefresh (window);
+		werase(window);
+		wrefresh(window);
 	}
 }
 
@@ -1206,8 +1143,8 @@ void eraseCursesWindow(WINDOW *window)
 void deleteCursesWindow(WINDOW *window)
 {
 	if (window) {
-		eraseCursesWindow (window);
-		delwin (window);
+		eraseCursesWindow(window);
+		delwin(window);
 	}
 }
 
@@ -1215,29 +1152,29 @@ void deleteCursesWindow(WINDOW *window)
  * This moves a given window (if we're able to set the window's beginning).
  * We do not use mvwin(), because it does (usually) not move subwindows.
  */
-void moveCursesWindow (WINDOW *window, int xdiff, int ydiff)
+void moveCursesWindow(WINDOW *window, int xdiff, int ydiff)
 {
 	if (window) {
 		int xpos, ypos;
-		getbegyx (window, ypos, xpos);
-		(void)setbegyx (window, (short)ypos, (short)xpos);
+		getbegyx(window, ypos, xpos);
+		(void)setbegyx(window,(short)ypos,(short)xpos);
 		xpos += xdiff;
 		ypos += ydiff;
-		werase (window);
-		(void)setbegyx (window, (short)ypos, (short)xpos);
+		werase(window);
+		(void)setbegyx(window,(short)ypos,(short)xpos);
 	}
 }
 
 
 int comparSort(const void *a, const void *b)
 {
-	return strcmp (*(const char *const *)a, (*(const char *const *)b));
+	return strcmp(*(const char *const *)a,(*(const char *const *)b));
 }
 
 void sortList(CDK_CSTRING *list, int length)
 {
 	if (length > 1)
-		qsort (list, (unsigned)length, sizeof (list[0]), comparSort);
+		qsort(list,(unsigned)length, sizeof(list[0]), comparSort);
 }
 
 /*
@@ -1248,12 +1185,12 @@ int searchList(CDK_CSTRING2 list, int listSize, const char *pattern)
 	int Index = -1;
 	/* Make sure the pattern isn't null. */
 	if (pattern != 0) {
-		size_t len = strlen (pattern);
+		size_t len = strlen(pattern);
 		int x;
 		/* Cycle through the list looking for the word. */
 		for (x = 0; x < listSize; x++) {
 			/* Do a string compare. */
-			int ret = strncmp (list[x], pattern, len);
+			int ret = strncmp(list[x], pattern, len);
 			/*
 			 * If 'ret' is less than 0, then the current word is alphabetically
 			 * less than the provided word.  At this point we will set the index
@@ -1291,7 +1228,7 @@ unsigned CDKallocStrings(char ***list, char *item, unsigned length, unsigned use
 			*list = typeReallocN(char *, *list, used);
 		}
 	}
-	(*list)[length++] = copyChar (item);
+	(*list)[length++] = copyChar(item);
 	(*list)[length] = 0;
 	return used;
 }
@@ -1302,10 +1239,10 @@ unsigned CDKallocStrings(char ***list, char *item, unsigned length, unsigned use
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end)
 {
 	if (start < end) {
-		unsigned want = (unsigned)(end - start) + 1000;
-		char *blanks = (char *)malloc (want);
+		unsigned want =(unsigned)(end - start) + 1000;
+		char *blanks =(char *)malloc(want);
 		if (blanks != 0) {
-			cleanChar (blanks, (int)(want - 1), ' ');
+			cleanChar(blanks,(int)(want - 1), ' ');
 			writeChar(window, xpos, ypos, blanks, align, start, end);
 			freeChecked(blanks);
 		}
@@ -1342,21 +1279,21 @@ void writeCharAttrib(WINDOW *window,
 	int x;
 	if (align == HORIZONTAL) {
 		/* Draw the message on a horizontal axis. */
-		display = MINIMUM (display, getmaxx (window) - 1);
+		display = MINIMUM(display, getmaxx(window) - 1);
 		for (x = 0; x < display; x++) {
-			(void)mvwaddch (window,
+			(void)mvwaddch(window,
 					ypos,
 					xpos + x,
-					CharOf (string[x + start]) | attr);
+					CharOf(string[x + start]) | attr);
 		}
 	} else {
 		/* Draw the message on a vertical axis. */
-		display = MINIMUM (display, getmaxy (window) - 1);
+		display = MINIMUM(display, getmaxy(window) - 1);
 		for (x = 0; x < display; x++) {
-			(void)mvwaddch (window,
+			(void)mvwaddch(window,
 					ypos + x,
 					xpos,
-					CharOf (string[x + start]) | attr);
+					CharOf(string[x + start]) | attr);
 		}
 	}
 }
@@ -1392,7 +1329,7 @@ EDisplayType char2DisplayType(const char *string)
 	/* *INDENT-ON* */
 	if (string) {
 		for (int n = 0; table[n].name != 0; n++) {
-			if (!strcmp (string, table[n].name))
+			if (!strcmp(string, table[n].name))
 				return table[n].code;
 		}
 	}
@@ -1441,14 +1378,14 @@ int filterByDisplayType(EDisplayType type, chtype input)
 		result = ERR;
 	} else if ((type == vINT ||
 				type == vHINT) &&
-			!isdigit (CharOf (result))) {
+			!isdigit(CharOf(result))) {
 		result = ERR;
 	} else if ((type == vCHAR ||
 				type == vUCHAR ||
 				type == vLCHAR ||
 				type == vUHCHAR ||
 				type == vLHCHAR) &&
-			isdigit (CharOf (result))) {
+			isdigit(CharOf(result))) {
 		result = ERR;
 	} else if (type == vVIEWONLY) {
 		result = ERR;
@@ -1456,14 +1393,14 @@ int filterByDisplayType(EDisplayType type, chtype input)
 				type == vUHCHAR ||
 				type == vUMIXED ||
 				type == vUHMIXED) &&
-			isalpha (CharOf (result))) {
-		result = toupper (result);
+			isalpha(CharOf(result))) {
+		result = toupper(result);
 	} else if ((type == vLCHAR ||
 				type == vLHCHAR ||
 				type == vLMIXED ||
 				type == vLHMIXED) &&
-			isalpha (CharOf (result))) {
-		result = tolower (result);
+			isalpha(CharOf(result))) {
+		result = tolower(result);
 	}
 	return result;
 }
@@ -1484,7 +1421,7 @@ void endCDK(void)
 #endif
 }
 
-static bool checkMenuKey (int keyCode, int functionKey)
+static bool checkMenuKey(int keyCode, int functionKey)
 {
 	return (keyCode == KEY_ESC && !functionKey);
 }
@@ -1495,12 +1432,12 @@ static bool checkMenuKey (int keyCode, int functionKey)
  */
 char **copyCharList(const char **list)
 {
-	size_t size = (size_t) lenCharList (list) + 1;
-	char **result = typeMallocN (char *, size);
+	size_t size = (size_t) lenCharList(list) + 1;
+	char **result = typeMallocN(char *, size);
 	if (result) {
 		unsigned n;
 		for (n = 0; n < size; ++n)
-			result[n] = copyChar (list[n]);
+			result[n] = copyChar(list[n]);
 	}
 	return result;
 }
@@ -1518,11 +1455,10 @@ int lenCharList(const char **list)
 	return result;
 }
 
-void initCDKColor (void)
+void initCDKColor(void)
 {
 #ifdef HAVE_START_COLOR
-	if (has_colors ())
-	{
+	if (has_colors()) {
 		int color[] =
 		{
 			COLOR_WHITE, COLOR_RED, COLOR_GREEN,
@@ -1532,17 +1468,12 @@ void initCDKColor (void)
 		int pair = 1;
 		int fg, bg;
 		int limit;
-
-		start_color ();
-
+		start_color();
 		limit = (COLORS < MAX_COLORS) ? COLORS : MAX_COLORS;
-
 		/* Create the color pairs. */
-		for (fg = 0; fg < limit; fg++)
-		{
-			for (bg = 0; bg < limit; bg++)
-			{
-				init_pair ((short)pair++, (short)color[fg], (short)color[bg]);
+		for (fg = 0; fg < limit; fg++) {
+			for (bg = 0; bg < limit; bg++) {
+				init_pair((short)pair++,(short)color[fg],(short)color[bg]);
 			}
 		}
 	}
@@ -1601,7 +1532,7 @@ CDKOBJS* SScreen::setCDKFocusPrevious()
 		if (--n < 0)
 			n = this->objectCount - 1;
 		curobj = this->object[n];
-		if (curobj != 0 && AcceptsFocusObj (curobj)) {
+		if (curobj != 0 && AcceptsFocusObj(curobj)) {
 			result = curobj;
 			break;
 		} else if (n == first) {
@@ -1620,7 +1551,7 @@ CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
 {
 	CDKOBJS *result = 0;
 	CDKOBJS *curobj;
-	int n = getFocusIndex ();
+	int n = getFocusIndex();
 	int first = n;
 	for (;;) {
 		if (++n >= this->objectCount)
@@ -1633,7 +1564,7 @@ CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
 			break;
 		}
 	}
-	setFocusIndex (/*this, */(result != 0) ? n : -1);
+	setFocusIndex(/*this, */(result != 0) ? n : -1);
 	return result;
 }
 
@@ -1643,13 +1574,13 @@ CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
 CDKOBJS* SScreen::setCDKFocusFirst(/*CDKSCREEN *screen*/)
 {
    setFocusIndex(/*screen, screen->*/objectCount - 1);
-   return switchFocus(setCDKFocusNext (/*screen*/), 0);
+   return switchFocus(setCDKFocusNext(/*screen*/), 0);
 }
 
 /*
  * Set focus to the last object in the screen.
  */
-/*CDKOBJS **/void SScreen::setCDKFocusLast (/*CDKSCREEN *screen*/)
+/*CDKOBJS **/void SScreen::setCDKFocusLast(/*CDKSCREEN *screen*/)
 {
    setFocusIndex(/*screen, */0);
    /*return */switchFocus(setCDKFocusPrevious(/*screen*/), 0);
@@ -1711,19 +1642,19 @@ void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
 {
 	switch (keyCode) {
 		case KEY_BTAB:
-			switchFocus(setCDKFocusPrevious (/*screen*/), curobj);
+			switchFocus(setCDKFocusPrevious(/*screen*/), curobj);
 			break;
 		case KEY_TAB:
-			switchFocus(setCDKFocusNext (/*screen*/), curobj);
+			switchFocus(setCDKFocusNext(/*screen*/), curobj);
 			break;
-		case KEY_F (10):
+		case KEY_F(10):
 			/* save data and exit */
 			exitOKCDKScreen(/*screen*/);
 			break;
-		case CTRL ('X'):
+		case CTRL('X'):
 			exitCancelCDKScreen(/*screen*/);
 			break;
-		case CTRL ('R'):
+		case CTRL('R'):
 			/* reset data to defaults */
 			resetCDKScreen(/*screen*/);
 			curobj->setFocus();
@@ -1735,11 +1666,11 @@ void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
 			break;
 		default:
 			/* not everyone wants menus, so we make them optional here */
-			if (funcMenuKey != 0 && funcMenuKey (keyCode, functionKey)) {
+			if (funcMenuKey != 0 && funcMenuKey(keyCode, functionKey)) {
 				/* find and enable drop down menu */
 				for (int j = 0; j < /*screen->*/objectCount; ++j)
-					if (/*ObjTypeOf (*//*screen->*/object[j]->cdktype/*)*/ == vMENU) {
-						handleMenu (/*screen, *//*screen->*/object[j], curobj);
+					if (/*ObjTypeOf(*//*screen->*/object[j]->cdktype/*)*/ == vMENU) {
+						handleMenu(/*screen, *//*screen->*/object[j], curobj);
 						break;
 					}
 			} else {
@@ -1762,7 +1693,7 @@ int SScreen::traverseCDKScreen(/*CDKSCREEN *screen*/)
 		while (((curobj = getCDKFocusCurrent(/*screen*/)) != 0) && (/*screen->*/exitStatus == CDKSCREEN_NOEXIT)) {
 			bool function;
 			int key = curobj->getchCDKObject(/*curobj, */&function);
-			traverseCDKOnce (/*screen, */curobj, key, function, checkMenuKey);
+			traverseCDKOnce(/*screen, */curobj, key, function, checkMenuKey);
 		}
 		if (/*screen->*/exitStatus == CDKSCREEN_EXITOK) {
 			saveDataCDKScreen(/*screen*/);
@@ -1842,7 +1773,7 @@ void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
 	if (screen->objectCount + 1 >= screen->objectLimit) {
 		screen->objectLimit += 2;
 		screen->objectLimit *= 2;
-		screen->object = typeReallocN (CDKOBJS *, screen->object, screen->objectLimit);
+		screen->object = typeReallocN(CDKOBJS *, screen->object, screen->objectLimit);
 	}
 	if (validObjType(cdktype)) {
 		setScreenIndex(screen, screen->objectCount++);
@@ -1852,7 +1783,7 @@ void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
 /*
  * This registers a CDK object with a screen.
  */
-void CDKOBJS::reRegisterCDKObject (EObjectType cdktype/*, void *object*/)
+void CDKOBJS::reRegisterCDKObject(EObjectType cdktype/*, void *object*/)
 {
 //   CDKOBJS *obj = (CDKOBJS *)object;
    registerCDKObject(/*obj->*/screen, cdktype/*, object*/);
@@ -1979,6 +1910,10 @@ void CDKOBJS::destroyCDKObject()
 	}
 }
 
+void CDKOBJS::destroyObj()
+{
+	destroyCDKObject();
+}
 
 /*
  * This removes an object from the CDK screen.
@@ -2188,7 +2123,7 @@ void SEntry::moveCDKEntry(/*CDKOBJS *object,*/
 		ypos = getbegy (this->win) + yplace;
 	}
 	/* Adjust the window if we need to. */
-	alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+	alignxy(WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
 	/* Get the difference. */
 	xdiff = currentX - xpos;
 	ydiff = currentY - ypos;
@@ -2234,7 +2169,7 @@ void SAlphalist::moveCDKAlphalist(
    }
 
    /* Adjust the window if we need to. */
-   alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+   alignxy(WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
 
    /* Get the difference. */
    xdiff = currentX - xpos;
@@ -2283,7 +2218,7 @@ void SScroll::moveCDKScroll(
       ypos = getbegy (this->win) + yplace;
    }
    /* Adjust the window if we need to. */
-   alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+   alignxy(WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
    /* Get the difference. */
    xdiff = currentX - xpos;
    ydiff = currentY - ypos;
@@ -2324,6 +2259,53 @@ SAlphalist::~SAlphalist()
       deleteCursesWindow (this->win);
       /* Unregister the object. */
       unregisterCDKObject(vALPHALIST);
+}
+
+
+SFileSelector::~SFileSelector()
+{
+//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+
+	/*
+      destroyInfo();
+      cleanCDKObjectBindings ();
+//      destroyCDKEntry (this->entryField);
+			entryField->~SEntry();
+//      destroyCDKScroll (this->scrollField);
+			scrollField->~SScroll();
+      deleteCursesWindow (this->shadowWin);
+      deleteCursesWindow (this->win);
+      unregisterCDKObject(vALPHALIST);
+			*/
+
+//   if (object != 0) {
+//      CDKFSELECT *fselect = (CDKFSELECT *)object;
+
+      cleanCDKObjectBindings (/*vFSELECT, fselect*/);
+
+      /* Free up the character pointers. */
+      freeChecked(this->pwd);
+      freeChecked(this->pathname);
+      freeChecked(this->dirAttribute);
+      freeChecked(this->fileAttribute);
+      freeChecked(this->linkAttribute);
+      freeChecked(this->sockAttribute);
+      CDKfreeStrings(this->dirContents);
+
+      /* Destroy the other Cdk objects. */
+			//      destroyCDKScroll(this->scrollField);
+			scrollField->destroyObj();
+			//      destroyCDKEntry(this->entryField);
+			entryField->~SEntry();
+
+      /* Free up the window pointers. */
+      deleteCursesWindow(this->shadowWin);
+      deleteCursesWindow(this->win);
+
+      /* Clean the key bindings. */
+      /* Unregister the object. */
+      unregisterCDKObject(vFSELECT/*, this*/);
+//   }
 }
 
 /*
@@ -2393,7 +2375,7 @@ SScroll::~SScroll(/*CDKOBJS *object*/)
 /*
  * Set the widget's title.
  */
-int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
+int CDKOBJS::setCdkTitle(const char *titlec, int boxWidth)
 {
 	cleanCdkTitle();
 	if (titlec != 0) {
@@ -2428,7 +2410,7 @@ int CDKOBJS::setCdkTitle (const char *titlec, int boxWidth)
 			title[x] = char2Chtypeh(temp[x], &titleLen[x], &titlePos[x]);
 			titlePos[x] = justifyString(titleWidth, titleLen[x], titlePos[x]);
 		}
-		CDKfreeStrings (temp);
+		CDKfreeStrings(temp);
 	}
 	return boxWidth;
 } // int CDKOBJS::setCdkTitle(const char *title, int boxWidth)
@@ -2765,9 +2747,9 @@ void SEntry::zeichneFeld()
 	// setlocale(LC_ALL,"");
 	int x = 0;
 	/* Set background color and attributes of the entry field */
-	wbkgd (fieldWin, fieldAttr);
+	wbkgd(fieldWin, fieldAttr);
 	/* Draw in the filler characters. */
-	(void)mvwhline (fieldWin, 0, x, filler | fieldAttr, fieldWidth);
+	(void)mvwhline(fieldWin, 0, x, filler | fieldAttr, fieldWidth);
 	/* If there is information in the field. Then draw it in. */
 	if (info) {
 		int infoLength = (int)strlen(info);
@@ -2803,13 +2785,13 @@ void SEntry::zeichneFeld()
 					x++;
 					aktumlz++;
 				} else {
-					(void)mvwaddch (fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
+					(void)mvwaddch(fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
 				}
 			}
 		}
-		wmove (fieldWin, 0, sbuch);
+		wmove(fieldWin, 0, sbuch);
 	}
-	wrefresh (fieldWin);
+	wrefresh(fieldWin);
 } // void SEntry::zeichneFeld
 
 
@@ -2832,7 +2814,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 		// GSchade Anfang
 		int highnr/*=0*/
 		// GSchade Ende
-		)
+		):fieldWidth(fWidth),boxWidth(0)
 {
 	// GSchade Anfang
 	cdktype=vENTRY;
@@ -2840,9 +2822,6 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	/* *INDENT-EQLS* */
 	int parentWidth      = getmaxxf(cdkscreen->window);
 	int parentHeight     = getmaxyf(cdkscreen->window);
-	int fieldWidth       = fWidth;
-	int boxWidth         = 0;
-	int boxHeight;
 	int xpos             = xplace;
 	int ypos             = yplace;
 	int junk             = 0;
@@ -2896,16 +2875,16 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	/*
 	 * Make sure we didn't extend beyond the dimensions of the window.
 	 */
-	boxWidth = MINIMUM (boxWidth, parentWidth);
-	boxHeight = MINIMUM (boxHeight, parentHeight);
-	fieldWidth = MINIMUM (fieldWidth,
+	boxWidth = MINIMUM(boxWidth, parentWidth);
+	boxHeight = MINIMUM(boxHeight, parentHeight);
+	fieldWidth = MINIMUM(fieldWidth,
 			boxWidth - labelLen +labelumlz - 2 * BorderOf (this));
 
 	/* Rejustify the x and y positions if we need to. */
 	alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
 
 	/* Make the label window. */
-	win = newwin (boxHeight, boxWidth, ypos, xpos);
+	win = newwin(boxHeight, boxWidth, ypos, xpos);
 	if (!win) {
 		destroyCDKObject();
 		return;
@@ -2913,7 +2892,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 		keypad (win, TRUE);
 
 		/* Make the field window. */
-		fieldWin = subwin (win, 1, fieldWidth,
+		fieldWin = subwin(win, 1, fieldWidth,
 				(ypos + TitleLinesOf (this) + BorderOf (this)),
 				(xpos + labelLen -labelumlz
 				 + horizontalAdjust
@@ -2935,7 +2914,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 			if (!info) {
 				destroyCDKObject();
 			} else {
-				cleanChar (info, maxp + 3, '\0');
+				cleanChar(info, maxp + 3, '\0');
 				infoWidth = maxp + 3;
 
 				/* *INDENT-EQLS* Set up the rest of the structure. */
@@ -2943,7 +2922,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 				parent                = cdkscreen->window;
 				shadowWin             = 0;
 				fieldAttr             = fieldAttrp;
-				fieldWidth            = fieldWidth;
+//				fieldWidth            = fieldWidth;
 				filler                = fillerp;
 				hidden                = fillerp;
 				ObjOf (this)->inputWindow   = fieldWin;
@@ -2956,8 +2935,8 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 				lbuch=0;
 				min                   = minp;
 				max                   = maxp;
-				boxWidth              = boxWidth;
-				boxHeight             = boxHeight;
+//				boxWidth              = boxWidth;
+//				boxHeight             = boxHeight;
 				initExitType (this);
 				dispType              = dispTypep;
 				callbfn            = &SEntry::CDKEntryCallBack;
@@ -2999,7 +2978,7 @@ char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drit
 			input = (chtype)getchCDKObject (&functionKey);
 			// GSchade Anfang
 			if (input==27) {
-				*Zweitzeichen = (chtype)getchCDKObject (&functionKey);
+				*Zweitzeichen = (chtype)getchCDKObject(&functionKey);
 				if (*Zweitzeichen==194||*Zweitzeichen==195) {
 					*Drittzeichen = (chtype)getchCDKObject (&functionKey);
 				}
@@ -3045,10 +3024,9 @@ char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drit
 //			mvwprintw(entry->parent,3,2,"kein Zweitzeichen");
 		}
 	} else {
-		int length = chlen (actions);
-		int x;
+		int length = chlen(actions);
 		/* Inject each character one at a time. */
-		for (x = 0; x < length; x++) {
+		for (int x = 0; x < length; x++) {
 //					mvwprintw(entry->parent,4,2,"vor inject 2");
 //			ret = injectCDKEntry(entry, actions[x]);
 			ret = injectCDKEntry(actions[x])?resultData.valueString:unknownString;
@@ -3103,7 +3081,7 @@ void SEntry::drawCDKEntry(bool Box)
 		drawObjBox(this->win/*, ObjOf (this)*/);
 	}
 	drawCdkTitle(this->win/*, object*/);
-	wrefresh (this->win);
+	wrefresh(this->win);
 
 	/* Draw in the label to the widget. */
 	if (this->labelWin) {
@@ -3140,7 +3118,7 @@ int SEntry::injectCDKEntry(chtype input)
 		umlaut[1]=*umlaut=0;
 	}
 	/* Set the exit type. */
-	setExitType (0);
+	setExitType(0);
 	/* Refresh the widget field. */
 	this->zeichneFeld();
 	/* Check if there is a pre-process function to be called. */
@@ -3376,7 +3354,7 @@ void SEntry::setCDKEntryValue(const char *newValue)
 		/* Just to be sure, if lets make sure the new value isn't null. */
 		if (!newValue) {
 			/* Then we want to just erase the old value. */
-			cleanChar (this->info, this->infoWidth, '\0');
+			cleanChar(this->info, this->infoWidth, '\0');
 
 			/* Set the pointers back to zero. */
 			this->leftChar = 0;
@@ -3385,9 +3363,9 @@ void SEntry::setCDKEntryValue(const char *newValue)
       this->sbuch=0;
 		} else {
 			/* Determine how many characters we need to copy. */
-			int copychars = MINIMUM ((int)strlen(newValue), this->max);
+			int copychars = MINIMUM((int)strlen(newValue), this->max);
 			/* OK, erase the old value, and copy in the new value. */
-			cleanChar (this->info, this->max, '\0');
+			cleanChar(this->info, this->max, '\0');
 			strncpy (this->info, newValue, (unsigned)copychars);
       this->settoend();
 		}
@@ -3508,7 +3486,7 @@ void CDKOBJS::drawCDKScreen()
  */
 void SScreen::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 {
-	int objectCount = /*screen->*/objectCount;
+//	int objectCount = /*screen->*/objectCount;
 	int x;
 	int focused = -1;
 	int visible = -1;
@@ -3522,26 +3500,30 @@ void SScreen::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
 	 * be drawn after all the invisible ones are erased */
 	for (x = 0; x < objectCount; x++) {
 		CDKOBJS *obj = /*screen->*/object[x];
-//		if (validObjType (obj, ObjTypeOf (obj))) KLA
+		if (obj) {
+			//		if (validObjType (obj, ObjTypeOf (obj))) KLA
 			if (obj->validObjType(obj->cdktype)) {
-			if (obj->isVisible) {
-				if (visible < 0)
-					visible = x;
-				if (obj->hasFocus && focused < 0)
-					focused = x;
-			} else {
-				obj->eraseObj();
+				if (obj->isVisible) {
+					if (visible < 0)
+						visible = x;
+					if (obj->hasFocus && focused < 0)
+						focused = x;
+				} else {
+					obj->eraseObj();
+				}
 			}
 		}
 	}
 	for (x = 0; x < objectCount; x++) {
 		CDKOBJS *obj = /*screen->*/object[x];
-		//		if (validObjType (obj, ObjTypeOf (obj))) KLA
-		if (obj->validObjType(obj->cdktype)) {
-			obj->hasFocus = (x == focused);
-			if (obj->isVisible) {
-				// GSchade 13.11.18 hier gehts vorbei
-				obj->drawObj(obj->box);
+		if (obj) {
+			//		if (validObjType (obj, ObjTypeOf (obj))) KLA
+			if (obj->validObjType(obj->cdktype)) {
+				obj->hasFocus = (x == focused);
+				if (obj->isVisible) {
+					// GSchade 13.11.18 hier gehts vorbei
+					obj->drawObj(obj->box);
+				}
 			}
 		}
 	}
@@ -3565,7 +3547,7 @@ void SEntry::setBKattrEntry(chtype attrib)
 	wbkgd(win, attrib);
 	wbkgd(fieldWin, attrib);
 	if (labelWin) {
-		wbkgd (labelWin, attrib);
+		wbkgd(labelWin, attrib);
 	}
 }
 
@@ -3652,6 +3634,13 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
    HasFocusObj (ObjOf (widget->scrollField)) = save
 
 void SAlphalist::injectMyScroller(chtype key)
+{
+	SaveFocus(this);
+	scrollField->injectCDKScroll(key);
+	RestoreFocus(this);
+}
+
+void SFileSelector::injectMyScroller(chtype key)
 {
 	SaveFocus(this);
 	scrollField->injectCDKScroll(key);
@@ -3925,10 +3914,10 @@ void SAlphalist::setMyBKattr(chtype character)
 void SScroll::setBKattrScroll(chtype attrib)
 {
 	//      CDKSCROLL *widget = (CDKSCROLL *)object;
-	wbkgd (this->win, attrib);
-	wbkgd (this->listWin, attrib);
+	wbkgd(this->win, attrib);
+	wbkgd(this->listWin, attrib);
 	if (this->scrollbarWin) {
-		wbkgd (this->scrollbarWin, attrib);
+		wbkgd(this->scrollbarWin, attrib);
 	}
 }
 
@@ -4046,7 +4035,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 
 
 			 /* Clean up. */
-			 CDKfreeStrings (altWords);
+			 CDKfreeStrings(altWords);
 
 			 /* Beep at the user. */
 			 Beep ();
@@ -4073,7 +4062,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 		 }
 
 		 /* Clean up. */
-		 CDKfreeStrings (altWords);
+		 CDKfreeStrings(altWords);
 
 		 /* Redraw the alphalist. */
 		 alphalist->drawCDKAlphalist(box);
@@ -4109,6 +4098,16 @@ void SAlphalist::unfocusCDKAlphalist()
 	entryField->unfocusCDKEntry();
 }
 
+void SFileSelector::focusCDKFileSelector()
+{
+	entryField->focusCDKEntry();
+}
+
+void SFileSelector::unfocusCDKFileSelector()
+{
+	entryField->unfocusCDKEntry();
+}
+
 /*
  * Set data for preprocessing.
  */
@@ -4130,7 +4129,7 @@ void CDKOBJS::setCDKObjectPostProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *dat
 /*
  * This is the heart-beat of the widget.
  */
-static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
+static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 				 *object GCC_UNUSED,
 				 void *clientData,
 				 chtype input)
@@ -4235,17 +4234,13 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 						 // GSchade Anfang
 						 int highnr/*=0*/
 						 // GSchade Ende
-		)
+		):xpos(xplace),ypos(yplace),highlight(highlight),fillerChar(fillerChar),shadow(shadow)
 {
 	cdktype = vALPHALIST;
 	/* *INDENT-EQLS* */
 //	CDKALPHALIST *alphalist      = 0;
 	int parentWidth              = getmaxx(cdkscreen->window);
 	int parentHeight             = getmaxy(cdkscreen->window);
-	int boxWidth;
-	int boxHeight;
-	int xpos                     = xplace;
-	int ypos                     = yplace;
 	int tempWidth                = 0;
 	int tempHeight               = 0;
 	int labelLen                 = 0;
@@ -4268,13 +4263,13 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	 * be ROWS-height, otherwise, the height will be the
 	 * given height.
 	 */
-	boxHeight = setWidgetDimension (parentHeight, height, 0);
+	boxHeight = setWidgetDimension(parentHeight, height, 0);
 	/*
 	 * If the width is a negative value, the width will
 	 * be COLS-width, otherwise, the width will be the
 	 * given width.
 	 */
-	boxWidth = setWidgetDimension (parentWidth, width, 0);
+	boxWidth = setWidgetDimension(parentWidth, width, 0);
 	/* Translate the label char *pointer to a chtype pointer. */
 	if (label) {
 		chtype *chtypeLabel = char2Chtypeh(label, &labelLen, &junk2
@@ -4282,26 +4277,27 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 				,highnr
 				// GSchade Ende
 				);
-		freeChtype (chtypeLabel);
+		freeChtype(chtypeLabel);
 	}
 	/* Rejustify the x and y positions if we need to. */
-	alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+	alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
 	/* Make the file selector window. */
-	this->win = newwin (boxHeight, boxWidth, ypos, xpos);
+	this->win = newwin(boxHeight, boxWidth, ypos, xpos);
 	if (!this->win) {
 		destroyCDKObject();
 		return;
 	}
-	keypad (this->win, TRUE);
+	keypad(this->win, TRUE);
 	/* *INDENT-EQLS* Set some variables. */
-	ScreenOf (this)         = cdkscreen;
+//	ScreenOf (this)         = cdkscreen;
+	screen									= cdkscreen;
 	this->parent            = cdkscreen->window;
-	this->highlight         = highlight;
-	this->fillerChar        = fillerChar;
-	this->boxHeight         = boxHeight;
-	this->boxWidth          = boxWidth;
-	initExitType (this);
-	this->shadow            = shadow;
+//	this->highlight         = highlight;
+//	this->fillerChar        = fillerChar;
+//	this->boxHeight         = boxHeight;
+//	this->boxWidth          = boxWidth;
+	initExitType(this);
+//	this->shadow            = shadow;
 	this->shadowWin         = 0;
 	/* Do we want a shadow? */
 	if (shadow) {
@@ -4580,15 +4576,13 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 			 bool numbers,
 			 chtype highlight,
 			 bool Box,
-			 bool shadow)
+			 bool pshadow)
 {
 	cdktype=vSCROLL;
    /* *INDENT-EQLS* */
    //CDKSCROLL *scrollp           = 0;
    int parentWidth              = getmaxx (cdkscreen->window);
    int parentHeight             = getmaxy (cdkscreen->window);
-   int boxWidth;
-   int boxHeight;
    int xpos                     = xplace;
    int ypos                     = yplace;
    int scrollAdjust             = 0;
@@ -4629,7 +4623,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    if (titleLines > boxHeight)
    {
       boxHeight = (titleLines 
-		   + MINIMUM (listSize, 8)
+		   + MINIMUM(listSize, 8)
 		   + 2 * borderSize);
    }
 
@@ -4657,7 +4651,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    setViewSize(listSize);
 
    /* Rejustify the x and y positions if we need to. */
-   alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+   alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
 
    /* Make the scrolling window */
    win = newwin(boxHeight, boxWidth, ypos, xpos);
@@ -4708,7 +4702,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    initExitType (this);
    ObjOf (this)->acceptsFocus = TRUE;
    ObjOf (this)->inputWindow = win;
-   shadow              = shadow;
+   shadow              = pshadow;
    SetPosition(0);
    /* Create the scrolling list item list and needed variables. */
    if (createCDKScrollItemList(numbers, list, listSize) <= 0) {
@@ -4934,7 +4928,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 					break;
 
 				case CDK_REFRESH:
-					screen->eraseCDKScreen ();
+					screen->eraseCDKScreen();
 					screen->refreshCDKScreen();
 					break;
 
@@ -4966,6 +4960,17 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 	ResultOf(this/*widget*/).valueInt = ret;
 	return (ret != unknownInt);
 } // static int _injectCDKScroll
+
+/*
+ * This sets the background attribute of the widget.
+ */
+void CDKOBJS::setBKattrObj(/*CDKOBJS *object, */chtype attrib)
+{
+//   if (object != 0) {
+//      CDKLABEL *widget = (CDKLABEL *)object;
+//      wbkgd(this->win, attrib);
+//   }
+}
 
 /*
  * This function creates the scrolling list information and sets up the needed
@@ -5088,13 +5093,15 @@ void SScreen::destroyCDKScreenObjects()
 {
 	for (int x = 0; x < this->objectCount; x++) {
 		CDKOBJS *obj = this->object[x];
-		int before = this->objectCount;
-//		if (validObjType (obj, ObjTypeOf (obj))) {
-//			MethodPtr (obj, eraseObj) (obj);
+		if (obj) {
+			int before = this->objectCount;
+			//		if (validObjType (obj, ObjTypeOf (obj))) KLA
+			//			MethodPtr (obj, eraseObj) (obj);
 			obj->eraseObj();
 			obj->destroyCDKObject();
 			x -= (this->objectCount - before);
-//		}
+			//		KLZ
+		}
 	}
 }
 
@@ -5134,19 +5141,24 @@ void SScreen::destroyCDKScreen()
  */
 void SScreen::eraseCDKScreen()
 {
-	int objectCount = this->objectCount;
+//	int objectCount = this->objectCount;
 	/* We just call the drawObject function. */
 	for (int x = 0; x < objectCount; x++) {
 		CDKOBJS *obj = this->object[x];
-		//		if (validObjType (obj, ObjTypeOf (obj))) {
-		if (obj->validObjType(obj->cdktype)) {
-			obj->eraseObj();
+		if (obj) {
+			//		if (validObjType (obj, ObjTypeOf (obj))) KLA
+			if (obj->validObjType(obj->cdktype)) {
+				obj->eraseObj();
+			}
 		}
 	}
 	/* Refresh the screen. */
 	wrefresh (this->window);
 }
 
+void CDKOBJS::eraseObj()
+{
+}
 
 #define limitFocusIndex(screen, value) \
  	(((value) >= (screen)->objectCount || (value) < 0) \
@@ -5271,7 +5283,7 @@ SLabel::SLabel(CDKSCREEN *cdkscreen,
    boxHeight = (boxHeight > parentHeight ? parentHeight : boxHeight);
 
    /* Rejustify the x and y positions if we need to. */
-   alignxy (cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
+   alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
 
    /* *INDENT-EQLS* Create the label. */
    /*ScreenOf (label)*/screen     = cdkscreen;
@@ -5436,7 +5448,7 @@ void SLabel::eraseCDKLabel(/*CDKOBJS *object*/)
 /*
  * This moves the label field to the given location.
  */
-void SLabel::moveCDKLabel (/*CDKOBJS *object,*/
+void SLabel::moveCDKLabel(/*CDKOBJS *object,*/
 			   int xplace,
 			   int yplace,
 			   bool relative,
@@ -5461,7 +5473,7 @@ void SLabel::moveCDKLabel (/*CDKOBJS *object,*/
    }
 
    /* Adjust the window if we need to. */
-   alignxy (WindowOf (this), &xpos, &ypos, /*label->*/boxWidth, /*label->*/boxHeight);
+   alignxy(WindowOf (this), &xpos, &ypos, /*label->*/boxWidth, /*label->*/boxHeight);
 
    /* Get the difference. */
    xdiff = currentX - xpos;
@@ -5735,7 +5747,7 @@ int CDKgetDirectoryContents(const char *directory, char ***list)
 	return counter;
 }
 
-int mode2Filetype (mode_t mode)
+int mode2Filetype(mode_t mode)
 {
 	/* *INDENT-OFF* */
 	static const struct {
@@ -5768,17 +5780,13 @@ int mode2Filetype (mode_t mode)
 	return filetype;
 }
 
-char *format3String (const char *format,
-			    const char *s1,
-			    const char *s2,
-			    const char *s3)
+char *format3String (const char *format, const char *s1, const char *s2, const char *s3)
 {
 	char *result;
-
 	if ((result = (char *)malloc (strlen (format) +
 					strlen (s1) +
 					strlen (s2) +
-					strlen (s3))) != 0)
+					strlen (s3))))
 		sprintf (result, format, s1, s2, s3);
 	return result;
 }
@@ -5799,7 +5807,7 @@ int SFileSelector::setCDKFselectDirContents(/*CDKFSELECT *fselect*/)
 		return 0;
 	}
 	/* Clean out the old directory list. */
-	CDKfreeStrings (this->dirContents);
+	CDKfreeStrings(this->dirContents);
 	this->dirContents = dirList;
 	this->fileCounter = fileCount;
 	/* Set the properties of the files. */
@@ -5846,6 +5854,678 @@ int SFileSelector::setCDKFselectDirContents(/*CDKFSELECT *fselect*/)
 	}
 	return 1;
 }
+
+static char *make_pathname (const char *directory, const char *filename)
+{
+	size_t need = strlen (filename) + 2;
+	bool root = (strcmp (directory, "/") == 0);
+	char *result;
+
+	if (!root)
+		need += strlen (directory);
+	if ((result = (char *)malloc (need)) != 0) {
+		if (root)
+			sprintf (result, "/%s", filename);
+		else
+			sprintf (result, "%s/%s", directory, filename);
+	}
+	return result;
+}
+
+/*
+ * trim the 'mode' from a copy of a dirContents[] entry.
+ */
+static char *trim1Char(char *source)
+{
+   size_t len;
+   if ((len = strlen (source)) != 0)
+      source[--len] = '\0';
+   return source;
+}
+
+/*
+ * Start of callback functions.
+ */
+int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
+				  void *object GCC_UNUSED,
+				  void *clientData,
+				  chtype key)
+{
+	/* *INDENT-EQLS* */
+	CDKFSELECT *fselect  = (CDKFSELECT *)clientData;
+	CDKSCROLL *scrollp   = (CDKSCROLL *)fselect->scrollField;
+	CDKENTRY *entry      = (CDKENTRY *)fselect->entryField;
+	if (scrollp->listSize > 0) {
+		char *current;
+		char *temp;
+		/* Move the scrolling list. */
+		fselect->injectMyScroller(key);
+		/* Get the currently highlighted filename. */
+		current = chtype2Char(scrollp->item[scrollp->currentItem]);
+		trim1Char(current);
+		temp = make_pathname(fselect->pwd, current);
+		/* Set the value in the entry field. */
+		entry->setCDKEntryValue(temp);
+		entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+		freeChecked(current);
+		freeChecked(temp);
+		return (TRUE);
+	}
+	Beep ();
+	return (FALSE);
+}
+
+/*
+ * Returns the directory for the given pathname, i.e., the part before the
+ * last slash.
+ */
+char *dirName(char *pathname)
+{
+	char *dir = 0;
+	size_t pathLen;
+
+	/* Check if the string is null.  */
+	if (pathname != 0
+			&& (dir = copyChar (pathname)) != 0
+			&& (pathLen = strlen (pathname)) != 0)
+	{
+		size_t x = pathLen;
+		while ((dir[x] != '/') && (x > 0))
+		{
+			dir[x--] = '\0';
+		}
+	}
+
+	return dir;
+}
+
+/*
+ * This takes a ~ type account name and returns the full pathname.
+ */
+static char *expandTilde (const char *filename)
+{
+   char *result = 0;
+   char *account;
+   char *pathname;
+   int len;
+
+   /* Make sure the filename is not null/empty, and begins with a tilde */
+   if ((filename != 0) &&
+       (len = (int)strlen (filename)) != 0 &&
+       filename[0] == '~' &&
+       (account = copyChar (filename)) != 0 &&
+       (pathname = copyChar (filename)) != 0)
+   {
+      bool slash = FALSE;
+      const char *home;
+      int x;
+      int len_a = 0;
+      int len_p = 0;
+      struct passwd *accountInfo;
+
+      /* Find the account name in the filename. */
+      for (x = 1; x < len; x++)
+      {
+	 if (filename[x] == '/' && !slash)
+	 {
+	    slash = TRUE;
+	 }
+	 else if (slash)
+	 {
+	    pathname[len_p++] = filename[x];
+	 }
+	 else
+	 {
+	    account[len_a++] = filename[x];
+	 }
+      }
+      account[len_a] = '\0';
+      pathname[len_p] = '\0';
+
+      home = 0;
+#ifdef HAVE_PWD_H
+      if (strlen (account) != 0 &&
+	  (accountInfo = getpwnam (account)) != 0)
+      {
+	 home = accountInfo->pw_dir;
+      }
+#endif
+      if (home == 0 || *home == '\0')
+	 home = getenv ("HOME");
+      if (home == 0 || *home == '\0')
+	 home = "/";
+
+      /*
+       * Construct the full pathname. We do this because someone
+       * may have a pathname at the end of the account name
+       * and we want to keep it.
+       */
+      result = make_pathname (home, pathname);
+
+      freeChecked(account);
+      freeChecked(pathname);
+   }
+   return result;
+}
+
+static char *format1String (const char *format, const char *string)
+{
+   char *result;
+   if ((result = (char *)malloc (strlen (format) + strlen (string))) != 0)
+      sprintf (result, format, string);
+   return result;
+}
+
+static char *errorMessage (const char *format)
+{
+   char *message;
+#ifdef HAVE_STRERROR
+   message = strerror (errno);
+#else
+   message = "Unknown reason.";
+#endif
+   return format1String (format, message);
+}
+
+static char *format1StrVal (const char *format, const char *string, int value)
+{
+   char *result;
+   if ((result = (char *)malloc (strlen (format) + strlen (string) + 20)) != 0)
+      sprintf (result, format, string, value);
+   return result;
+}
+
+static char *format1Number (const char *format, long value)
+{
+   char *result;
+   if ((result = (char *)malloc (strlen (format) + 20)) != 0)
+      sprintf (result, format, value);
+   return result;
+}
+
+static char *format1Date (const char *format, time_t value)
+{
+   char *result;
+   char *temp = ctime(&value);
+   if ((result = (char *)malloc (strlen (format) + strlen (temp) + 1)) != 0) {
+      sprintf (result, format, trim1Char (temp));
+   }
+   return result;
+}
+
+
+
+/*
+ * Corresponding list freeing (does not free the list pointer).
+ */
+void freeCharList (char **list, unsigned size)
+{
+	if (list != 0) {
+		while (size-- != 0) {
+			freeChecked(list[size]);
+			list[size] = 0;
+		}
+	}
+}
+
+/*
+ * This erases the file selector from the screen.
+ */
+void SFileSelector::eraseCDKFselect(/*CDKOBJS *object*/)
+{
+	//   if (validCDKObject (object)) {
+	//      CDKFSELECT *fselect = (CDKFSELECT *)object;
+	scrollField->eraseCDKScroll(/*fselect->scrollField*/);
+	entryField->eraseCDKEntry(/*fselect->entryField*/);
+	eraseCursesWindow(/*fselect->*/win);
+	//   }
+}
+
+/*
+ * This function sets the information inside the file selector.
+ */
+void SFileSelector::setCDKFselect(/*CDKFSELECT *fselect,*/
+		    const char *directory,
+		    chtype fieldAttrib,
+		    chtype pfiller,
+		    chtype phighlight,
+		    const char *dirAttribute,
+		    const char *fileAttribute,
+		    const char *linkAttribute,
+		    const char *sockAttribute,
+		    bool Box GCC_UNUSED)
+{
+	/* *INDENT-EQLS* */
+	CDKSCROLL *fscroll   = this->scrollField;
+	CDKENTRY *fentry     = this->entryField;
+	char *tempDir        = 0;
+	/* Keep the info sent to us. */
+	this->fieldAttribute = fieldAttrib;
+	this->fillerCharacter = pfiller;
+	this->highlight = phighlight;
+	/* Set the attributes of the entry field/scrolling list. */
+	//   setCDKEntryFillerChar(fentry, filler);
+	fentry->filler=pfiller;
+	//   setCDKScrollHighlight(fscroll, phighlight);
+	fscroll->highlight=phighlight;
+
+	/* Only do the directory stuff if the directory is not null. */
+	if (directory != 0) {
+		char *newDirectory;
+
+		/* Try to expand the directory if it starts with a ~ */
+		if ((tempDir = expandTilde (directory)) != 0) {
+			newDirectory = tempDir;
+		} else {
+			newDirectory = copyChar (directory);
+		}
+
+		/* Change directories. */
+		if (chdir (newDirectory) != 0) {
+			char *mesg[10];
+
+			Beep ();
+
+			/* Could not get into the directory, pop up a little message. */
+			mesg[0] = format1String ("<C>Could not change into %s", newDirectory);
+			mesg[1] = errorMessage ("<C></U>%s");
+			mesg[2] = copyChar (" ");
+			mesg[3] = copyChar ("<C>Press Any Key To Continue.");
+
+			/* Pop Up a message. */
+			screen->popupLabel(/*ScreenOf (this), */(CDK_CSTRING2)mesg, 4);
+
+			/* Clean up some memory. */
+			freeCharList (mesg, 4);
+
+			/* Get out of here. */
+			eraseCDKFselect(/*this*/);
+			drawCDKFselect (/*this, ObjOf (this)->*/box);
+			freeChecked(newDirectory);
+			return;
+		}
+		freeChecked(newDirectory);
+	}
+
+	/*
+	 * If the information coming in is the same as the information
+	 * that is already there, there is no need to destroy it.
+	 */
+	if (this->pwd != directory)
+	{
+		setPWD(/*this*/);
+	}
+	if (this->fileAttribute != fileAttribute)
+	{
+		/* Remove the old pointer and set the new value. */
+		freeChecked(this->fileAttribute);
+		this->fileAttribute = copyChar (fileAttribute);
+	}
+	if (this->dirAttribute != dirAttribute)
+	{
+		/* Remove the old pointer and set the new value. */
+		freeChecked(this->dirAttribute);
+		this->dirAttribute = copyChar (dirAttribute);
+	}
+	if (this->linkAttribute != linkAttribute)
+	{
+		/* Remove the old pointer and set the new value. */
+		freeChecked(this->linkAttribute);
+		this->linkAttribute = copyChar (linkAttribute);
+	}
+	if (this->sockAttribute != sockAttribute)
+	{
+		/* Remove the old pointer and set the new value. */
+		freeChecked(this->sockAttribute);
+		this->sockAttribute = copyChar (sockAttribute);
+	}
+
+	/* Set the contents of the entry field. */
+	fentry->setCDKEntryValue(/*fentry, */this->pwd);
+	fentry->drawCDKEntry(/*fentry, ObjOf (fentry)->*/box);
+
+	/* Get the directory contents. */
+	if (setCDKFselectDirContents(/*this*/) == 0) {
+		Beep ();
+		return;
+	}
+
+	/* Set the values in the scrolling list. */
+	fscroll->setCDKScrollItems (/*fscroll,*/
+			(CDK_CSTRING2)this->dirContents,
+			this->fileCounter,
+			FALSE);
+}
+
+/*
+ * Return the plain string that corresponds to an item in dirContents[].
+ */
+char *SFileSelector::contentToPath(/*CDKFSELECT *fselect, */char *content)
+{
+   chtype *tempChtype;
+   char *tempChar;
+   char *result;
+   int j, j2;
+
+   tempChtype = char2Chtypeh (content, &j, &j2);
+   tempChar = chtype2Char (tempChtype);
+   trim1Char (tempChar);	/* trim the 'mode' stored on the end */
+
+   /* Create the pathname. */
+   result = make_pathname (this->pwd, tempChar);
+
+   /* Clean up. */
+   freeChtype (tempChtype);
+   freeChecked(tempChar);
+   return result;
+}
+
+
+/*
+ * This tries to complete the filename.
+ */
+static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
+			       void *object GCC_UNUSED,
+			       void *clientData,
+			       chtype key GCC_UNUSED)
+{
+	/* *INDENT-EQLS* */
+	CDKFSELECT *fselect  = (CDKFSELECT *)clientData;
+	CDKSCROLL *scrollp   = fselect->scrollField;
+	CDKENTRY *entry      = fselect->entryField;
+	char *filename       = copyChar (entry->info);
+	char *mydirname      = dirName (filename);
+	char *newFilename    = 0;
+	size_t filenameLen   = 0;
+	int isDirectory;
+	char **list;
+
+	/* Make sure the filename is not null/empty. */
+	if (filename == 0 || !(filenameLen = strlen (filename))) {
+		Beep ();
+		freeChecked(filename);
+		freeChecked(mydirname);
+		return (TRUE);
+	}
+
+	/* Try to expand the filename if it starts with a ~ */
+	if ((newFilename = expandTilde (filename)) != 0) {
+		freeChecked(filename);
+		filename = newFilename;
+		entry->setCDKEntryValue(filename);
+		entry->drawCDKEntry(box);
+	}
+
+	/* Make sure we can change into the directory. */
+	isDirectory = chdir (filename);
+	if (chdir (fselect->pwd) != 0) {
+		freeChecked(filename);
+		freeChecked(mydirname);
+		return FALSE;
+	}
+
+	fselect->setCDKFselect (/*fselect,*/
+			isDirectory ? mydirname : filename,
+			fselect->fieldAttribute,
+			fselect->fillerCharacter,
+			fselect->highlight,
+			fselect->dirAttribute,
+			fselect->fileAttribute,
+			fselect->linkAttribute,
+			fselect->sockAttribute,
+			ObjOf (fselect)->box);
+	freeChecked(mydirname);
+
+	/* If we can, change into the directory. */
+	if (isDirectory) {
+		/*
+		 * Set the entry field with the filename so the current
+		 * filename selection shows up.
+		 */
+		entry->setCDKEntryValue(/*entry, */filename);
+		entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+	}
+
+	/* Create the file list. */
+	if ((list = typeMallocN (char *, fselect->fileCounter)) != 0) {
+		int Index, x;
+		for (x = 0; x < fselect->fileCounter; x++) {
+			list[x] = fselect->contentToPath (/*fselect, */fselect->dirContents[x]);
+		}
+
+		/* Look for a unique filename match. */
+		Index = searchList ((CDK_CSTRING2)list, fselect->fileCounter, filename);
+		/* If the index is less than zero, return we didn't find a match. */
+		if (Index < 0) {
+			Beep ();
+		} else {
+			/* Move to the current item in the scrolling list. */
+			int difference = Index - scrollp->currentItem;
+			int absoluteDifference = abs (difference);
+			if (difference < 0) {
+				for (x = 0; x < absoluteDifference; x++) {
+					fselect->injectMyScroller(/*fselect, */KEY_UP);
+				}
+			} else if (difference > 0) {
+				for (x = 0; x < absoluteDifference; x++) {
+					fselect->injectMyScroller(/*fselect, */KEY_DOWN);
+				}
+			}
+			fselect->drawMyScroller(/*fselect*/);
+
+			/* Ok, we found a match, is the next item similar? */
+			if (Index + 1 < fselect->fileCounter &&
+					0 != list[Index + 1] &&
+					0 == strncmp (list[Index + 1], filename, filenameLen)) {
+				int currentIndex = Index;
+				int baseChars = (int)filenameLen;
+				int matches = 0;
+
+				/* Determine the number of files which match. */
+				while (currentIndex < fselect->fileCounter) {
+					if (list[currentIndex] != 0) {
+						if (strncmp (list[currentIndex], filename, filenameLen) == 0) {
+							matches++;
+						}
+					}
+					currentIndex++;
+				}
+				/* Start looking for the common base characters. */
+				for (;;) {
+					int secondaryMatches = 0;
+					for (x = Index; x < Index + matches; x++) {
+						if (list[Index][baseChars] == list[x][baseChars]) {
+							secondaryMatches++;
+						}
+					}
+					if (secondaryMatches != matches) {
+						Beep ();
+						break;
+					}
+					/* Inject the character into the entry field. */
+					fselect->entryField->injectCDKEntry(/*fselect->entryField,*/ (chtype)list[Index][baseChars]);
+					baseChars++;
+				}
+			} else {
+				/* Set the entry field with the found item. */
+				entry->setCDKEntryValue(/*entry, */list[Index]);
+				entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+			}
+		}
+		freeCharList(list, (unsigned)fselect->fileCounter);
+		free(list);
+	}
+	freeChecked(filename);
+	return(TRUE);
+}
+
+/*
+ * This function takes a mode_t type and creates a string represntation
+ * of the permission mode.
+ */
+int mode2Char (char *string, mode_t mode)
+{
+	/* *INDENT-OFF* */
+	static struct {
+		mode_t	mask;
+		unsigned	col;
+		char	flag;
+	} table[] = {
+		{ S_IRUSR,	1,	'r' },
+		{ S_IWUSR,	2,	'w' },
+		{ S_IXUSR,	3,	'x' },
+#if defined (S_IRGRP) && defined (S_IWGRP) && defined (S_IXGRP)
+		{ S_IRGRP,	4,	'r' },
+		{ S_IWGRP,	5,	'w' },
+		{ S_IXGRP,	6,	'x' },
+#endif
+#if defined (S_IROTH) && defined (S_IWOTH) && defined (S_IXOTH)
+		{ S_IROTH,	7,	'r' },
+		{ S_IWOTH,	8,	'w' },
+		{ S_IXOTH,	9,	'x' },
+#endif
+#ifdef S_ISUID
+		{ S_ISUID,	3,	's' },
+#endif
+#ifdef S_ISGID
+		{ S_ISGID,	6,	's' },
+#endif
+#ifdef S_ISVTX
+		{ S_ISVTX,	9,	't' },
+#endif
+	};
+	/* *INDENT-ON* */
+
+	/* Declare local variables.  */
+	int permissions = 0;
+	int filetype = mode2Filetype (mode);
+	unsigned n;
+
+	/* Clean the string.  */
+	cleanChar (string, 11, '-');
+	string[11] = '\0';
+
+	if (filetype == '?')
+		return -1;
+
+	for (n = 0; n < sizeof (table) / sizeof (table[0]); n++)
+	{
+		if ((mode & table[n].mask) != 0)
+		{
+			string[table[n].col] = table[n].flag;
+			permissions |= (int)table[n].mask;
+		}
+	}
+
+	/* Check for unusual permissions.  */
+#ifdef S_ISUID
+	if (((mode & S_IXUSR) == 0) &&
+			((mode & S_IXGRP) == 0) &&
+			((mode & S_IXOTH) == 0) &&
+			(mode & S_ISUID) != 0)
+	{
+		string[3] = 'S';
+	}
+#endif
+
+	return permissions;
+}
+
+/*
+ * This is a callback to the scrolling list which displays information
+ * about the current file. (and the whole directory as well)
+ */
+static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
+			      void *object,
+			      void *clientData,
+			      chtype key GCC_UNUSED)
+{
+	CDKENTRY *entry = (CDKENTRY *)object;
+	CDKFSELECT *fselect = (CDKFSELECT *)clientData;
+	CDKLABEL *infoLabel;
+	struct stat fileStat;
+#ifdef HAVE_PWD_H
+	struct passwd *pwEnt;
+	struct group *grEnt;
+#endif
+	char *filename;
+	const char *filetype;
+	char *mesg[10];
+	char stringMode[15];
+	int intMode;
+	bool functionKey;
+	filename = fselect->entryField->info;
+	if (lstat (filename, &fileStat) == 0) {
+		switch (mode2Filetype (fileStat.st_mode)) {
+			case 'l':
+				filetype = "Symbolic Link";
+				break;
+			case '@':
+				filetype = "Socket";
+				break;
+			case '-':
+				filetype = "Regular File";
+				break;
+			case 'd':
+				filetype = "Directory";
+				break;
+			case 'c':
+				filetype = "Character Device";
+				break;
+			case 'b':
+				filetype = "Block Device";
+				break;
+			case '&':
+				filetype = "FIFO Device";
+				break;
+			default:
+				filetype = "Unknown";
+				break;
+		}
+	} else {
+		filetype = "Unknown";
+	}
+	/* Get the user name and group name. */
+#ifdef HAVE_PWD_H
+	pwEnt = getpwuid (fileStat.st_uid);
+	grEnt = getgrgid (fileStat.st_gid);
+#endif
+	/* Convert the mode_t type to both string and int. */
+	intMode = mode2Char(stringMode, fileStat.st_mode);
+	/* Create the message. */
+	mesg[0] = format1String ("Directory  : </U>%s", fselect->pwd);
+	mesg[1] = format1String ("Filename   : </U>%s", filename);
+#ifdef HAVE_PWD_H
+	mesg[2] = format1StrVal ("Owner      : </U>%s<!U> (%d)",
+			pwEnt->pw_name,
+			(int)fileStat.st_uid);
+	mesg[3] = format1StrVal ("Group      : </U>%s<!U> (%d)",
+			grEnt->gr_name,
+			(int)fileStat.st_gid);
+#else
+	mesg[2] = format1Number ("Owner      : (%ld)", (long)fileStat.st_uid);
+	mesg[3] = format1Number ("Group      : (%ld)", (long)fileStat.st_gid);
+#endif
+	mesg[4] = format1StrVal ("Permissions: </U>%s<!U> (%o)", stringMode, intMode);
+	mesg[5] = format1Number ("Size       : </U>%ld<!U> bytes", (long)fileStat.st_size);
+	mesg[6] = format1Date ("Last Access: </U>%s", fileStat.st_atime);
+	mesg[7] = format1Date ("Last Change: </U>%s", fileStat.st_ctime);
+	mesg[8] = format1String ("File Type  : </U>%s", filetype);
+	/* Create the pop up label. */
+	infoLabel = new SLabel(entry->/*obj.*/screen,
+			CENTER, CENTER,
+			(CDK_CSTRING2)mesg, 9,
+			TRUE, FALSE);
+	infoLabel->drawCDKLabel(/*infoLabel, */TRUE);
+	infoLabel->getchCDKObject(/*ObjOf (infoLabel), */&functionKey);
+	/* Clean up some memory. */
+	infoLabel->destroyCDKLabel (/*infoLabel*/);
+	freeCharList (mesg, 9);
+	/* Redraw the file selector. */
+	fselect->drawCDKFselect(/*fselect, ObjOf (fselect)->*/box);
+	return (TRUE);
+}
+
 
 /*
  * This creates a file selection widget.
@@ -5984,46 +6664,46 @@ SFileSelector::SFileSelector(
    //setCDKEntryLRChar (this->entryField, ACS_RTEE);
 
    /* Define the callbacks for the entry field. */
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField,*/
 		  KEY_UP,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField,*/
 		  KEY_PPAGE,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField,*/
 		  KEY_DOWN,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField, */
 		  KEY_NPAGE,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField,*/
 		  KEY_TAB,
 		  completeFilenameCB,
 		  this);
-   bindCDKObject (vENTRY,
-		  this->entryField,
+   bindCDKObject(/*vENTRY,
+		  this->entryField,*/
 		  CTRL ('^'),
 		  displayFileInfoCB,
 		  this);
 
    /* Put the current working directory in the entry field. */
-   setCDKEntryValue (this->entryField, this->pwd);
+   entryField->setCDKEntryValue (/*this->entryField, */this->pwd);
 
    /* Create the scrolling list in the selector. */
    tempHeight = getmaxy (this->entryField->win) - BorderOf (this);
    tempWidth = (isFullWidth (width)
 		? FULL
 		: boxWidth - 1);
-   this->scrollField = newCDKScroll (cdkscreen,
+   this->scrollField = new SScroll (cdkscreen,
 					getbegx (this->win),
 					getbegy (this->win) + tempHeight,
 					RIGHT,
@@ -6036,24 +6716,25 @@ SFileSelector::SFileSelector(
 					Box, FALSE);
 
    /* Set the lower left/right characters of the entry field. */
-   setCDKScrollULChar (this->scrollField, ACS_LTEE);
-   setCDKScrollURChar (this->scrollField, ACS_RTEE);
+//   scrollField->setCDKScrollULChar (/*this->scrollField, */ACS_LTEE);
+   ULChar=ACS_LTEE;
+//   scrollField->setCDKScrollURChar (/*this->scrollField, */ACS_RTEE);
+	 URChar=ACS_RTEE;
 
    /* Do we want a shadow? */
-   if (shadow)
-   {
+   if (shadow) {
       this->shadowWin = newwin (boxHeight, boxWidth, ypos + 1, xpos + 1);
    }
 
    /* Setup the key bindings. */
    for (x = 0; x < (int)SIZEOF (bindings); ++x)
-      bindCDKObject (vFSELECT,
-		     this,
+      bindCDKObject(/*vFSELECT,
+		     this, */
 		     (chtype)bindings[x].from,
 		     getcCDKBind,
 		     (void *)(long)bindings[x].to);
 
-   registerCDKObject (cdkscreen, vFSELECT, this);
+   registerCDKObject (cdkscreen, vFSELECT/*, this*/);
 
 //   return (this);
 }

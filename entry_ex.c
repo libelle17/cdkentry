@@ -201,14 +201,14 @@ static int do_undo (CB_PARAMS)
 struct hotkst {
 	const char *label;
 	int highnr;
+	u_char obalph;
 	int highinr; // fuer jeden vorausgehenden Umlaut usw. 2 Buchstaben rechnen
 	int buch;
-	u_char obalph;
 	CDKENTRY *eingabef;
 } hk[]={
 	//		 /*
-	{"</R/U/6>Directory:<!R!6!U> ",4},
-	{"</R/U/6>Däteis:<!R!6!U> ",2},
+	{"</R/U/6>Directory:<!R!6!U> ",4,1},
+	{"</R/U/6>Däteis:<!R!6!U> ",2,1},
 	{"</R/U/6>Datei:<!R!6>",3},
 	{"</R/U/6>Döüßatei:<!R!6>",4},
 	{"</R/U/6>Ordner:<!R!6>",4},
@@ -349,7 +349,7 @@ int main (int argc, char **argv)
 				newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
 		} else {
 			hk[aktent].eingabef=newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
-			bindCDKObject (vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
+			bindCDKObject(vENTRY, hk[aktent].eingabef, '?', XXXCB, 0);
 		}
 		/* Is the widget null? */
 		if (!hk[aktent].eingabef) {
