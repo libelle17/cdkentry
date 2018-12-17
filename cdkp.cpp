@@ -471,7 +471,7 @@ char **CDKsplitString(const char *string, int separator)
 	if (string != 0 && *string != 0) {
 		unsigned need = countChar(string, separator) + 2;
 		if ((result = typeMallocN(char *, need)) != 0) {
-			unsigned item = 0;
+			unsigned nr = 0;
 			const char *first = string;
 			for (;;) {
 				while (*string != 0 && *string != separator)
@@ -483,13 +483,13 @@ char **CDKsplitString(const char *string, int separator)
 
 				memcpy(temp, first, need);
 				temp[need] = 0;
-				result[item++] = temp;
+				result[nr++] = temp;
 
 				if (*string++ == 0)
 					break;
 				first = string;
 			}
-			result[item] = 0;
+			result[nr] = 0;
 		}
 	}
 	return result;
@@ -2025,8 +2025,8 @@ void SScroll::insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item)
    char *temp = 0;
    size_t have = 0;
    if (allocListArrays (/*scrollp, *//*scrollp->*/listSize, /*scrollp->*/listSize + 1) &&
-       insertListItem (/*scrollp, *//*scrollp->*/currentItem) &&
-       allocListItem (/*scrollp,*/
+       insertListItem(/*scrollp, *//*scrollp->*/currentItem) &&
+       allocListItem(/*scrollp,*/
 		      /*scrollp->*/currentItem,
 		      &temp,
 		      &have,
@@ -2231,7 +2231,8 @@ void SScroll::moveCDKScroll(
    refreshCDKWindow(WindowOf (this));
    /* Redraw the window, if they asked for it. */
    if (refresh_flag) {
-      drawCDKScroll(box);
+		 // hier entstehen keine Fehler
+      drawCDKScroll(box,1);
    }
 }
 
@@ -2333,21 +2334,19 @@ void SAlphalist::setCDKAlphalistPostProcess(
 /*
  * This function draws the scrolling list widget.
  */
-void SScroll::drawCDKScroll(bool Box)
+void SScroll::drawCDKScroll(bool Box,bool obmit)
 {
 //   CDKSCROLL *scrollp = (CDKSCROLL *)object;
-
    /* Draw in the shadow if we need to. */
    if (this->shadowWin)
       drawShadow(this->shadowWin);
-
    drawCdkTitle(this->win);
-
    /* Draw in the scolling list items. */
 	 // Kommentar GSchade 0 11.11.18
 	 // GSchade: auskommentieren und dann noch vor dem Wechsel zu anderem alle übrigen zeichnen
-	 if (akteinbart==einb_alphalist)
-		 drawCDKScrollList(Box);
+	 if (akteinbart==einb_alphalist &&obmit) {
+		 drawCDKScrollList(Box); wrefresh(parent); // gleichbedeutend: wrefresh(obj.screen->window);
+	 }
 }
 
 
@@ -2867,7 +2866,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	}
 
 	oldWidth = boxWidth;
-	boxWidth = setCdkTitle (title, boxWidth);
+	boxWidth = setCdkTitle(title, boxWidth);
 	horizontalAdjust = (boxWidth - oldWidth) / 2;
 
 	boxHeight += TitleLinesOf(this);
@@ -4389,7 +4388,8 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
 {
    SaveFocus(this);
-   scrollField->drawCDKScroll(box);
+	 // hier entstehen Fehler oben
+   scrollField->drawCDKScroll(box,0);
    RestoreFocus(this);
 }
 
@@ -4731,7 +4731,8 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 int SScroll::activateCDKScroll(chtype *actions)
 {
 	/* Draw the scrolling list */
-	this->drawCDKScroll(box);
+	// hier entstehen keine Fehler
+	this->drawCDKScroll(box,1);
 	if (!actions) {
 		chtype input;
 		bool functionKey;
@@ -4769,7 +4770,6 @@ void SScroll::drawCDKScrollCurrent()
 		 /*A_NORMAL*/
 		 // Ende G.Schade 2.10.18
 		 ;
-
    writeChtypeAttrib(this->listWin,
 		      (screenPos >= 0) ? screenPos : 0,
 		      this->currentHigh,
@@ -4790,19 +4790,17 @@ void SScroll::drawCDKScrollList(bool Box)
 {
 	/* If the list is empty, don't draw anything. */
 	if (this->listSize > 0) {
-		int j;
 		/* Redraw the list */
-		for (j = 0; j < this->viewSize; j++) {
-			int k;
+		for (int j = 0; j < this->viewSize; j++) {
 			int xpos = SCREEN_YPOS (this, 0);
 			int ypos = SCREEN_YPOS (this, j);
-			writeBlanks(this->listWin, xpos, ypos,
-					HORIZONTAL, 0, this->boxWidth - 2 * BorderOf (this));
-			k = j + this->currentTop;
+			writeBlanks(this->listWin, xpos, ypos, HORIZONTAL, 0, this->boxWidth - 2 * BorderOf (this));
+			int k = j + this->currentTop;
 			/* Draw the elements in the scroll list. */
 			if (k < this->listSize) {
 				int screenPos = SCREENPOS(this, k);
 				/* Write in the correct line. */
+				// zeichnet alle, ohne das Aktuelle zu markieren
 				writeChtype (this->listWin,
 						(screenPos >= 0) ? screenPos : 1,
 						ypos,
@@ -4812,7 +4810,8 @@ void SScroll::drawCDKScrollList(bool Box)
 						this->itemLen[k]);
 			}
 		}
-		this->drawCDKScrollCurrent();
+		// zeichnet nur das Markierte
+		this->drawCDKScrollCurrent(); wrefresh (this->win);
 		/* Determine where the toggle is supposed to be. */
 		if (this->scrollbarWin) {
 			this->togglePos = floorCDK(this->currentItem * (double)this->step);
@@ -4834,7 +4833,7 @@ void SScroll::drawCDKScrollList(bool Box)
 	if (Box) {
 		drawObjBox(win);
 	} else {
-		touchwin (this->win);
+		touchwin(this->win);
 	}
 	wrefresh (this->win);
 } // static void drawCDKScrollList
@@ -5034,9 +5033,9 @@ bool SScroll::allocListArrays(int oldSize, int newSize)
 			newLen[n] = this->itemLen[n];
 			newPos[n] = this->itemPos[n];
 		}
-		freeChecked (this->item);
-		freeChecked (this->itemPos);
-		freeChecked (this->itemLen);
+		freeChecked(this->item);
+		freeChecked(this->itemPos);
+		freeChecked(this->itemLen);
 		this->item = newList;
 		this->itemLen = newLen;
 		this->itemPos = newPos;
@@ -5069,7 +5068,7 @@ bool SScroll::allocListItem(
 					return FALSE;
 			}
 		}
-		sprintf (*work, NUMBER_FMT, number, value);
+		sprintf(*work, NUMBER_FMT, number, value);
 		value = *work;
 	}
 	if ((this->item[which] = char2Chtypeh(value,
@@ -5619,7 +5618,8 @@ void SEntry::drawObj(bool box)
 }
 void SScroll::drawObj(bool box)
 {
-	drawCDKScroll(box);
+	// mit 1 entstehen hier Fehler nur unten, nicht oben
+	drawCDKScroll(box,0);
 }
 void SFileSelector::drawObj(bool box)
 {
@@ -5784,7 +5784,7 @@ char *format3String (const char *format, const char *s1, const char *s2, const c
 					strlen (s1) +
 					strlen (s2) +
 					strlen (s3))))
-		sprintf (result, format, s1, s2, s3);
+		sprintf(result, format, s1, s2, s3);
 	return result;
 }
 
@@ -5862,9 +5862,9 @@ static char *make_pathname (const char *directory, const char *filename)
 		need += strlen (directory);
 	if ((result = (char *)malloc (need)) != 0) {
 		if (root)
-			sprintf (result, "/%s", filename);
+			sprintf(result, "/%s", filename);
 		else
-			sprintf (result, "%s/%s", directory, filename);
+			sprintf(result, "%s/%s", directory, filename);
 	}
 	return result;
 }
@@ -6009,11 +6009,11 @@ static char *format1String (const char *format, const char *string)
 {
    char *result;
    if ((result = (char *)malloc (strlen (format) + strlen (string))) != 0)
-      sprintf (result, format, string);
+      sprintf(result, format, string);
    return result;
 }
 
-static char *errorMessage (const char *format)
+static char *errorMessage(const char *format)
 {
    char *message;
 #ifdef HAVE_STRERROR
@@ -6021,31 +6021,31 @@ static char *errorMessage (const char *format)
 #else
    message = "Unknown reason.";
 #endif
-   return format1String (format, message);
+   return format1String(format, message);
 }
 
-static char *format1StrVal (const char *format, const char *string, int value)
+static char *format1StrVal(const char *format, const char *string, int value)
 {
    char *result;
    if ((result = (char *)malloc (strlen (format) + strlen (string) + 20)) != 0)
-      sprintf (result, format, string, value);
+      sprintf(result, format, string, value);
    return result;
 }
 
-static char *format1Number (const char *format, long value)
+static char *format1Number(const char *format, long value)
 {
    char *result;
    if ((result = (char *)malloc (strlen (format) + 20)) != 0)
-      sprintf (result, format, value);
+      sprintf(result, format, value);
    return result;
 }
 
-static char *format1Date (const char *format, time_t value)
+static char *format1Date(const char *format, time_t value)
 {
    char *result;
    char *temp = ctime(&value);
    if ((result = (char *)malloc (strlen (format) + strlen (temp) + 1)) != 0) {
-      sprintf (result, format, trim1Char (temp));
+      sprintf(result, format, trim1Char (temp));
    }
    return result;
 }

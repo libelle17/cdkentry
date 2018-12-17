@@ -612,10 +612,10 @@ struct CDKOBJS
    unsigned     bindingCount;
    CDKBINDING * bindingList;
    /* title-drawing */
-   chtype **	title;
-   int *	titlePos;
-   int *	titleLen;
-   int		titleLines;
+   chtype **	title=0;
+   int *	titlePos=0;
+   int *	titleLen=0;
+   int		titleLines=0;
    /* line-drawing (see 'box') */
    chtype       ULChar;		/* lines: upper-left */
    chtype       URChar;		/* lines: upper-right */
@@ -675,7 +675,7 @@ struct CDKOBJS
 	 ~CDKOBJS();
 	 void unregisterCDKObject(EObjectType cdktype/*, void *object*/);
 	 void destroyCDKObject(/*CDKOBJS *obj*/);
-	 int setCdkTitle (/*CDKOBJS *obj, */const char *title, int boxWidth);
+	 int setCdkTitle(/*CDKOBJS *obj, */const char *title, int boxWidth);
 	 void drawCdkTitle(WINDOW *);
 	 void cleanCdkTitle();
 	 bool validObjType(EObjectType type);
@@ -787,9 +787,9 @@ struct SScroll_basis:public CDKOBJS
 	WINDOW * scrollbarWin; 
 	WINDOW * shadowWin; 
 	int      titleAdj;   /* unused */ 
-	chtype **    item; 
-	int *    itemLen; 
-	int *    itemPos; 
+	chtype **    item=0; 
+	int *    itemLen=0; 
+	int *    itemPos=0; 
 
 	int      currentTop; 
 	int      currentItem; 
@@ -869,7 +869,7 @@ struct SScroll:SScroll_basis
 	void drawCDKScrollList(bool Box);
 	int activateCDKScroll(chtype *actions);
 	void setCDKScrollPosition(int item);
-	void drawCDKScroll(bool Box);
+	void drawCDKScroll(bool Box,bool obmit=0);
 	 void drawObj(bool Box);
 	 void drawCDKScrollCurrent();
 	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
