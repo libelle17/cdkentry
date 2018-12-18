@@ -1158,6 +1158,8 @@ void moveCursesWindow(WINDOW *window, int xdiff, int ydiff)
 		int xpos, ypos;
 		getbegyx(window, ypos, xpos);
 		(void)setbegyx(window,(short)ypos,(short)xpos);
+		window->_begy=ypos;
+		window->_begx=xpos;
 		xpos += xdiff;
 		ypos += ydiff;
 		werase(window);

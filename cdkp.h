@@ -1,3 +1,5 @@
+#define NCURSES_INTERNALS
+
 #ifdef HAVE_XCURSES
 #include <xcurses.h>
 #ifndef mvwhline
@@ -15,6 +17,7 @@
 #else
 #include <curses.h>
 #endif
+
 //#include "cdk_test.h"
 #ifndef CDKINCLUDES
 #ifndef CDK_TEST_H
@@ -639,7 +642,7 @@ struct CDKOBJS
 	 virtual void focusObj(){};
 	 virtual void unfocusObj(){};
 	 virtual void setFocus();
-	 virtual int injectObj(chtype){};
+	 virtual int injectObj(chtype){return 0;};
 	 /*
 	 virtual void moveObj(int,int,bool,bool);
 	 virtual void saveDataObj();
@@ -989,7 +992,7 @@ struct SAlphalist:CDKOBJS
    WINDOW*	shadowWin;
    CDKENTRY*	entryField;
    CDKSCROLL*	scrollField;
-   char **	list;
+   char **	list=0;
    int		listSize;
    int		xpos;
    int		ypos;
