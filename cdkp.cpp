@@ -4389,7 +4389,7 @@ void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
 {
    SaveFocus(this);
 	 // hier entstehen Fehler oben
-   scrollField->drawCDKScroll(box,0);
+   scrollField->drawCDKScroll(box,1);
    RestoreFocus(this);
 }
 
@@ -4802,7 +4802,7 @@ void SScroll::drawCDKScrollList(bool Box)
 				/* Write in the correct line. */
 				// zeichnet alle, ohne das Aktuelle zu markieren
 				writeChtype (this->listWin,
-						(screenPos >= 0) ? screenPos : 1,
+						((screenPos >= 0) ? screenPos : 1)+30,
 						ypos,
 						this->item[k],
 						HORIZONTAL,
