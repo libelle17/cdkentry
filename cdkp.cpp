@@ -4389,7 +4389,7 @@ void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
 {
    SaveFocus(this);
 	 // hier entstehen Fehler oben
-   scrollField->drawCDKScroll(box,1);
+   scrollField->drawCDKScroll(box,0);
    RestoreFocus(this);
 }
 
