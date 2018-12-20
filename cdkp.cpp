@@ -4390,8 +4390,8 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
 {
    SaveFocus(this);
-	 // hier entstehen Fehler oben
-   scrollField->drawCDKScroll(box,0);
+	// mit 1 entstehen hier Fehler nicht unten, nur oben
+   scrollField->drawCDKScroll(box,1);
    RestoreFocus(this);
 }
 
@@ -5621,7 +5621,7 @@ void SEntry::drawObj(bool box)
 void SScroll::drawObj(bool box)
 {
 	// mit 1 entstehen hier Fehler nur unten, nicht oben
-	drawCDKScroll(box,0);
+	drawCDKScroll(box,1);
 }
 void SFileSelector::drawObj(bool box)
 {
