@@ -1,5 +1,6 @@
 /* $Id: entry_ex.c,v 1.17 2016/12/04 15:22:16 tom Exp $ */
 
+#define HAVE_NCURSESW_NCURSES_H
 // #include <cdk_test.h>
 #include <locale.h>
 // GSchade 25.9.18

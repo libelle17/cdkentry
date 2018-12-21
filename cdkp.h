@@ -1,4 +1,4 @@
-#define NCURSES_INTERNALS
+#define NCURSES_INTERNALS // fuer openSuse, nicht ubuntu
 
 #ifdef HAVE_XCURSES
 #include <xcurses.h>

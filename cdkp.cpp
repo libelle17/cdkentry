@@ -4790,6 +4790,9 @@ void SScroll::drawCDKScrollCurrent()
  */
 void SScroll::drawCDKScrollList(bool Box)
 {
+	static int reihe{0};
+	reihe++;
+	int anzy{0};
 	/* If the list is empty, don't draw anything. */
 	if (this->listSize > 0) {
 		/* Redraw the list */
@@ -4803,8 +4806,9 @@ void SScroll::drawCDKScrollList(bool Box)
 				int screenPos = SCREENPOS(this, k);
 				/* Write in the correct line. */
 				// zeichnet alle, ohne das Aktuelle zu markieren
+				mvwprintw(parent,anzy++,100,"%i: cury: %i",reihe,listWin->_cury);
 				writeChtype (this->listWin,
-						((screenPos >= 0) ? screenPos : 1)+30,
+						((screenPos >= 0) ? screenPos : 1)+10,
 						ypos,
 						this->item[k],
 						HORIZONTAL,
