@@ -2099,6 +2099,7 @@ SEntry::~SEntry()
 		unregisterCDKObject(vENTRY);
 }
 
+const int abstand{1}; // Abstand des Scrollfeldes vom Entryfeld
 /*
  * This moves the entry field to the given location.
  */
@@ -2183,7 +2184,7 @@ void SAlphalist::moveCDKAlphalist(
 
    /* Move the sub-widgets. */
    entryField->moveCDKEntry(xplace, yplace, relative, FALSE);
-   scrollField->moveCDKScroll(xplace, yplace, relative, FALSE);
+   scrollField->moveCDKScroll(xplace, yplace+abstand, relative, FALSE);
 
    /* Touch the windows so they 'move'. */
    refreshCDKWindow (WindowOf (this));
@@ -3104,8 +3105,9 @@ int SEntry::injectCDKEntry(chtype input)
 	bool complete = FALSE;
 	static char umlaut[3]={0};
 	const int inpint=input;
-	mvwprintw(this->screen->window,2,2,"injectCDKEntry %c %i          ",input,input);
-	screen->refreshCDKScreen();
+	static int zahl{0};
+	mvwprintw(this->screen->window,2,2,"%i injectCDKEntry %c %i          ",zahl++,input,input);
+	// screen->refreshCDKScreen(); // 21.12.18: Übeltäter, schreibt Listeneinträge an falsche Stellen
 	if (inpint==194 || inpint==195) {
 //		printf("Eintrag: %i\n",inpint);
 		*umlaut=inpint;
@@ -4358,14 +4360,11 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	 * Create the scrolling list.  It overlaps the entry field by one line if
 	 * we are using box-borders.
 	 */
-	tempHeight = getmaxy (this->entryField->win) - BorderOf (this);
-	tempWidth = (isFullWidth (width)
-			? FULL
-			: boxWidth - 1);
+	tempHeight = getmaxy(this->entryField->win) - BorderOf(this);
+	tempWidth = (isFullWidth(width) ? FULL : boxWidth - 1);
 	this->scrollField = new SScroll(cdkscreen,
-			getbegx (this->win),
-			getbegy (this->entryField->win)
-			+ tempHeight,
+			getbegx(this->win),
+			getbegy(this->entryField->win) + tempHeight,
 			RIGHT,
 			boxHeight - tempHeight,
 			tempWidth,
@@ -4762,6 +4761,7 @@ int SScroll::activateCDKScroll(chtype *actions)
 	return -1;
 }
 
+const int einrueck{1};
 void SScroll::drawCDKScrollCurrent()
 {
    /* Rehighlight the current menu item. */
@@ -4773,7 +4773,7 @@ void SScroll::drawCDKScrollCurrent()
 		 // Ende G.Schade 2.10.18
 		 ;
    writeChtypeAttrib(this->listWin,
-		      (screenPos >= 0) ? screenPos : 0,
+		      ((screenPos >= 0) ? screenPos : 0)+einrueck,
 		      this->currentHigh,
 		      this->item[this->currentItem],
 		      highlight,
@@ -4791,11 +4791,14 @@ void SScroll::drawCDKScrollCurrent()
 void SScroll::drawCDKScrollList(bool Box)
 {
 	static int reihe{0};
-	reihe++;
 	int anzy{0};
 	/* If the list is empty, don't draw anything. */
 	if (this->listSize > 0) {
 		/* Redraw the list */
+		reihe++;
+		if (reihe>=22 && reihe<42) {
+			reihe=reihe;
+		}
 		for (int j = 0; j < this->viewSize; j++) {
 			int xpos = SCREEN_YPOS (this, 0);
 			int ypos = SCREEN_YPOS (this, j);
@@ -4806,9 +4809,9 @@ void SScroll::drawCDKScrollList(bool Box)
 				int screenPos = SCREENPOS(this, k);
 				/* Write in the correct line. */
 				// zeichnet alle, ohne das Aktuelle zu markieren
-				mvwprintw(parent,anzy++,100,"%i: cury: %i",reihe,listWin->_cury);
-				writeChtype (this->listWin,
-						((screenPos >= 0) ? screenPos : 1)+10,
+				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,chtype2Char(item[k]));
+				writeChtype(this->listWin,
+						((screenPos >= 0) ? screenPos : 1)+einrueck,
 						ypos,
 						this->item[k],
 						HORIZONTAL,
@@ -6707,8 +6710,8 @@ SFileSelector::SFileSelector(
 		? FULL
 		: boxWidth - 1);
    this->scrollField = new SScroll (cdkscreen,
-					getbegx (this->win),
-					getbegy (this->win) + tempHeight,
+					getbegx(this->win),
+					getbegy(this->win) + tempHeight,
 					RIGHT,
 					boxHeight - tempHeight,
 					tempWidth,
