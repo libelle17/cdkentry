@@ -9,7 +9,7 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
-CDKSCREEN *allgscr;
+SScreen *allgscr;
 
 #ifdef HAVE_XCURSES
 char *XCursesProgramName = "entry_ex";
@@ -19,22 +19,34 @@ char *XCursesProgramName = "entry_ex";
 using namespace std;
 vector<string> erg;
 
-static BINDFN_PROTO (XXXCB);
 
 static char **myUserList = 0;
 char **userList              = 0;
 static int userSize;
 
-typedef struct
+struct UNDO
 {
 	int deleted;			/* index in current list which is deleted */
 	int original;		/* index in myUserList[] of deleted item */
 	int position;		/* position before delete */
 	int topline;			/* top-line before delete */
-} UNDO;
+};
 
 static UNDO *myUndoList;
 static int undoSize;
+
+// static BINDFN_PROTO (XXXCB);
+static int XXXCB(EObjectType cdktype GCC_UNUSED,
+		void *object GCC_UNUSED,
+		void *clientData GCC_UNUSED,
+		chtype key GCC_UNUSED)
+{
+	const char* mesg[2];
+	mesg[0]="Hilfefunktion";
+	((SScreen*)allgscr)->popupLabel(/*(SScreen*)allgscr,*/(CDK_CSTRING2)mesg,1);
+//	printf("Hilfefunktion aufgerufen\n\r\n\r");
+	return(TRUE);
+}
 
 /*
  * This reads the passwd file and retrieves user information.
@@ -57,9 +69,8 @@ static int getUserList(char ***list)
 	return x;
 }
 
-#define CB_PARAMS EObjectType cdktype GCC_UNUSED, void* object GCC_UNUSED, void* clientdata GCC_UNUSED, chtype key GCC_UNUSED
 
-static void fill_undo(CDKALPHALIST *widget, int deleted, char *data)
+static void fill_undo(SAlphalist *widget, int deleted, char *data)
 {
 //	int top = getCDKScrollCurrentTop(widget->scrollField);
 	int top=widget->scrollField->currentTop;
@@ -80,9 +91,10 @@ static void fill_undo(CDKALPHALIST *widget, int deleted, char *data)
 	++undoSize;
 }
 #ifdef brauchtsaano
+#define CB_PARAMS EObjectType cdktype GCC_UNUSED, void* object GCC_UNUSED, void* clientdata GCC_UNUSED, chtype key GCC_UNUSED
 static int do_delete(CB_PARAMS)
 {
-	CDKALPHALIST *widget = (CDKALPHALIST *)clientdata;
+	SAlphalist *widget = (SAlphalist *)clientdata;
 	int size;
 	char **list = getCDKAlphalistContents(widget, &size);
 	int result = FALSE;
@@ -107,7 +119,7 @@ static int do_delete(CB_PARAMS)
 
 static int do_delete1(CB_PARAMS)
 {
-	CDKALPHALIST *widget =(CDKALPHALIST *)clientdata;
+	SAlphalist *widget =(SAlphalist *)clientdata;
 	int size;
 	char **list = getCDKAlphalistContents(widget, &size);
 	int result = FALSE;
@@ -134,8 +146,7 @@ static int do_delete1(CB_PARAMS)
 
 static int do_help(CB_PARAMS)
 {
-	static const char *message[] =
-	{
+	static const char *message[] = {
 		"Alpha List tests:",
 		"",
 		"F1 = help (this message)",
@@ -156,7 +167,7 @@ static int do_reload(CB_PARAMS)
 	int result = FALSE;
 
 	if (userSize) {
-		CDKALPHALIST *widget = (CDKALPHALIST *)clientdata;
+		SAlphalist *widget = (SAlphalist *)clientdata;
 		setCDKAlphalistContents(widget,(CDK_CSTRING *)myUserList, userSize);
 		setCDKAlphalistCurrentItem(widget, 0);
 		drawCDKAlphalist(widget, BorderOf(widget));
@@ -170,7 +181,7 @@ static int do_undo(CB_PARAMS)
 	int result = FALSE;
 
 	if (undoSize > 0) {
-		CDKALPHALIST *widget =(CDKALPHALIST *)clientdata;
+		SAlphalist *widget =(SAlphalist *)clientdata;
 		int size;
 		int n;
 		char **oldlist = getCDKAlphalistContents(widget, &size);
@@ -196,32 +207,36 @@ static int do_undo(CB_PARAMS)
 	return result;
 }
 #endif
-
+enum eingtyp {
+	eingfld,
+	auswfld,
+	dteifld,
+};
 struct hotkst {
 	const char *label;
 	int highnr;
-	u_char obalph;
+	eingtyp obalph;
 	int highinr; // fuer jeden vorausgehenden Umlaut usw. 2 Buchstaben rechnen
 	int buch;
-	CDKENTRY *eingabef;
+	CDKOBJS *eingabef;
 } hk[]={
 	//		 /*
-	{"</R/U/6>Directory:<!R!6!U> ",4,1},
-	{"</R/U/6>Däteis:<!R!6!U> ",2,1},
-	{"</R/U/6>Datei:<!R!6>",3,1},
-	{"</R/U/6>Döüßatei:<!R!6>",4,1},
-	{"</R/U/6>Ordner:<!R!6>",4,1},
+	{"</R/U/6>Directory:<!R!6!U> ",4,auswfld},
+	{"</R/U/6>Däteis:<!R!6!U> ",2,auswfld},
+	{"</R/U/6>Datei:<!R!6>",3,auswfld},
+	{"</R/U/6>Döüßatei:<!R!6>",4,auswfld},
+	{"</R/U/6>Ordner:<!R!6>",4,auswfld},
 	//		 */
 	{"</R/U/6>Alphälißt:<!R!6>",4},
-	{"</R/U/6>Betalist:<!R!6>",2},
+	{"</R/U/6>Betalist:<!R!6>",2,dteifld},
 	{"</R/U/6>Betalist:<!R!6>",3},
 	{"</R/U/6>Dürectory:<!R!6>",3},
 	{"</R/U/4>Dürectory:<!R!4>",3},
-	{"</R/U/6>Directory:<!R!6!U> ",4,1},
-	{"</R/U/6>Däteis:<!R!6!U> ",2,1},
-	{"</R/U/6>Datei:<!R!6>",3,1},
-	{"</R/U/6>Döüßatei:<!R!6>",4,1},
-	{"</R/U/6>Ordner:<!R!6>",4,1},
+	{"</R/U/6>Directory:<!R!6!U> ",4,auswfld},
+	{"</R/U/6>Däteis:<!R!6!U> ",2,auswfld},
+	{"</R/U/6>Datei:<!R!6>",3,auswfld},
+	{"</R/U/6>Döüßatei:<!R!6>",4,auswfld},
+	{"</R/U/6>Ordner:<!R!6>",4,auswfld},
 	//		 */
 	{"</R/U/6>Alphälißt:<!R!6>",4},
 	{"</R/U/6>Betalist:<!R!6>",2},
@@ -233,7 +248,7 @@ const int maxhk=sizeof hk/sizeof *hk;
 const int yabst=7;
 const int xpos=11;
 /*
-void zeichne(CDKSCREEN *cdkscreen,int Znr)
+void zeichne(SScreen *cdkscreen,int Znr)
 {
 	bool obverschiebe=erstmals;
 	 if(Znr<ymin) {
@@ -251,7 +266,7 @@ void zeichne(CDKSCREEN *cdkscreen,int Znr)
 			 if(aktent>=ymin && aktent<ymax) {
 				 hk[aktent].eingabef->obj.isVisible=1;
 				 if(hk[aktent].obalph)
-					 moveCDKAlphalist(((CDKALPHALIST*)hk[aktent].eingabef),xpos,yabst+aktent-ymin,0,1);
+					 moveCDKAlphalist(((SAlphalist*)hk[aktent].eingabef),xpos,yabst+aktent-ymin,0,1);
 				 else
 					 moveCDKEntry(hk[aktent].eingabef,xpos,yabst+aktent-ymin,0,1);
 			 } else {
@@ -274,7 +289,7 @@ int main(int argc, char **argv)
 	//setlocale(LC_ALL,"de_DE.UTF-8");
 	setlocale(LC_ALL,"");
 	/* *INDENT-EQLS* */
-	CDKSCREEN *cdkscreen = 0;
+	SScreen *cdkscreen = 0;
 
 	/* Get the user list. */
 	userSize = getUserList(&userList);
@@ -286,7 +301,7 @@ int main(int argc, char **argv)
 	myUndoList = (UNDO *) malloc((size_t) userSize * sizeof(UNDO));
 	undoSize = 0;
 	/*
-		 CDKENTRY *directory  = 0,*file=0;
+		 SEntry *directory  = 0,*file=0;
 		 const char *title    = "<C>Gib aößä\n<C>dürectory name.";
 		 const char *ftit    = "<C>Dateiname.";
 		 const char *label    = "</R/U/6>Dürectory:<!R!6>";
@@ -319,7 +334,7 @@ int main(int argc, char **argv)
 	//	 file = newCDKEntry(cdkscreen, xpos, 13, /*ftit*/"", flabel, A_NORMAL, '.', vMIXED, 30, 0, max,/*Box*/0,/*shadow*/0,/*highnr*/1);
 
 //	allgscr=cdkscreen=initCDKScreen(0);
-  CDKSCREEN cscr(0);
+  SScreen cscr(0);
 	allgscr=cdkscreen=&cscr;
 	/*static*/ int maxy=getmaxy(cdkscreen->window)-yabst;
 	/*static*/ int maxh=maxy>maxhk?maxhk:maxy;
@@ -358,22 +373,31 @@ int main(int argc, char **argv)
 //		mvwprintw(cdkscreen->window,18,aktent*10,"%i/%i",hk[aktent].highnr,hk[aktent].highinr);
 //		if (hk[aktent].highnr)
 //			mvwprintw(cdkscreen->window,aktent+yabst,125,"%i:%c,%s",hk[aktent].highnr,hk[aktent].buch,hk[aktent].label);
-		if (hk[aktent].obalph) {
-			hk[aktent].eingabef=(CDKENTRY*)
-//				newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
-			new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
-		} else {
-			hk[aktent].eingabef=
-//				newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
-				new SEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
-			hk[aktent].eingabef->bindCDKObject(/*vENTRY, hk[aktent].eingabef, */'?', XXXCB, 0);
+		switch (hk[aktent].obalph) {
+			case auswfld:
+				hk[aktent].eingabef=
+					//newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
+					new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
+				break;
+			case eingfld:
+				hk[aktent].eingabef=
+					//newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
+					new SEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
+				hk[aktent].eingabef->bindCDKObject(/*vENTRY, hk[aktent].eingabef, */'?', XXXCB, 0);
+				break;
+			case dteifld:
+				hk[aktent].eingabef=
+					//newCDKEntry(cdkscreen,xpos,yabst+aktent,"",hk[aktent].label,A_NORMAL,'.',vMIXED,30,0,maxlen,0,0,hk[aktent].highinr);
+					new SFSelect(cdkscreen,xpos,yabst+aktent,20,65,"",hk[aktent].label,A_NORMAL,'.',A_REVERSE,"</5>","</48>","</N>","</N>",TRUE,FALSE,hk[aktent].highinr);
+				hk[aktent].eingabef->bindCDKObject(/*vENTRY, hk[aktent].eingabef, */'?', XXXCB, 0);
+				break;
+
 		}
 		/* Is the widget null? */
 		if (!hk[aktent].eingabef) {
 			/* Clean up. */
 			cdkscreen->destroyCDKScreen();
 			endCDK();
-
 			printf ("Cannot create the entry box. Is the window too small, aktent: %lu   \n",aktent);
 			ExitProgram(EXIT_FAILURE);
 		}
@@ -413,30 +437,42 @@ int main(int argc, char **argv)
 			for(int aktent=0;aktent<maxhk;aktent++) {
 				if (aktent>=ymin && aktent<ymax) {
 					hk[aktent].eingabef->isVisible=1;
-					if (hk[aktent].obalph)
-						((CDKALPHALIST*)hk[aktent].eingabef)->moveCDKAlphalist(/*((CDKALPHALIST*)hk[aktent].eingabef),*/xpos,yabst+aktent-ymin,0,1);
-					else
-						hk[aktent].eingabef->moveCDKEntry(/*hk[aktent].eingabef,*/xpos,yabst+aktent-ymin,0,1);
+					switch (hk[aktent].obalph) {
+						case auswfld:
+							((SAlphalist*)hk[aktent].eingabef)->moveCDKAlphalist(/*((SAlphalist*)hk[aktent].eingabef),*/xpos,yabst+aktent-ymin,0,1);
+							break;
+						case eingfld:
+							((SEntry*)hk[aktent].eingabef)->moveCDKEntry(/*hk[aktent].eingabef,*/xpos,yabst+aktent-ymin,0,1);
+							break;
+						case dteifld:
+							((SFSelect*)hk[aktent].eingabef)->moveCDKFselect(/*hk[aktent].eingabef,*/xpos,yabst+aktent-ymin,0,1);
+							break;
+					}
 				} else {
 					hk[aktent].eingabef->isVisible=0;
 				}
 			}
-		}else {
+		} else {
 			//			mvwprintw(cdkscreen->window,1,xpos,"ohne Neuzeichnen: %i-%i, Znr: %i  ",ymin,ymax,Znr);
 		}
 		refreshCDKWindow(cdkscreen->window);
 		cdkscreen->refreshCDKScreen();
 		erstmals=0;
-
 		//char *info;
 		// mvwprintw(cdkscreen->window,30,60,"<R>werde eingegeben:%i %i ",info,Zweitzeichen);
-		if (hk[Znr].obalph) {
+					switch (hk[Znr].obalph) {
+						case auswfld:
 			akteinbart=einb_alphalist;
-			/*info=*/((CDKALPHALIST*)hk[Znr].eingabef)->activateCDKAlphalist(/*(CDKALPHALIST*)hk[Znr].eingabef, */0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/0);
-			(((CDKALPHALIST*)hk[Znr].eingabef)->scrollField)->eraseCDKScroll(/*((CDKALPHALIST*)hk[Znr].eingabef)->scrollField*/);
-		} else {
-			/*info = */hk[Znr].eingabef->activateCDKEntry(/*hk[Znr].eingabef, */0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/1);
-		}
+			/*info=*/((SAlphalist*)hk[Znr].eingabef)->activateCDKAlphalist(/*(SAlphalist*)hk[Znr].eingabef, */0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/0);
+			(((SAlphalist*)hk[Znr].eingabef)->scrollField)->eraseCDKScroll(/*((SAlphalist*)hk[Znr].eingabef)->scrollField*/);
+							break;
+						case eingfld:
+			/*info = */((SEntry*)hk[Znr].eingabef)->activateCDKEntry(/*hk[Znr].eingabef, */0,&Zweitzeichen, &Drittzeichen,/*obpfeil*/1);
+							break;
+						case dteifld:
+			/*info = */((SFSelect*)hk[Znr].eingabef)->activateCDKFselect(/*hk[Znr].eingabef, */0);
+							break;
+					}
 		//#ifdef mdebug
 		/*
 			 mesg[0] = "<C>Letzte Eingabe:";
@@ -496,9 +532,11 @@ int main(int argc, char **argv)
 	for(int aktent=0;aktent<maxhk;aktent++) {
 		//		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
 		const char *ueb=
-			hk[aktent].obalph?
-			((CDKALPHALIST*)hk[aktent].eingabef)->entryField->info:
-			hk[aktent].eingabef->info;
+			hk[aktent].obalph==auswfld?
+			((SAlphalist*)hk[aktent].eingabef)->entryField->info:
+			hk[aktent].obalph==dteifld?
+			((SFSelect*)hk[aktent].eingabef)->entryField->info:
+			((SEntry*)hk[aktent].eingabef)->info;
 		erg.push_back(ueb);
 	}
 	/*
@@ -539,14 +577,3 @@ for(size_t aktent=0;aktent<erg.size();aktent++) {
 return EXIT_SUCCESS;
 }
 
-static int XXXCB(EObjectType cdktype GCC_UNUSED,
-		void *object GCC_UNUSED,
-		void *clientData GCC_UNUSED,
-		chtype key GCC_UNUSED)
-{
-	const char* mesg[2];
-	mesg[0]="Hilfefunktion";
-	((CDKSCREEN*)allgscr)->popupLabel(/*(CDKSCREEN*)allgscr,*/(CDK_CSTRING2)mesg,1);
-//	printf("Hilfefunktion aufgerufen\n\r\n\r");
-	return(TRUE);
-}

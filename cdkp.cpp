@@ -1549,7 +1549,7 @@ CDKOBJS* SScreen::setCDKFocusPrevious()
  * Set focus to a specific object, returning it.
  * If the object cannot be found, return null.
  */
-CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
+CDKOBJS* SScreen::setCDKFocusCurrent(/*SScreen *screen, */CDKOBJS *newobj)
 {
 	CDKOBJS *result = 0;
 	CDKOBJS *curobj;
@@ -1573,7 +1573,7 @@ CDKOBJS* SScreen::setCDKFocusCurrent(/*CDKSCREEN *screen, */CDKOBJS *newobj)
 /*
  * Set focus to the first object in the screen.
  */
-CDKOBJS* SScreen::setCDKFocusFirst(/*CDKSCREEN *screen*/)
+CDKOBJS* SScreen::setCDKFocusFirst(/*SScreen *screen*/)
 {
    setFocusIndex(/*screen, screen->*/objectCount - 1);
    return switchFocus(setCDKFocusNext(/*screen*/), 0);
@@ -1582,7 +1582,7 @@ CDKOBJS* SScreen::setCDKFocusFirst(/*CDKSCREEN *screen*/)
 /*
  * Set focus to the last object in the screen.
  */
-/*CDKOBJS **/void SScreen::setCDKFocusLast(/*CDKSCREEN *screen*/)
+/*CDKOBJS **/void SScreen::setCDKFocusLast(/*SScreen *screen*/)
 {
    setFocusIndex(/*screen, */0);
    /*return */switchFocus(setCDKFocusPrevious(/*screen*/), 0);
@@ -1591,7 +1591,7 @@ CDKOBJS* SScreen::setCDKFocusFirst(/*CDKSCREEN *screen*/)
 /*
  * Save data in widgets on a screen
  */
-void SScreen::saveDataCDKScreen(/*CDKSCREEN *screen*/)
+void SScreen::saveDataCDKScreen(/*SScreen *screen*/)
 {
    for (int i = 0; i < /*screen->*/objectCount; ++i)
       object[i]->/*saveDataObj*/saveDataCDK(/*screen->*//*object[i]*/);
@@ -1600,23 +1600,23 @@ void SScreen::saveDataCDKScreen(/*CDKSCREEN *screen*/)
 /*
  * Refresh data in widgets on a screen
  */
-void SScreen::refreshDataCDKScreen(/*CDKSCREEN *screen*/)
+void SScreen::refreshDataCDKScreen(/*SScreen *screen*/)
 {
    for (int i = 0; i < /*screen->*/objectCount; ++i)
       object[i]->/*refreshDataObj*/refreshDataCDK(/*screen->*//*object[i]*/);
 }
 
-void SScreen::resetCDKScreen(/*CDKSCREEN *screen*/)
+void SScreen::resetCDKScreen(/*SScreen *screen*/)
 {
    refreshDataCDKScreen(/*screen*/);
 }
 
-void SScreen::exitOKCDKScreen(/*CDKSCREEN *screen*/)
+void SScreen::exitOKCDKScreen(/*SScreen *screen*/)
 {
    /*screen->*/exitStatus = CDKSCREEN_EXITOK;
 }
 
-void SScreen::exitCancelCDKScreen(/*CDKSCREEN *screen*/)
+void SScreen::exitCancelCDKScreen(/*SScreen *screen*/)
 {
    /*screen->*/exitStatus = CDKSCREEN_EXITCANCEL;
 }
@@ -1636,7 +1636,7 @@ void CDKOBJS::resetCDKScreenOf(/*CDKOBJS *obj*/)
    screen->resetCDKScreen(/*obj->screen*/);
 }
 
-void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
+void SScreen::traverseCDKOnce(/*SScreen *screen,*/
 		CDKOBJS *curobj,
 		int keyCode,
 		bool functionKey,
@@ -1685,7 +1685,7 @@ void SScreen::traverseCDKOnce(/*CDKSCREEN *screen,*/
 /*
  * Traverse the widgets on a screen.
  */
-int SScreen::traverseCDKScreen(/*CDKSCREEN *screen*/)
+int SScreen::traverseCDKScreen(/*SScreen *screen*/)
 {
 	int result = 0;
 	CDKOBJS *curobj = setCDKFocusFirst(/*screen*/);
@@ -1706,7 +1706,7 @@ int SScreen::traverseCDKScreen(/*CDKSCREEN *screen*/)
 }
 
 
-CDKOBJS* SScreen::handleMenu(/*CDKSCREEN *screen, */CDKOBJS *menu, CDKOBJS *oldobj)
+CDKOBJS* SScreen::handleMenu(/*SScreen *screen, */CDKOBJS *menu, CDKOBJS *oldobj)
 {
 	bool done = FALSE;
 	CDKOBJS *newobj;
@@ -1770,7 +1770,7 @@ CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj)
 /*
  * This registers a CDK object with a screen.
  */
-void CDKOBJS::registerCDKObject(CDKSCREEN *screen, EObjectType cdktype)
+void CDKOBJS::registerCDKObject(SScreen *screen, EObjectType cdktype)
 {
 	if (screen->objectCount + 1 >= screen->objectLimit) {
 		screen->objectLimit += 2;
@@ -1794,7 +1794,7 @@ void CDKOBJS::reRegisterCDKObject(EObjectType cdktype/*, void *object*/)
 //#define validIndex(screen, n) ((n) >= 0 && (n) < (screen)->objectCount)
 #define validIndex(n)((n) >= 0 && (n) < (this)->objectCount)
 
-void SScreen::swapCDKIndices(/*CDKSCREEN *screen, */int n1, int n2)
+void SScreen::swapCDKIndices(/*SScreen *screen, */int n1, int n2)
 {
 	if (n1 != n2 && validIndex (n1) && validIndex (n2)) {
 		object[n2]->setScreenIndex(this, n1);
@@ -1813,7 +1813,7 @@ void CDKOBJS::raiseCDKObject(EObjectType cdktype/*, void *object*/)
 {
 //   CDKOBJS *obj = (CDKOBJS *)object;
 //   if (validObjType (obj, cdktype)) {
-//      CDKSCREEN *screen = obj->screen;
+//      SScreen *screen = obj->screen;
       screen->swapCDKIndices(screenIndex, screen->objectCount - 1);
 //   }
 }
@@ -1825,7 +1825,7 @@ void CDKOBJS::lowerCDKObject(EObjectType cdktype/*, void *object*/)
 {
 //   CDKOBJS *obj = (CDKOBJS *)object;
 //   if (validObjType (obj, cdktype)) {
-//      CDKSCREEN *screen = obj->screen;
+//      SScreen *screen = obj->screen;
       screen->swapCDKIndices(screenIndex, 0);
 //   }
 }
@@ -1860,7 +1860,7 @@ void CDKOBJS::setExitType(chtype ch)
 /*
  * Set indices so the screen and object point to each other.
  */
-void CDKOBJS::setScreenIndex(CDKSCREEN *pscreen, int number/*, CDKOBJS *obj*/)
+void CDKOBJS::setScreenIndex(SScreen *pscreen, int number/*, CDKOBJS *obj*/)
 {
 	screenIndex = number;
 	screen = pscreen;
@@ -1924,7 +1924,7 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 {
 	//   CDKOBJS *obj = (CDKOBJS *)object;
 	if (validObjType(cdktype) && this->screenIndex >= 0) {
-//		CDKSCREEN *screen = (this)->screen;
+//		SScreen *screen = (this)->screen;
 		if (screen != 0) {
 			int Index = (this)->screenIndex;
 			this->screenIndex = -1;
@@ -1959,7 +1959,7 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 /*
  * Resequence the numbers after a insertion/deletion.
  */
-void SScroll::resequence(/*CDKSCROLL *scrollp*/)
+void SScroll::resequence(/*SScroll *scrollp*/)
 {
 	if (/*scrollp->*/numbers) {
 		int j, k;
@@ -1982,7 +1982,7 @@ void SScroll::resequence(/*CDKSCROLL *scrollp*/)
 	}
 }
 
-bool SScroll::insertListItem(/*CDKSCROLL *scrollp, */int inr)
+bool SScroll::insertListItem(/*SScroll *scrollp, */int inr)
 {
 	for (int x = /*scrollp->*/listSize; x > inr; --x) {
 		/*scrollp->*/item[x] = /*scrollp->*/item[x - 1];
@@ -1997,7 +1997,7 @@ bool SScroll::insertListItem(/*CDKSCROLL *scrollp, */int inr)
  */
 #define AvailableWidth(w)  ((w)->boxWidth - 2 * BorderOf (w))
 #define WidestItem(w)      ((w)->maxLeftChar + AvailableWidth (w))
-void SScroll::addCDKScrollItem(/*CDKSCROLL *scrollp,*/ const char *item)
+void SScroll::addCDKScrollItem(/*SScroll *scrollp,*/ const char *item)
 {
    int itemNumber = /*scrollp->*/listSize;
    int widestItem = WidestItem(/*scrollp*/this);
@@ -2021,7 +2021,7 @@ void SScroll::addCDKScrollItem(/*CDKSCROLL *scrollp,*/ const char *item)
 /*
  * This adds a single item to a scrolling list, before the current item.
  */
-void SScroll::insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item)
+void SScroll::insertCDKScrollItem(/*SScroll *scrollp, */const char *item)
 {
    int widestItem = WidestItem (/*scrollp*/this);
    char *temp = 0;
@@ -2047,7 +2047,7 @@ void SScroll::insertCDKScrollItem(/*CDKSCROLL *scrollp, */const char *item)
 /*
  * This removes a single item from a scrolling list.
  */
-void SScroll::deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position)
+void SScroll::deleteCDKScrollItem(/*SScroll *scrollp, */int position)
 {
 	if (position >= 0 && position < /*scrollp->*/listSize) {
 		freeChtype (/*scrollp->*/item[position]);
@@ -2069,14 +2069,14 @@ void SScroll::deleteCDKScrollItem(/*CDKSCROLL *scrollp, */int position)
 
 void SScroll::focusCDKScroll(/*CDKOBJS *object*/)
 {
-//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+//   SScroll *scrollp = (SScroll *)object;
    drawCDKScrollCurrent(/*scrollp*/);
    wrefresh(/*scrollp->*/listWin);
 }
 
 void SScroll::unfocusCDKScroll(/*CDKOBJS *object*/)
 {
-//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+//   SScroll *scrollp = (SScroll *)object;
    drawCDKScrollCurrent(/*scrollp*/);
    wrefresh(/*scrollp->*/listWin);
 }
@@ -2084,7 +2084,7 @@ void SScroll::unfocusCDKScroll(/*CDKOBJS *object*/)
 
 SEntry::~SEntry()
 {
-//		CDKENTRY *entry = (CDKENTRY *)object;
+//		SEntry *entry = (SEntry *)object;
 		cleanCdkTitle();
 		freeChtype(this->label);
 		freeChecked(this->info);
@@ -2110,7 +2110,7 @@ void SEntry::moveCDKEntry(/*CDKOBJS *object,*/
 		bool refresh_flag)
 {
 	/* *INDENT-EQLS* */
-//	CDKENTRY *entry = (CDKENTRY *)object;
+//	SEntry *entry = (SEntry *)object;
 	int currentX    = getbegx (this->win);
 	int currentY    = getbegy (this->win);
 	int xpos        = xplace;
@@ -2152,7 +2152,7 @@ void SAlphalist::moveCDKAlphalist(
 			       bool relative,
 			       bool refresh_flag)
 {
-//	CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+//	SAlphalist *alphalist = (SAlphalist *)object;
    /* *INDENT-EQLS* */
    int currentX = getbegx (this->win);
    int currentY = getbegy (this->win);
@@ -2160,40 +2160,110 @@ void SAlphalist::moveCDKAlphalist(
    int ypos     = yplace;
    int xdiff    = 0;
    int ydiff    = 0;
-
    /*
     * If this is a relative move, then we will adjust where we want
     * to move to.
     */
-   if (relative)
-   {
+   if (relative) {
       xpos = getbegx (this->win) + xplace;
       ypos = getbegy (this->win) + yplace;
    }
-
    /* Adjust the window if we need to. */
    alignxy(WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
-
    /* Get the difference. */
    xdiff = currentX - xpos;
    ydiff = currentY - ypos;
-
    /* Move the window to the new location. */
    moveCursesWindow(this->win, -xdiff, -ydiff);
    moveCursesWindow(this->shadowWin, -xdiff, -ydiff);
-
    /* Move the sub-widgets. */
    entryField->moveCDKEntry(xplace, yplace, relative, FALSE);
-   scrollField->moveCDKScroll(xplace, yplace+abstand, relative, FALSE);
-
+   scrollField->moveCDKScroll(xplace, yplace+abstand+box, relative, FALSE);
    /* Touch the windows so they 'move'. */
    refreshCDKWindow (WindowOf (this));
-
    /* Redraw the window, if they asked for it. */
    if (refresh_flag) {
       drawCDKAlphalist(box);
    }
 } // void SAlphalist::moveCDKAlphalist(
+
+/*
+ * This moves the fselect field to the given location.
+ */
+void SFSelect::moveCDKFselect(/*CDKOBJS *object,*/
+			     int xplace,
+			     int yplace,
+			     bool relative,
+			     bool refresh_flag)
+{
+	//   SFSelect *fselect = (SFSelect *)object;
+	/* *INDENT-EQLS* */
+	int currentX = getbegx(this->win);
+	int currentY = getbegy(this->win);
+	int xpos     = xplace;
+	int ypos     = yplace;
+	int xdiff    = 0;
+	int ydiff    = 0;
+	/*
+	 * If this is a relative move, then we will adjust where we want
+	 * to move to.
+	 */
+	if (relative) {
+		xpos = getbegx (this->win) + xplace;
+		ypos = getbegy (this->win) + yplace;
+	}
+	/* Adjust the window if we need to. */
+	alignxy (WindowOf (this), &xpos, &ypos, this->boxWidth, this->boxHeight);
+	/* Get the difference. */
+	xdiff = currentX - xpos;
+	ydiff = currentY - ypos;
+	/* Move the window to the new location. */
+	moveCursesWindow (this->win, -xdiff, -ydiff);
+	moveCursesWindow (this->shadowWin, -xdiff, -ydiff);
+	/* Move the sub-widgets. */
+	entryField->moveCDKEntry(xplace, yplace, relative, FALSE);
+	scrollField->moveCDKScroll(xplace, yplace+abstand+box, relative, FALSE);
+	/* Redraw the window, if they asked for it. */
+	if (refresh_flag) {
+		drawCDKFselect(/*this, ObjOf (this)->*/box);
+	}
+}
+
+/*
+ * This means you want to use the given file selector. It takes input
+ * from the keyboard, and when it's done, it fills the entry info
+ * element of the structure with what was typed.
+ */
+char *SFSelect::activateCDKFselect(/*SFSelect *fselect, */chtype *actions)
+{
+	chtype input = 0;
+	bool functionKey;
+	char *ret = 0;
+	/* Draw the widget. */
+	drawCDKFselect(/*fselect, ObjOf (fselect)->*/box);
+	if (!actions) {
+		for (;;) {
+			input =(chtype)getchCDKObject(/*ObjOf (fselect->entryField), */&functionKey);
+			/* Inject the character into the widget. */
+			ret=injectCDKFselect(input)?resultData.valueString:unknownString;
+			if (this->exitType != vEARLY_EXIT) {
+				return ret;
+			}
+		}
+	} else {
+		int length = chlen (actions);
+		/* Inject each character one at a time. */
+		for (int x = 0; x < length; x++) {
+			ret=injectCDKFselect(actions[x])?resultData.valueString:unknownString;
+			if (this->exitType != vEARLY_EXIT) {
+				return ret;
+			}
+		}
+	}
+	/* Set the exit type and exit. */
+	setExitType(/*fselect, */0);
+	return 0;
+}
 
 /*
  * This moves the scroll field to the given location.
@@ -2205,7 +2275,7 @@ void SScroll::moveCDKScroll(
 			    bool refresh_flag)
 {
    /* *INDENT-EQLS* */
-//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+//   SScroll *scrollp = (SScroll *)object;
    int currentX       = getbegx (this->win);
    int currentY       = getbegy (this->win);
    int xpos           = xplace;
@@ -2249,11 +2319,11 @@ void SAlphalist::destroyInfo()
 
 SAlphalist::~SAlphalist()
 {
-//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+//      SAlphalist *alphalist = (SAlphalist *)object;
 
       destroyInfo();
       /* Clean the key bindings. */
-      cleanCDKObjectBindings ();
+      cleanCDKObjectBindings();
 //      destroyCDKEntry (this->entryField);
 			entryField->~SEntry();
 //      destroyCDKScroll (this->scrollField);
@@ -2266,9 +2336,9 @@ SAlphalist::~SAlphalist()
 }
 
 
-SFileSelector::~SFileSelector()
+SFSelect::~SFSelect()
 {
-//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+//      SAlphalist *alphalist = (SAlphalist *)object;
 
 	/*
       destroyInfo();
@@ -2283,9 +2353,9 @@ SFileSelector::~SFileSelector()
 			*/
 
 //   if (object != 0) {
-//      CDKFSELECT *fselect = (CDKFSELECT *)object;
+//      SFSelect *fselect = (SFSelect *)object;
 
-      cleanCDKObjectBindings (/*vFSELECT, fselect*/);
+      cleanCDKObjectBindings(/*vFSELECT, fselect*/);
 
       /* Free up the character pointers. */
       freeChecked(this->pwd);
@@ -2339,7 +2409,7 @@ void SAlphalist::setCDKAlphalistPostProcess(
  */
 void SScroll::drawCDKScroll(bool Box,bool obmit)
 {
-//   CDKSCROLL *scrollp = (CDKSCROLL *)object;
+//   SScroll *scrollp = (SScroll *)object;
    /* Draw in the shadow if we need to. */
    if (this->shadowWin)
       drawShadow(this->shadowWin);
@@ -2358,7 +2428,7 @@ void SScroll::drawCDKScroll(bool Box,bool obmit)
  */
 SScroll::~SScroll(/*CDKOBJS *object*/)
 {
-		//CDKSCROLL *scrollp = (CDKSCROLL *)object;
+		//SScroll *scrollp = (SScroll *)object;
 		cleanCdkTitle();
 		CDKfreeChtypes(this->item);
 		freeChecked(this->itemPos);
@@ -2504,7 +2574,7 @@ CDKOBJS* CDKOBJS::bindableObject()
 	return this;
 }
 
-CDKOBJS* SFileSelector::bindableObject()
+CDKOBJS* SFSelect::bindableObject()
 {
 	return entryField;
 }
@@ -2517,19 +2587,25 @@ CDKOBJS* SAlphalist::bindableObject()
 /*
  * This inserts a binding.
  */
-void CDKOBJS::bindCDKObject (
+void CDKOBJS::bindCDKObject(
 		    chtype key,
 		    BINDFN function,
 		    void *data)
 {
 	CDKOBJS *obj = bindableObject();
+	if (obj) {
+		bindv[key]=CDKBINDING(function,data);
+		if (bindv.find(key)->second==false) {
+			bindv.insert(make_pair(CDKBINDING(function,data),key));
+		}
+	}
 	if ((key < KEY_MAX) && obj) {
 		if (key && (unsigned)key >= obj->bindingCount) {
 			unsigned next = (unsigned) (key + 1);
-			if (obj->bindingList != 0)
-				obj->bindingList = typeReallocN (CDKBINDING, obj->bindingList, next);
+			if (obj->bindingList)
+				obj->bindingList = typeReallocN(CDKBINDING, obj->bindingList, next);
 			else
-				obj->bindingList = typeMallocN (CDKBINDING, next);
+				obj->bindingList = typeMallocN(CDKBINDING, next);
 			memset (&(obj->bindingList[obj->bindingCount]), 0, (next - obj->bindingCount) * sizeof (CDKBINDING));
 			obj->bindingCount = next;
 		}
@@ -2635,8 +2711,7 @@ int CDKOBJS::getcCDKObject()
 	} else if (!test 
 			|| (unsigned)result >= test->bindingCount
 			|| !test->bindingList[result].bindFunction) {
-		switch (result)
-		{
+		switch (result) {
 			case '\r':
 			case '\n':
 				result = KEY_ENTER;
@@ -2800,7 +2875,7 @@ void SEntry::zeichneFeld()
 /*
  * This creates a pointer to an entry widget.
  */
-SEntry::SEntry(CDKSCREEN *cdkscreen,
+SEntry::SEntry(SScreen *cdkscreen,
 		int xplace,
 		int yplace,
 		const char *title,
@@ -2829,7 +2904,7 @@ SEntry::SEntry(CDKSCREEN *cdkscreen,
 	int junk             = 0;
 	int horizontalAdjust, oldWidth;
 
-	//	if ((entry = newCDKObject (CDKENTRY, &my_funcs)) == 0) return (0);
+	//	if ((entry = newCDKObject (SEntry, &my_funcs)) == 0) return (0);
 	::CDKOBJS();
 
 	setBox(Box);
@@ -3073,7 +3148,7 @@ char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,i
 //void SEntry::drawCDKEntry(bool Box)
 void SEntry::drawCDKEntry(bool Box)
 {
-//	CDKENTRY *entry = (CDKENTRY *)object;
+//	SEntry *entry = (SEntry *)object;
 	/* Did we ask for a shadow? */
 	if (this->shadowWin) {
 		drawShadow(this->shadowWin);
@@ -3099,7 +3174,7 @@ void SEntry::drawCDKEntry(bool Box)
  */
 int SEntry::injectCDKEntry(chtype input)
 {
-//	CDKENTRY *widget = (CDKENTRY *)object;
+//	SEntry *widget = (SEntry *)object;
 	int ppReturn = 1;
 	char *ret = unknownString;
 	bool complete = FALSE;
@@ -3333,8 +3408,7 @@ int SEntry::injectCDKEntry(chtype input)
 			}
 		}
 		/* Should we do a post-process? */
-		if (!complete && (PostProcessFuncOf(this)))
-		{
+		if (!complete && (PostProcessFuncOf(this))) {
 			PostProcessFuncOf (this) (vENTRY,
 					this,
 					PostProcessDataOf (this),
@@ -3454,7 +3528,7 @@ void SAlphalist::eraseCDKAlphalist/*_eraseCDKAlphalist*/()
 {
 	//   if (validCDKObject (object))
 	{
-		//      CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+		//      SAlphalist *alphalist = (SAlphalist *)object;
 		scrollField->eraseCDKScroll();
 		//      eraseCDKEntry (entryField);
 		entryField->eraseCDKEntry();
@@ -3470,7 +3544,7 @@ void SScroll::eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/)
 {
 //   if (validCDKObject (object))
    {
-//      CDKSCROLL *scrollp = (CDKSCROLL *)object;
+//      SScroll *scrollp = (SScroll *)object;
       eraseCursesWindow(win);
       eraseCursesWindow(shadowWin);
    }
@@ -3487,7 +3561,7 @@ void CDKOBJS::drawCDKScreen()
 /*
  * This refreshes all the objects in the screen.
  */
-void SScreen::refreshCDKScreen(/*CDKSCREEN *cdkscreen*/)
+void SScreen::refreshCDKScreen(/*SScreen *cdkscreen*/)
 {
 //	int objectCount = /*screen->*/objectCount;
 	int x;
@@ -3643,7 +3717,7 @@ void SAlphalist::injectMyScroller(chtype key)
 	RestoreFocus(this);
 }
 
-void SFileSelector::injectMyScroller(chtype key)
+void SFSelect::injectMyScroller(chtype key)
 {
 	SaveFocus(this);
 	scrollField->injectCDKScroll(key);
@@ -3655,7 +3729,7 @@ void SFileSelector::injectMyScroller(chtype key)
  */
 int SAlphalist::injectCDKAlphalist(chtype input)
 {
-//   CDKALPHALIST *alphalist = (CDKALPHALIST *)object;
+//   SAlphalist *alphalist = (SAlphalist *)object;
    char *ret;
    /* Draw the widget. */
    drawCDKAlphalist(box);
@@ -3669,6 +3743,57 @@ int SAlphalist::injectCDKAlphalist(chtype input)
    ResultOf (this).valueString = ret;
    return (ret != unknownString);
 }
+
+/*
+ * This injects a single character into the file selector.
+ */
+int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
+{
+	//   SFSelect *fselect = (SFSelect *)object;
+	const char *filename;
+	bool file;
+	char *ret = unknownString;
+	bool complete = FALSE;
+	/* Let the user play. */
+	if (entryField) {
+	 filename = entryField->injectCDKEntry(/*this->entryField, */input)?entryField->resultData.valueString:unknownString;
+  }
+	/* Copy the entry field exitType to the fileselector. */
+	copyExitType(this, this->entryField);
+	/* If we exited early, make sure we don't interpret it as a file. */
+	if (this->exitType == vEARLY_EXIT) {
+		return 0;
+	}
+	/* Can we change into the directory? */
+	file = chdir (filename);
+	if (chdir(this->pwd)) {
+		return 0;
+	}
+	/* If it's not a directory, return the filename. */
+	if (file) {
+		/* It's a regular file, create the full path. */
+		this->pathname = copyChar (filename);
+		/* Return the complete pathname. */
+		ret = (this->pathname);
+		complete = TRUE;
+	} else {
+		/* Set the file selector information. */
+		setCDKFselect(/*this, */filename,
+				this->fieldAttribute, this->fillerCharacter,
+				this->highlight,
+				this->dirAttribute, this->fileAttribute,
+				this->linkAttribute, this->sockAttribute,
+				/*ObjOf (this)->*/box);
+
+		/* Redraw the scrolling list. */
+		drawMyScroller(/*this*/);
+	}
+	if (!complete)
+		setExitType(/*this, */0);
+	ResultOf (this).valueString = ret;
+	return (ret != unknownString);
+}
+
 
 /*
  * This sets multiple attributes of the widget.
@@ -3701,7 +3826,7 @@ void SScroll::setCDKScroll(
 	 box=Box;
 }
 // wird bisher nicht gebraucht
-int SScroll::getCDKScrollItems(/*CDKSCROLL *scrollp, */char **list)
+int SScroll::getCDKScrollItems(/*SScroll *scrollp, */char **list)
 {
 	if (list) {
 		for (int x = 0; x < /*scrollp->*/listSize; x++) {
@@ -3716,7 +3841,7 @@ int SScroll::getCDKScrollItems(/*CDKSCROLL *scrollp, */char **list)
  */
 /*
 	 // statt dessen: setBox
-void SScroll::setCDKScrollBox(//CDKSCROLL *scrollp, 
+void SScroll::setCDKScrollBox(//SScroll *scrollp, 
 							bool Box)
 {
    //ObjOf (scrollp)->
@@ -3748,7 +3873,7 @@ void SScroll::setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers)
    this->leftChar = 0;
 }
 
-void SScroll::setCDKScrollCurrentTop(/*CDKSCROLL *widget, */int item)
+void SScroll::setCDKScrollCurrentTop(/*SScroll *widget, */int item)
 {
    if (item < 0)
       item = 0;
@@ -3772,24 +3897,18 @@ void SScroll::setCDKScrollPosition(int item)
  */
 void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
 {
-   CDKSCROLL *scrollp = this->scrollField;
-   CDKENTRY *entry = this->entryField;
-
    if (!createList(list, listSize))
       return;
-
    /* Set the information in the scrolling list. */
-   scrollp->setCDKScroll(
+   scrollField->setCDKScroll(
 		 (CDK_CSTRING2)this->list,
 		 this->listSize,
 		 NONUMBERS,
-		 scrollp->highlight,
-		 ObjOf (scrollp)->box);
-
+		 scrollField->highlight,
+		 ObjOf(scrollField)->box);
    /* Clean out the entry field. */
    setCDKAlphalistCurrentItem(0);
-   entry->cleanCDKEntry();
-
+   entryField->cleanCDKEntry();
    /* Redraw the this. */
    this->eraseCDKAlphalist();
    this->drawCDKAlphalist(box);
@@ -3916,7 +4035,7 @@ void SAlphalist::setMyBKattr(chtype character)
  */
 void SScroll::setBKattrScroll(chtype attrib)
 {
-	//      CDKSCROLL *widget = (CDKSCROLL *)object;
+	//      SScroll *widget = (SScroll *)object;
 	wbkgd(this->win, attrib);
 	wbkgd(this->listWin, attrib);
 	if (this->scrollbarWin) {
@@ -3933,9 +4052,9 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
 		chtype key)
 {
 	/* *INDENT-EQLS* */
-   CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
-   CDKSCROLL *scrollp      = alphalist->scrollField;
-   CDKENTRY *entry         = alphalist->entryField;
+   SAlphalist *alphalist = (SAlphalist *)clientData;
+   SScroll *scrollp      = alphalist->scrollField;
+   SEntry *entry         = alphalist->entryField;
    if (scrollp->listSize > 0) {
       char *current;
       /* Adjust the scrolling list. */
@@ -3957,9 +4076,9 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
 static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED, void *clientData, chtype key GCC_UNUSED)
 {
    /* *INDENT-EQLS* */
-   CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
-   CDKENTRY *entry         = (CDKENTRY *)alphalist->entryField;
-   CDKSCROLL *scrollp      = 0;
+   SAlphalist *alphalist = (SAlphalist *)clientData;
+   SEntry *entry         = (SEntry *)alphalist->entryField;
+   SScroll *scrollp      = 0;
    int wordLength          = 0;
    int Index               = 0;
    int ret                 = 0;
@@ -4083,7 +4202,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 
 void SAlphalist::focusCDKAlphalist()
 {
-//   CDKALPHALIST *widget = (CDKALPHALIST *)object;
+//   SAlphalist *widget = (SAlphalist *)object;
 	/*
 	FocusObj(entryField);
 	MethodPtr(entryField,focusObj)(entryField);
@@ -4096,17 +4215,17 @@ void SAlphalist::focusCDKAlphalist()
 
 void SAlphalist::unfocusCDKAlphalist()
 {
-//   CDKALPHALIST *widget = (CDKALPHALIST *)object;
+//   SAlphalist *widget = (SAlphalist *)object;
 //   UnfocusObj(ObjOf(entryField));
 	entryField->unfocusCDKEntry();
 }
 
-void SFileSelector::focusCDKFileSelector()
+void SFSelect::focusCDKFileSelector()
 {
 	entryField->focusCDKEntry();
 }
 
-void SFileSelector::unfocusCDKFileSelector()
+void SFSelect::unfocusCDKFileSelector()
 {
 	entryField->unfocusCDKEntry();
 }
@@ -4114,7 +4233,7 @@ void SFileSelector::unfocusCDKFileSelector()
 /*
  * Set data for preprocessing.
  */
-void CDKOBJS::setCDKObjectPreProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data)
+void CDKOBJS::setCDKObjectPreProcess(/*CDKOBJS *obj, */PROCESSFN fn, void *data)
 {
    preProcessFunction = fn;
    preProcessData = data;
@@ -4138,9 +4257,9 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 				 chtype input)
 {
 	/* *INDENT-EQLS* */
-	CDKALPHALIST *alphalist = (CDKALPHALIST *)clientData;
-	CDKSCROLL *scrollp      = alphalist->scrollField;
-	CDKENTRY *entry         = alphalist->entryField;
+	SAlphalist *alphalist = (SAlphalist *)clientData;
+	SScroll *scrollp      = alphalist->scrollField;
+	SEntry *entry         = alphalist->entryField;
 	int infoLen             = (entry->info ? (int)strlen(entry->info) : 0);
 	int result              = 1;
 	bool empty              = FALSE;
@@ -4221,7 +4340,7 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 /*
  * This creates the alphalist widget.
  */
-SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
+SAlphalist::SAlphalist(SScreen *cdkscreen,
 			       int xplace,
 			       int yplace,
 			       int height,
@@ -4241,7 +4360,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 {
 	cdktype = vALPHALIST;
 	/* *INDENT-EQLS* */
-//	CDKALPHALIST *alphalist      = 0;
+//	SAlphalist *alphalist      = 0;
 	int parentWidth              = getmaxx(cdkscreen->window);
 	int parentHeight             = getmaxy(cdkscreen->window);
 	int tempWidth                = 0;
@@ -4256,7 +4375,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	/* *INDENT-ON* */
 
 	::CDKOBJS();
-	if (/*(alphalist = newCDKObject (CDKALPHALIST, &my_funcs)) == 0 || */ !createList(list, listSize)) {
+	if (/*(alphalist = newCDKObject (SAlphalist, &my_funcs)) == 0 || */ !createList(list, listSize)) {
 		destroyCDKObject();
 		return;
 	}
@@ -4311,7 +4430,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 	tempWidth = (isFullWidth (width)
 			? FULL
 			: boxWidth - 2 - labelLen);
-	this->entryField = new CDKENTRY(cdkscreen,
+	this->entryField = new SEntry(cdkscreen,
 			getbegx (this->win),
 			getbegy (this->win),
 			title, label,
@@ -4386,7 +4505,7 @@ SAlphalist::SAlphalist(CDKSCREEN *cdkscreen,
 //	return (this);
 }
 
-void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
+void SAlphalist::drawMyScroller(/*SAlphalist *widget*/)
 {
    SaveFocus(this);
 	// mit 1 entstehen hier Fehler nicht unten, nur oben
@@ -4399,7 +4518,7 @@ void SAlphalist::drawMyScroller(/*CDKALPHALIST *widget*/)
  */
 void SAlphalist::drawCDKAlphalist(bool Box GCC_UNUSED)
 {
-//   CDKALPHALIST *alphalist = (CDKALPHALIST *)obj;
+//   SAlphalist *alphalist = (SAlphalist *)obj;
    /* Does this widget have a shadow? */
    if (shadowWin) {
       drawShadow(shadowWin);
@@ -4565,7 +4684,7 @@ void SScroll_basis::setViewSize(int size)
 /*
  * This function creates a new scrolling list widget.
  */
-SScroll::SScroll(CDKSCREEN *cdkscreen,
+SScroll::SScroll(SScreen *cdkscreen,
 			 int xplace,
 			 int yplace,
 			 int splace,
@@ -4581,7 +4700,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
 {
 	cdktype=vSCROLL;
    /* *INDENT-EQLS* */
-   //CDKSCROLL *scrollp           = 0;
+   //SScroll *scrollp           = 0;
    int parentWidth              = getmaxx (cdkscreen->window);
    int parentHeight             = getmaxy (cdkscreen->window);
    int xpos                     = xplace;
@@ -4600,7 +4719,7 @@ SScroll::SScroll(CDKSCREEN *cdkscreen,
    };
    /* *INDENT-ON* */
 
-//   if ((scrollp = newCDKObject (CDKSCROLL, &my_funcs)) == 0) { destroyCDKObject (scrollp); return (0); }
+//   if ((scrollp = newCDKObject (SScroll, &my_funcs)) == 0) { destroyCDKObject (scrollp); return (0); }
 	::CDKOBJS();
    setBox(Box);
 
@@ -4853,7 +4972,7 @@ void SScroll::drawCDKScrollList(bool Box)
  */
 int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 {
-	//   CDKSCROLL *myself = (CDKSCROLL *)object;
+	//   SScroll *myself = (SScroll *)object;
 //	CDKSCROLLER *widget = (CDKSCROLLER *)this;
 	int ppReturn = 1;
 	int ret = unknownInt;
@@ -4972,7 +5091,7 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 void CDKOBJS::setBKattrObj(/*CDKOBJS *object, */chtype attrib)
 {
 //   if (object != 0) {
-//      CDKLABEL *widget = (CDKLABEL *)object;
+//      SLabel *widget = (SLabel *)object;
 //      wbkgd(this->win, attrib);
 //   }
 }
@@ -5186,11 +5305,11 @@ void SScreen::setFocusIndex(int value)
 /*
  * This creates a new CDK screen.
  */
-//CDKSCREEN *initCDKScreen (WINDOW *window)
+//SScreen *initCDKScreen (WINDOW *window)
 SScreen::SScreen(WINDOW *window)
 {
 	//	ALL_SCREENS *item;
-	//	CDKSCREEN *screen = 0;
+	//	SScreen *screen = 0;
 	/* initialization, for the first time */
 	if (/*all_screens == 0 || */stdscr == 0 || window == 0) {
 		/* Set up basic curses settings. */
@@ -5208,7 +5327,7 @@ SScreen::SScreen(WINDOW *window)
 	}
 
 	//	if ((item = typeMalloc (ALL_SCREENS)) != 0) {
-	//		if ((screen = typeCalloc (CDKSCREEN)) != 0) {
+	//		if ((screen = typeCalloc (SScreen)) != 0) {
 	/*
 		 item->link = all_screens;
 		 item->screen = this;
@@ -5216,7 +5335,7 @@ SScreen::SScreen(WINDOW *window)
 	 */
 	all_screens.push_back(this);
 
-	/* Initialize the CDKSCREEN pointer. */
+	/* Initialize the SScreen pointer. */
 	this->objectCount = 0;
 	this->objectLimit = 2;
 	this->object = typeMallocN (CDKOBJS *, this->objectLimit);
@@ -5231,8 +5350,8 @@ SScreen::SScreen(WINDOW *window)
 /*
  * This creates a label widget.
  */
-//CDKLABEL *newCDKLabel (CDKSCREEN *cdkscreen,
-SLabel::SLabel(CDKSCREEN *cdkscreen,
+//SLabel *newCDKLabel (SScreen *cdkscreen,
+SLabel::SLabel(SScreen *cdkscreen,
 		       int xplace,
 		       int yplace,
 		       CDK_CSTRING2 mesg,
@@ -5241,7 +5360,7 @@ SLabel::SLabel(CDKSCREEN *cdkscreen,
 		       bool shadow): xpos(xplace),ypos(yplace),boxWidth(INT_MIN),rows(prows),shadow(shadow)
 {
    /* *INDENT-EQLS* */
-//   CDKLABEL *label      = 0;
+//   SLabel *label      = 0;
    int parentWidth      = getmaxx (cdkscreen->window);
    int parentHeight     = getmaxy (cdkscreen->window);
 //   int boxWidth         = INT_MIN;
@@ -5252,7 +5371,7 @@ SLabel::SLabel(CDKSCREEN *cdkscreen,
 
 	::CDKOBJS();
    if (rows <= 0
-       /*|| (label = newCDKObject (CDKLABEL, &my_funcs)) == 0*/
+       /*|| (label = newCDKObject (SLabel, &my_funcs)) == 0*/
        || (/*label->*/info = typeCallocN (chtype *, rows + 1)) == 0
        || (/*label->*/infoLen = typeCallocN (int, rows + 1)) == 0
        || (/*label->*/infoPos = typeCallocN (int, rows + 1)) == 0)
@@ -5328,13 +5447,13 @@ SLabel::SLabel(CDKSCREEN *cdkscreen,
 /*
  * This sets the box flag for the label widget.
  */
-void SLabel::setCDKLabelBox(/*CDKLABEL *label, */bool Box)
+void SLabel::setCDKLabelBox(/*SLabel *label, */bool Box)
 {
    /*ObjOf (label)->*/box = Box;
    /*ObjOf (label)->*/borderSize = Box ? 1 : 0;
 }
 
-bool SLabel::getCDKLabelBox(/*CDKLABEL *label*/)
+bool SLabel::getCDKLabelBox(/*SLabel *label*/)
 {
    return /*ObjOf (label)->*/box;
 }
@@ -5342,7 +5461,7 @@ bool SLabel::getCDKLabelBox(/*CDKLABEL *label*/)
 /*
  * This was added for the builder.
  */
-void SLabel::activateCDKLabel(/*CDKLABEL *label, */chtype *actions GCC_UNUSED)
+void SLabel::activateCDKLabel(/*SLabel *label, */chtype *actions GCC_UNUSED)
 {
    drawCDKLabel(/*label, ObjOf (label)->*/box);
 }
@@ -5350,7 +5469,7 @@ void SLabel::activateCDKLabel(/*CDKLABEL *label, */chtype *actions GCC_UNUSED)
 /*
  * This sets multiple attributes of the widget.
  */
-void SLabel::setCDKLabel(/*CDKLABEL *label, */CDK_CSTRING2 mesg, int lines, bool Box)
+void SLabel::setCDKLabel(/*SLabel *label, */CDK_CSTRING2 mesg, int lines, bool Box)
 {
    setCDKLabelMessage (/*label, */mesg, lines);
    setCDKLabelBox (/*label, */Box);
@@ -5359,7 +5478,7 @@ void SLabel::setCDKLabel(/*CDKLABEL *label, */CDK_CSTRING2 mesg, int lines, bool
 /*
  * This sets the information within the label.
  */
-void SLabel::setCDKLabelMessage (/*CDKLABEL *label, */CDK_CSTRING2 pinfo, int infoSize)
+void SLabel::setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 pinfo, int infoSize)
 {
    int x;
    int limit;
@@ -5393,7 +5512,7 @@ void SLabel::setCDKLabelMessage (/*CDKLABEL *label, */CDK_CSTRING2 pinfo, int in
    drawCDKLabel(/*label, ObjOf (label)->*/box);
 }
 
-chtype **SLabel::getCDKLabelMessage(/*CDKLABEL *label, */int *size)
+chtype **SLabel::getCDKLabelMessage(/*SLabel *label, */int *size)
 {
    (*size) = /*label->*/rows;
    return /*label->*/info;
@@ -5405,7 +5524,7 @@ chtype **SLabel::getCDKLabelMessage(/*CDKLABEL *label, */int *size)
 void SLabel::setBKattrLabel(/*CDKOBJS *object, */chtype attrib)
 {
 //   if (object != 0) {
-//      CDKLABEL *widget = (CDKLABEL *)object;
+//      SLabel *widget = (SLabel *)object;
       wbkgd(/*widget->*/win, attrib);
 //   }
 }
@@ -5415,7 +5534,7 @@ void SLabel::setBKattrLabel(/*CDKOBJS *object, */chtype attrib)
  */
 void SLabel::drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED)
 {
-//   CDKLABEL *label = (CDKLABEL *)object;
+//   SLabel *label = (SLabel *)object;
    /* Is there a shadow? */
    if (/*label->*/shadowWin != 0) {
       drawShadow(/*label->*/shadowWin);
@@ -5444,7 +5563,7 @@ void SLabel::drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED)
 void SLabel::eraseCDKLabel(/*CDKOBJS *object*/)
 {
 //   if (validCDKObject (object)) {
-//      CDKLABEL *label = (CDKLABEL *)object;
+//      SLabel *label = (SLabel *)object;
       eraseCursesWindow(/*label->*/win);
       eraseCursesWindow(/*label->*/shadowWin);
 //   }
@@ -5459,7 +5578,7 @@ void SLabel::moveCDKLabel(/*CDKOBJS *object,*/
 			   bool relative,
 			   bool refresh_flag)
 {
-//   CDKLABEL *label = (CDKLABEL *)object;
+//   SLabel *label = (SLabel *)object;
    /* *INDENT-EQLS* */
    int currentX = getbegx (/*label->*/win);
    int currentY = getbegy (/*label->*/win);
@@ -5503,7 +5622,7 @@ void SLabel::moveCDKLabel(/*CDKOBJS *object,*/
 void SLabel::destroyCDKLabel(/*CDKOBJS *object*/)
 {
 //   if (object != 0) {
-//      CDKLABEL *label = (CDKLABEL *)object;
+//      SLabel *label = (SLabel *)object;
 
       CDKfreeChtypes (/*label->*/info);
       freeChecked (/*label->*/infoLen);
@@ -5524,7 +5643,7 @@ void SLabel::destroyCDKLabel(/*CDKOBJS *object*/)
 /*
  * This pauses until a user hits a key...
  */
-char SLabel::waitCDKLabel(/*CDKLABEL *label, */char key)
+char SLabel::waitCDKLabel(/*SLabel *label, */char key)
 {
 	int code;
 	bool functionKey;
@@ -5546,13 +5665,13 @@ char SLabel::waitCDKLabel(/*CDKLABEL *label, */char key)
 /*
  * This pops up a message.
  */
-void SScreen::popupLabel(/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count)
+void SScreen::popupLabel(/*SScreen *screen, */CDK_CSTRING2 mesg, int count)
 {
-//   CDKLABEL *popup = 0;
+//   SLabel *popup = 0;
    int oldCursState;
    bool functionKey;
    /* Create the label. */
-   CDKLABEL popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+   SLabel popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
    oldCursState = curs_set(0);
    /* Draw it on the screen. */
    popup.drawCDKLabel(/*popup, */TRUE);
@@ -5570,13 +5689,13 @@ void SScreen::popupLabel(/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count)
 /*
  * This pops up a message.
  */
-void SScreen::popupLabelAttrib(/*CDKSCREEN *screen, */CDK_CSTRING2 mesg, int count, chtype attrib)
+void SScreen::popupLabelAttrib(/*SScreen *screen, */CDK_CSTRING2 mesg, int count, chtype attrib)
 {
-//   CDKLABEL *popup = 0;
+//   SLabel *popup = 0;
    int oldCursState;
    bool functionKey;
    /* Create the label. */
-   CDKLABEL popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+   SLabel popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
 //   popup.setCDKLabelBackgroundAttrib(attrib);
    popup.setBKattrObj(attrib);
    oldCursState = curs_set(0);
@@ -5630,7 +5749,7 @@ void SScroll::drawObj(bool box)
 	// mit 1 entstehen hier Fehler nur unten, nicht oben
 	drawCDKScroll(box,1);
 }
-void SFileSelector::drawObj(bool box)
+void SFSelect::drawObj(bool box)
 {
 	drawCDKFselect(box);
 }
@@ -5673,9 +5792,9 @@ void SScroll::setBKattrObj(chtype attrib)
 /*
  * This draws the file selector widget.
  */
-void SFileSelector::drawCDKFselect(/*CDKOBJS *object, */bool Box GCC_UNUSED)
+void SFSelect::drawCDKFselect(/*CDKOBJS *object, */bool Box GCC_UNUSED)
 {
-//   CDKFSELECT *fselect = (CDKFSELECT *)object;
+//   SFSelect *fselect = (SFSelect *)object;
 
    /* Draw in the shadow if we need to. */
    if (/*fselect->*/shadowWin) {
@@ -5704,7 +5823,7 @@ void SFileSelector::drawCDKFselect(/*CDKOBJS *object, */bool Box GCC_UNUSED)
    HasFocusObj (ObjOf (widget->scrollField)) = save
 	 */
 
-void SFileSelector::drawMyScroller(/*CDKFSELECT *widget*/)
+void SFSelect::drawMyScroller(/*SFSelect *widget*/)
 {
    SaveFocus(this);
    scrollField->drawCDKScroll(/*widget->scrollField, ObjOf (widget->scrollField)->*/scrollField->box);
@@ -5714,7 +5833,7 @@ void SFileSelector::drawMyScroller(/*CDKFSELECT *widget*/)
 /*
  * Store the name of the current working directory.
  */
-void SFileSelector::setPWD(/*CDKFSELECT *fselect*/)
+void SFSelect::setPWD(/*SFSelect *fselect*/)
 {
    char buffer[512];
    freeChecked(this->pwd);
@@ -5800,7 +5919,7 @@ char *format3String (const char *format, const char *s1, const char *s2, const c
 /*
  * This creates a list of the files in the current directory.
  */
-int SFileSelector::setCDKFselectDirContents(/*CDKFSELECT *fselect*/)
+int SFSelect::setCDKFselectDirContents(/*CDKFSELECT *fselect*/)
 {
 	struct stat fileStat;
 	char **dirList = 0;
@@ -5898,9 +6017,9 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 				  chtype key)
 {
 	/* *INDENT-EQLS* */
-	CDKFSELECT *fselect  = (CDKFSELECT *)clientData;
-	CDKSCROLL *scrollp   = (CDKSCROLL *)fselect->scrollField;
-	CDKENTRY *entry      = (CDKENTRY *)fselect->entryField;
+	SFSelect *fselect  = (SFSelect *)clientData;
+	SScroll *scrollp   = (SScroll *)fselect->scrollField;
+	SEntry *entry      = (SEntry *)fselect->entryField;
 	if (scrollp->listSize > 0) {
 		char *current;
 		char *temp;
@@ -6077,10 +6196,10 @@ void freeCharList (char **list, unsigned size)
 /*
  * This erases the file selector from the screen.
  */
-void SFileSelector::eraseCDKFselect(/*CDKOBJS *object*/)
+void SFSelect::eraseCDKFselect(/*CDKOBJS *object*/)
 {
 	//   if (validCDKObject (object)) {
-	//      CDKFSELECT *fselect = (CDKFSELECT *)object;
+	//      SFSelect *fselect = (SFSelect *)object;
 	scrollField->eraseCDKScroll(/*fselect->scrollField*/);
 	entryField->eraseCDKEntry(/*fselect->entryField*/);
 	eraseCursesWindow(/*fselect->*/win);
@@ -6090,7 +6209,7 @@ void SFileSelector::eraseCDKFselect(/*CDKOBJS *object*/)
 /*
  * This function sets the information inside the file selector.
  */
-void SFileSelector::setCDKFselect(/*CDKFSELECT *fselect,*/
+void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 		    const char *directory,
 		    chtype fieldAttrib,
 		    chtype pfiller,
@@ -6102,8 +6221,8 @@ void SFileSelector::setCDKFselect(/*CDKFSELECT *fselect,*/
 		    bool Box GCC_UNUSED)
 {
 	/* *INDENT-EQLS* */
-	CDKSCROLL *fscroll   = this->scrollField;
-	CDKENTRY *fentry     = this->entryField;
+	SScroll *fscroll   = this->scrollField;
+	SEntry *fentry     = this->entryField;
 	char *tempDir        = 0;
 	/* Keep the info sent to us. */
 	this->fieldAttribute = fieldAttrib;
@@ -6206,7 +6325,7 @@ void SFileSelector::setCDKFselect(/*CDKFSELECT *fselect,*/
 /*
  * Return the plain string that corresponds to an item in dirContents[].
  */
-char *SFileSelector::contentToPath(/*CDKFSELECT *fselect, */char *content)
+char *SFSelect::contentToPath(/*SFSelect *fselect, */char *content)
 {
    chtype *tempChtype;
    char *tempChar;
@@ -6236,9 +6355,9 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 			       chtype key GCC_UNUSED)
 {
 	/* *INDENT-EQLS* */
-	CDKFSELECT *fselect  = (CDKFSELECT *)clientData;
-	CDKSCROLL *scrollp   = fselect->scrollField;
-	CDKENTRY *entry      = fselect->entryField;
+	SFSelect *fselect  = (SFSelect *)clientData;
+	SScroll *scrollp   = fselect->scrollField;
+	SEntry *entry      = fselect->entryField;
 	char *filename       = copyChar (entry->info);
 	char *mydirname      = dirName (filename);
 	char *newFilename    = 0;
@@ -6446,9 +6565,9 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 			      void *clientData,
 			      chtype key GCC_UNUSED)
 {
-	CDKENTRY *entry = (CDKENTRY *)object;
-	CDKFSELECT *fselect = (CDKFSELECT *)clientData;
-	CDKLABEL *infoLabel;
+	SEntry *entry = (SEntry *)object;
+	SFSelect *fselect = (SFSelect *)clientData;
+	SLabel *infoLabel;
 	struct stat fileStat;
 #ifdef HAVE_PWD_H
 	struct passwd *pwEnt;
@@ -6536,9 +6655,9 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 /*
  * This creates a file selection widget.
  */
-//CDKFSELECT *newCDKFselect (
-SFileSelector::SFileSelector(
-		CDKSCREEN *cdkscreen,
+//SFSelect *newCDKFselect (
+SFSelect::SFSelect(
+		SScreen *cdkscreen,
 		int xplace,
 		int yplace,
 		int height,
@@ -6558,7 +6677,7 @@ SFileSelector::SFileSelector(
 {
 	cdktype = vFSELECT;
 	/* *INDENT-EQLS* */
-//	CDKFSELECT *fselect  = 0;
+//	SFSelect *fselect  = 0;
 	int parentWidth      = getmaxx (cdkscreen->window);
 	int parentHeight     = getmaxy (cdkscreen->window);
 	int boxWidth;
@@ -6582,7 +6701,7 @@ SFileSelector::SFileSelector(
 	};
 	/* *INDENT-ON* */
 
-//	if ((fselect = newCDKObject (CDKFSELECT, &my_funcs)) == 0) return (0);
+//	if ((fselect = newCDKObject (SFSelect, &my_funcs)) == 0) return (0);
 	::CDKOBJS();
 
 	setBox(Box);
@@ -6658,7 +6777,7 @@ SFileSelector::SFileSelector(
 				      Box, FALSE,highnr);
 
    /* Make sure the widget was created. */
-   if (this->entryField == 0) {
+   if (!this->entryField) {
       destroyCDKObject();
       return ;
    }
@@ -6670,32 +6789,32 @@ SFileSelector::SFileSelector(
    //setCDKEntryLRChar (this->entryField, ACS_RTEE);
 
    /* Define the callbacks for the entry field. */
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField,*/
 		  KEY_UP,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField,*/
 		  KEY_PPAGE,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField,*/
 		  KEY_DOWN,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField, */
 		  KEY_NPAGE,
 		  fselectAdjustScrollCB,
 		  this);
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField,*/
 		  KEY_TAB,
 		  completeFilenameCB,
 		  this);
-   bindCDKObject(/*vENTRY,
+   entryField->bindCDKObject(/*vENTRY,
 		  this->entryField,*/
 		  CTRL ('^'),
 		  displayFileInfoCB,
