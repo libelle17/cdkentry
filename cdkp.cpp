@@ -1186,11 +1186,10 @@ int searchList(CDK_CSTRING2 list, int listSize, const char *pattern)
 {
 	int Index = -1;
 	/* Make sure the pattern isn't null. */
-	if (pattern != 0) {
+	if (pattern) {
 		size_t len = strlen(pattern);
-		int x;
 		/* Cycle through the list looking for the word. */
-		for (x = 0; x < listSize; x++) {
+		for (int x = 0; x < listSize; x++) {
 			/* Do a string compare. */
 			int ret = strncmp(list[x], pattern, len);
 			/*
@@ -2312,8 +2311,11 @@ void SScroll::moveCDKScroll(
 
 void SAlphalist::destroyInfo()
 {
-   CDKfreeStrings(list);
-   list = 0;
+#ifdef pneu
+	plist.clear();
+#endif
+   CDKfreeStrings(slist);
+   slist = 0;
    listSize = 0;
 }
 
@@ -3763,7 +3765,7 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 			if (status) {
 				destroyInfo();
 				this->listSize = listSize;
-				this->list = newlist;
+				this->slist = newlist;
 			} else {
 				CDKfreeStrings(newlist);
 			}
@@ -3979,7 +3981,7 @@ void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
       return;
    /* Set the information in the scrolling list. */
    scrollField->setCDKScroll(
-		 (CDK_CSTRING2)this->list,
+		 (CDK_CSTRING2)this->slist,
 		 this->listSize,
 		 NONUMBERS,
 		 scrollField->highlight,
@@ -3998,7 +4000,7 @@ void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
 char **SAlphalist::getCDKAlphalistContents(int *size)
 {
    (*size) = listSize;
-   return list;
+   return slist;
 }
 
 /*
@@ -4013,7 +4015,7 @@ void SAlphalist::setCDKAlphalistCurrentItem(int item)
 {
    if (this->listSize) {
       scrollField->setCDKScrollCurrent(item);
-      entryField->setCDKEntryValue(this->list[scrollField->currentItem]);
+      entryField->setCDKEntryValue(this->slist[scrollField->currentItem]);
    }
 }
 
@@ -4175,7 +4177,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
    }
 
    /* Look for a unique word match. */
-   Index = searchList((CDK_CSTRING2)alphalist->list, alphalist->listSize, entry->info);
+   Index = searchList((CDK_CSTRING2)alphalist->slist, alphalist->listSize, entry->info);
 
    /* If the index is less than zero, return we didn't find a match. */
    if (Index < 0) {
@@ -4185,13 +4187,13 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 
    /* Did we find the last word in the list? */
    if (Index == alphalist->listSize - 1) {
-      entry->setCDKEntryValue(alphalist->list[Index]);
+      entry->setCDKEntryValue(alphalist->slist[Index]);
       entry->drawObj(box);
       return TRUE;
    }
 
    /* Ok, we found a match, is the next item similar? */
-   ret = strncmp (alphalist->list[Index + 1], entry->info, (size_t) wordLength);
+   ret = strncmp (alphalist->slist[Index + 1], entry->info, (size_t) wordLength);
 	 if (!ret) {
 		 int currentIndex = Index;
 		 int altCount = 0;
@@ -4204,11 +4206,11 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 		 /* Start looking for alternate words. */
 		 /* FIXME: bsearch would be more suitable */
 		 while ((currentIndex < alphalist->listSize)
-				 && (strncmp (alphalist->list[currentIndex],
+				 && (strncmp (alphalist->slist[currentIndex],
 						 entry->info,
 						 (size_t) wordLength) == 0)) {
 			 used = CDKallocStrings(&altWords,
-					 alphalist->list[currentIndex++],
+					 alphalist->slist[currentIndex++],
 					 (unsigned)altCount++,
 					 used);
 		 }
@@ -4269,7 +4271,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 	 } else {
 		 /* Set the entry field with the found item. */
 		 entry->setCDKEntry(
-				 alphalist->list[Index],
+				 alphalist->slist[Index],
 				 entry->min,
 				 entry->max,
 				 ObjOf (entry)->box);
@@ -4373,7 +4375,7 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 			Beep ();
 		} else if (!strlen (pattern)) {
 			empty = TRUE;
-		} else if ((Index = searchList ((CDK_CSTRING2)alphalist->list,
+		} else if ((Index = searchList((CDK_CSTRING2)alphalist->slist,
 						alphalist->listSize,
 						pattern)) >= 0) {
 			/* *INDENT-EQLS* */

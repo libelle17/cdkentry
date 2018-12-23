@@ -19,11 +19,18 @@ char *XCursesProgramName = "entry_ex";
 using namespace std;
 vector<string> erg;
 
-
+#ifdef pneu
+set<string> userpList,myUserpList;
+#else
+#endif
 static char **myUserList = 0;
 char **userList              = 0;
 static int userSize;
 
+
+#ifdef pneu
+vector<string> myUndopList;
+#endif
 struct UNDO
 {
 	int deleted;			/* index in current list which is deleted */
@@ -31,7 +38,6 @@ struct UNDO
 	int position;		/* position before delete */
 	int topline;			/* top-line before delete */
 };
-
 static UNDO *myUndoList;
 static int undoSize;
 
@@ -48,18 +54,29 @@ static int XXXCB(EObjectType cdktype GCC_UNUSED,
 	return(TRUE);
 }
 
+#ifdef pneu
+static int getUserList(set<string> *plist)
+{
+	int x{0};
+#if defined (HAVE_PWD_H)
+	struct passwd *ent;
+  while ((ent=getpwent())) {
+		plist->insert(ent->pw_name);
+		++x;
+	}
+#endif
+ return x;
+}
+#endif
 /*
  * This reads the passwd file and retrieves user information.
  */
 static int getUserList(char ***list)
 {
-#if defined (HAVE_PWD_H)
-	struct passwd *ent;
-#endif
 	int x = 0;
-	unsigned used = 0;
-
 #if defined (HAVE_PWD_H)
+	unsigned used = 0;
+	struct passwd *ent;
 	while ((ent = getpwent())) {
 		used = CDKallocStrings(list, ent->pw_name,(unsigned)x++, used);
 	}
@@ -68,20 +85,22 @@ static int getUserList(char ***list)
 	return x;
 }
 
-
+#define brauchtsaano
+#ifdef brauchtsaano
 static void fill_undo(SAlphalist *widget, int deleted, char *data)
 {
 //	int top = getCDKScrollCurrentTop(widget->scrollField);
 	int top=widget->scrollField->currentTop;
-//	int item = getCDKAlphalistCurrentItem(widget);
+//	int item = widget->getCDKAlphalistCurrentItem();
 	int item=widget->scrollField->currentItem;
-	int n;
-
+#ifdef pneu
+	myUndopList.push_back(string(data));
+#endif
 	myUndoList[undoSize].deleted = deleted;
 	myUndoList[undoSize].topline = top;
 	myUndoList[undoSize].original = -1;
 	myUndoList[undoSize].position = item;
-	for (n = 0; n < userSize; ++n) {
+	for (int n = 0; n < userSize; ++n) {
 		if (!strcmp(myUserList[n], data)) {
 			myUndoList[undoSize].original = n;
 			break;
@@ -89,28 +108,27 @@ static void fill_undo(SAlphalist *widget, int deleted, char *data)
 	}
 	++undoSize;
 }
-#ifdef brauchtsaano
 #define CB_PARAMS EObjectType cdktype GCC_UNUSED, void* object GCC_UNUSED, void* clientdata GCC_UNUSED, chtype key GCC_UNUSED
 static int do_delete(CB_PARAMS)
 {
 	SAlphalist *widget = (SAlphalist *)clientdata;
 	int size;
-	char **list = getCDKAlphalistContents(widget, &size);
+	char **list = widget->getCDKAlphalistContents(&size);
 	int result = FALSE;
 
 	if (size) {
 //		int save = getCDKScrollCurrentTop(widget->scrollField);
 		int save=widget->scrollField->currentTop;
-		int first = getCDKAlphalistCurrentItem(widget);
+		int first = widget->getCDKAlphalistCurrentItem();
 		int n;
 
 		fill_undo(widget, first, list[first]);
 		for (n = first; n < size; ++n)
 			list[n] = list[n + 1];
-		setCDKAlphalistContents(widget,(CDK_CSTRING *)list, size - 1);
-		setCDKScrollCurrentTop(widget->scrollField, save);
-		setCDKAlphalistCurrentItem(widget, first);
-		drawCDKAlphalist(widget, BorderOf(widget));
+		widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
+		widget->scrollField->setCDKScrollCurrentTop(save);
+		widget->setCDKAlphalistCurrentItem(first);
+		widget->drawCDKAlphalist(BorderOf(widget));
 		result = TRUE;
 	}
 	return result;
@@ -120,23 +138,23 @@ static int do_delete1(CB_PARAMS)
 {
 	SAlphalist *widget =(SAlphalist *)clientdata;
 	int size;
-	char **list = getCDKAlphalistContents(widget, &size);
+	char **list = widget->getCDKAlphalistContents(&size);
 	int result = FALSE;
 
 	if (size) {
 //		int save = getCDKScrollCurrentTop(widget->scrollField);
 		int save=widget->scrollField->currentTop;
-		int first = getCDKAlphalistCurrentItem(widget);
+		int first = widget->getCDKAlphalistCurrentItem();
 
 		if (first-- > 0) {
 			int n;
-			fill_undo (widget, first, list[first]);
+			fill_undo(widget, first, list[first]);
 			for (n = first; n < size; ++n)
 				list[n] = list[n + 1];
-			setCDKAlphalistContents(widget,(CDK_CSTRING *)list, size - 1);
-			setCDKScrollCurrentTop(widget->scrollField, save);
-			setCDKAlphalistCurrentItem(widget, first);
-			drawCDKAlphalist(widget, BorderOf(widget));
+			widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
+			widget->scrollField->setCDKScrollCurrentTop(save);
+			widget->setCDKAlphalistCurrentItem(first);
+			widget->drawCDKAlphalist(BorderOf(widget));
 			result = TRUE;
 		}
 	}
@@ -155,7 +173,7 @@ static int do_help(CB_PARAMS)
 		"F5 = undo deletion",
 		0
 	};
-	popupLabel(allgscr,
+	allgscr->popupLabel(
 			(CDK_CSTRING2)message,
 			(int)CDKcountStrings ((CDK_CSTRING2)message));
 	return TRUE;
@@ -166,9 +184,9 @@ static int do_reload(CB_PARAMS)
 	int result = FALSE;
 	if (userSize) {
 		SAlphalist *widget = (SAlphalist *)clientdata;
-		setCDKAlphalistContents(widget,(CDK_CSTRING *)myUserList, userSize);
-		setCDKAlphalistCurrentItem(widget, 0);
-		drawCDKAlphalist(widget, BorderOf(widget));
+		widget->setCDKAlphalistContents((CDK_CSTRING *)myUserList, userSize);
+		widget->setCDKAlphalistCurrentItem(0);
+		widget->drawCDKAlphalist(BorderOf(widget));
 		result = TRUE;
 	}
 	return result;
@@ -180,9 +198,13 @@ static int do_undo(CB_PARAMS)
 
 	if (undoSize > 0) {
 		SAlphalist *widget =(SAlphalist *)clientdata;
+#ifdef pneu
+		string zruck=*myUndopList.erase(myUndopList.end()-1);
+	  widget->plist.insert(zruck);
+#endif
 		int size;
 		int n;
-		char **oldlist = getCDKAlphalistContents(widget, &size);
+		char **oldlist = widget->getCDKAlphalistContents(&size);
 		char **newlist =(char **)malloc((size_t)(++size + 1) * sizeof(char *));
 
 		--undoSize;
@@ -195,10 +217,10 @@ static int do_undo(CB_PARAMS)
 			newlist[n] = copyChar(oldlist[n]);
 			--n;
 		}
-		setCDKAlphalistContents(widget,(CDK_CSTRING *)newlist, size);
-		setCDKScrollCurrentTop(widget->scrollField, myUndoList[undoSize].topline);
-		setCDKAlphalistCurrentItem(widget, myUndoList[undoSize].position);
-		drawCDKAlphalist(widget, BorderOf(widget));
+		widget->setCDKAlphalistContents((CDK_CSTRING *)newlist, size);
+		widget->scrollField->setCDKScrollCurrentTop(myUndoList[undoSize].topline);
+		widget->setCDKAlphalistCurrentItem(myUndoList[undoSize].position);
+		widget->drawCDKAlphalist(BorderOf(widget));
 		free(newlist);
 		result = TRUE;
 	}
@@ -290,11 +312,18 @@ int main(int argc, char **argv)
 	SScreen *cdkscreen = 0;
 
 	/* Get the user list. */
+#ifdef pneu
+	userSize=getUserList(&userpList);
+#endif
 	userSize = getUserList(&userList);
 	if (userSize <= 0) {
 		fprintf(stderr, "Cannot get user list\n");
 		ExitProgram(EXIT_FAILURE);
 	}
+#ifdef pneu
+	myUserpList = userpList;
+	
+#endif
 	myUserList = copyCharList((const char **)userList);
 	myUndoList = (UNDO *) malloc((size_t) userSize * sizeof(UNDO));
 	undoSize = 0;

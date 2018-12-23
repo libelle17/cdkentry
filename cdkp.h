@@ -18,6 +18,7 @@
 #include <curses.h>
 #endif
 #include <map> // bindv
+#include <set> // plist
 
 //#include "cdk_test.h"
 #ifndef CDKINCLUDES
@@ -1019,8 +1020,13 @@ struct SAlphalist:CDKOBJS
    WINDOW*	shadowWin;
    SEntry*	entryField;
    SScroll*	scrollField;
-   char **	list=0;
+#define pneu
+//#ifdef pneu
+	 std::set<std::string> plist;
+//#else
+   char **	slist=0;
    int		listSize;
+//#endif
    int		xpos;
    int		ypos;
    int		height;
