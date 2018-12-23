@@ -2593,12 +2593,14 @@ void CDKOBJS::bindCDKObject(
 		    void *data)
 {
 	CDKOBJS *obj = bindableObject();
+#ifdef bneu
 	if (obj) {
-		bindv[key]=CDKBINDING(function,data);
-		if (bindv.find(key)->second==false) {
-			bindv.insert(make_pair(CDKBINDING(function,data),key));
+		if (key==9) {
+			int test{0};
 		}
+		obj->bindv[key]=CDKBINDING(function,data);
 	}
+#else
 	if ((key < KEY_MAX) && obj) {
 		if (key && (unsigned)key >= obj->bindingCount) {
 			unsigned next = (unsigned) (key + 1);
@@ -2614,6 +2616,7 @@ void CDKOBJS::bindCDKObject(
 			obj->bindingList[key].bindData = data;
 		}
 	}
+#endif
 }
 
 /*
@@ -2622,10 +2625,16 @@ void CDKOBJS::bindCDKObject(
 void CDKOBJS::unbindCDKObject(chtype key)
 {
 	CDKOBJS *obj = bindableObject();
+#ifdef bneu
+	if (obj) {
+		obj->bindv.erase(key);
+	}
+#else
 	if (obj && ((unsigned)key < obj->bindingCount)) {
 		obj->bindingList[key].bindFunction = 0;
 		obj->bindingList[key].bindData = 0;
 	}
+#endif
 }
 
 /*
@@ -2633,7 +2642,12 @@ void CDKOBJS::unbindCDKObject(chtype key)
  */
 void CDKOBJS::cleanCDKObjectBindings()
 {
-	CDKOBJS *obj = bindableObject ();
+	CDKOBJS *obj = bindableObject();
+#ifdef bneu
+	if (obj) {
+		obj->bindv.clear();
+	}
+#else
 	if (obj && obj->bindingList) {
 		for (unsigned x = 0; x < obj->bindingCount; x++) {
 			(obj)->bindingList[x].bindFunction = 0;
@@ -2641,6 +2655,7 @@ void CDKOBJS::cleanCDKObjectBindings()
 		}
 		freeAndNull((obj)->bindingList);
 	}
+#endif
 }
 
 
@@ -2653,6 +2668,15 @@ void CDKOBJS::cleanCDKObjectBindings()
 int CDKOBJS::checkCDKObjectBind(chtype key)
 {
 	CDKOBJS *obj = bindableObject();
+#ifdef bneu
+	if (obj) {
+		if (obj->bindv.find(key)!=obj->bindv.end()) {
+			BINDFN function=obj->bindv[key].bindFunction;
+			void *data=obj->bindv[key].bindData;
+			return function(cdktype, this, data, key);
+		}
+	}
+#else
 	if (obj && ((unsigned)key < obj->bindingCount)) {
 		if ((obj)->bindingList[key].bindFunction) {
 			BINDFN function = obj->bindingList[key].bindFunction;
@@ -2660,6 +2684,7 @@ int CDKOBJS::checkCDKObjectBind(chtype key)
 			return function(cdktype, this, data, key);
 		}
 	}
+#endif
 	return (FALSE);
 }
 
@@ -2670,10 +2695,18 @@ bool CDKOBJS::isCDKObjectBind(chtype key)
 {
 	bool result = FALSE;
 	CDKOBJS *obj = bindableObject();
+#ifdef bneu
+	if (obj) {
+		if (obj->bindv.find(key)!=obj->bindv.end()) {
+			result=TRUE;
+		}
+	}
+#else
 	if (obj && ((unsigned)key < obj->bindingCount)) {
 		if ((obj)->bindingList[key].bindFunction)
 			result = TRUE;
 	}
+#endif
 	return (result);
 }
 
@@ -2703,14 +2736,15 @@ int CDKOBJS::getcCDKObject()
 	CDKOBJS *test = bindableObject();
 	int result = wgetch(InputWindowOf (this));
 	// printf("%c %ul\n",result,result); //G.Schade
-	if (result >= 0
-			&& test
-			&& (unsigned)result < test->bindingCount
-			&& test->bindingList[result].bindFunction == getcCDKBind) {
-		result = (int)(long)test->bindingList[result].bindData;
-	} else if (!test 
-			|| (unsigned)result >= test->bindingCount
-			|| !test->bindingList[result].bindFunction) {
+#ifdef bneu
+	BINDFN fn{0};
+	CDKBINDING *bnd{0}; 
+	if (result>=0 && test) {
+		bindvit=test->bindv.find(result);
+	}
+	if (result>=0 && test && bindvit!=test->bindv.end() && bindvit->second.bindFunction == getcCDKBind) {
+		result=(int)(long)test->bindv[result].bindData;
+	} else if (!test || bindvit==test->bindv.end() || !bindvit->second.bindFunction) {
 		switch (result) {
 			case '\r':
 			case '\n':
@@ -2745,6 +2779,50 @@ int CDKOBJS::getcCDKObject()
 				break;
 		}
 	}
+#else
+	if (result >= 0
+			&& test
+			&& (unsigned)result < test->bindingCount
+			&& test->bindingList[result].bindFunction == getcCDKBind) {
+		result = (int)(long)test->bindingList[result].bindData;
+	} else if (!test 
+			|| (unsigned)result >= test->bindingCount
+			|| !test->bindingList[result].bindFunction) {
+		switch (result) {
+			case '\r':
+			case '\n':
+				result = KEY_ENTER;
+				break;
+			case '\t':
+				result = KEY_TAB;
+				break;
+			case DELETE:
+				result = KEY_DC;
+				break;
+			case '\b':		// same as CTRL('H'), for ASCII 
+				result = KEY_BACKSPACE;
+				break;
+			case CDK_BEGOFLINE:
+				result = KEY_HOME;
+				break;
+			case CDK_ENDOFLINE:
+				result = KEY_END;
+				break;
+			case CDK_FORCHAR:
+				result = KEY_RIGHT;
+				break;
+			case CDK_BACKCHAR:
+				result = KEY_LEFT;
+				break;
+			case CDK_NEXT:
+				result = KEY_TAB;
+				break;
+			case CDK_PREV:
+				result = KEY_BTAB;
+				break;
+		}
+	}
+#endif
 	return result;
 } // int CDKOBJS::getcCDKObject()
 

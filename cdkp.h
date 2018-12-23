@@ -629,9 +629,14 @@ struct CDKOBJS
    WINDOW *     inputWindow;
    void *       dataPtr;
    CDKDataUnion resultData;
+#define bneu
+#ifdef bneu
+	 std::map<chtype,CDKBINDING> bindv;
+	 std::map<chtype,CDKBINDING>::const_iterator bindvit;
+#else
    unsigned     bindingCount=0;
    CDKBINDING * bindingList=0;
-	 std::map<chtype,CDKBINDING> bindv;
+#endif
    /* title-drawing */
    chtype **	title=0;
    int *	titlePos=0;

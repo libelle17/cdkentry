@@ -60,8 +60,7 @@ static int getUserList(char ***list)
 	unsigned used = 0;
 
 #if defined (HAVE_PWD_H)
-	while ((ent = getpwent()) != 0)
-	{
+	while ((ent = getpwent())) {
 		used = CDKallocStrings(list, ent->pw_name,(unsigned)x++, used);
 	}
 	endpwent();
@@ -165,7 +164,6 @@ static int do_help(CB_PARAMS)
 static int do_reload(CB_PARAMS)
 {
 	int result = FALSE;
-
 	if (userSize) {
 		SAlphalist *widget = (SAlphalist *)clientdata;
 		setCDKAlphalistContents(widget,(CDK_CSTRING *)myUserList, userSize);
