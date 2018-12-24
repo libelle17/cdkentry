@@ -583,7 +583,11 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 			   void *clientData,
 			   chtype key GCC_UNUSED);
 char *chtype2Char (const chtype *string);
-int searchList(CDK_CSTRING2 list, int listSize, const char *pattern);
+int searchList(
+#ifdef pneu
+		std::set<std::string> *plistp,
+#endif
+		CDK_CSTRING2 list, int listSize, const char *pattern);
 unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned used);
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
 void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
@@ -1021,9 +1025,10 @@ struct SAlphalist:CDKOBJS
    SEntry*	entryField;
    SScroll*	scrollField;
 #define pneu
-//#ifdef pneu
+#ifdef pneu
 	 std::set<std::string> plist;
 //#else
+#endif
    char **	slist=0;
    int		listSize;
 //#endif
@@ -1045,6 +1050,9 @@ struct SAlphalist:CDKOBJS
 			 int width,
 			 const char *title,
 			 const char *label,
+#ifdef pneu
+			 std::set<std::string> *plistp,
+#endif
 			 CDK_CSTRING *list,
 			 int listSize,
 			 chtype fillerChar,
@@ -1068,8 +1076,16 @@ struct SAlphalist:CDKOBJS
 	 void eraseCDKAlphalist();
 	 void eraseObj(){eraseCDKAlphalist();}
 	 void destroyInfo();
-	 void setCDKAlphalist(CDK_CSTRING *list, int listSize, chtype fillerChar, chtype highlight, bool Box);
-	 void setCDKAlphalistContents (CDK_CSTRING *list, int listSize);
+	 void setCDKAlphalist(
+#ifdef pneu
+			 std::set<std::string> *plistp,
+#endif
+			 CDK_CSTRING *list, int listSize, chtype fillerChar, chtype highlight, bool Box);
+	 void setCDKAlphalistContents(
+#ifdef pneu
+		      std::set<std::string> *plistp,
+#endif
+			 CDK_CSTRING *list, int listSize);
 	 char **getCDKAlphalistContents(int *size);
 	 int getCDKAlphalistCurrentItem();
 	 void setCDKAlphalistCurrentItem(int item);

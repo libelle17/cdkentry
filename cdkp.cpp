@@ -1182,22 +1182,39 @@ void sortList(CDK_CSTRING *list, int length)
 /*
  * This looks for a subset of a word in the given list.
  */
-int searchList(CDK_CSTRING2 list, int listSize, const char *pattern)
+int searchList(
+#ifdef pneu
+		set<string> *plistp,
+#endif
+		CDK_CSTRING2 list, int listSize, const char *pattern)
 {
 	int Index = -1;
 	/* Make sure the pattern isn't null. */
 	if (pattern) {
 		size_t len = strlen(pattern);
 		/* Cycle through the list looking for the word. */
-		for (int x = 0; x < listSize; x++) {
-			/* Do a string compare. */
-			int ret = strncmp(list[x], pattern, len);
-			/*
-			 * If 'ret' is less than 0, then the current word is alphabetically
-			 * less than the provided word.  At this point we will set the index
-			 * to the current position.  If 'ret' is greater than 0, then the
-			 * current word is alphabetically greater than the given word.  We
-			 * should return with index, which might contain the last best match. 
+#ifdef pneu
+		int x=0;
+		for(set<string>::const_iterator it0=plistp->begin();it0!=plistp->end();++x,++it0) {
+			const int ret{strncmp(it0->c_str(),pattern,len)};
+			if (ret<0) {
+				Index=ret;
+			} else {
+				if (!ret) Index=x;
+				break;
+			}
+		}
+#else
+#endif
+	for (int x = 0; x < listSize; x++) {
+		/* Do a string compare. */
+		int ret = strncmp(list[x], pattern, len);
+		/*
+		 * If 'ret' is less than 0, then the current word is alphabetically
+		 * less than the provided word.  At this point we will set the index
+		 * to the current position.  If 'ret' is greater than 0, then the
+		 * current word is alphabetically greater than the given word.  We
+		 * should return with index, which might contain the last best match. 
 			 * If they are equal, then we've found it.
 			 */
 			if (ret < 0) {
@@ -3741,7 +3758,9 @@ void CDKOBJS::saveDataCDK()
 {
 }
 
-
+#ifdef pneu
+#else
+#endif
 int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 {
 	int status = 0;
@@ -3879,13 +3898,20 @@ int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
  * This sets multiple attributes of the widget.
  */
 void SAlphalist::setCDKAlphalist(
+#ifdef pneu
+		      set<string> *plistp,
+#endif
 		      CDK_CSTRING *list,
 		      int listSize,
 		      chtype fillerChar,
 		      chtype highlight,
 		      bool Box)
 {
-   setCDKAlphalistContents(list, listSize);
+   setCDKAlphalistContents(
+#ifdef pneu
+			 plistp,
+#endif
+			 list, listSize);
    setCDKAlphalistFillerChar(fillerChar);
    setCDKAlphalistHighlight(highlight);
    setBox/*setCDKAlphalistBox*/(Box);
@@ -3975,8 +4001,15 @@ void SScroll::setCDKScrollPosition(int item)
 /*
  * This function sets the information inside the file selector.
  */
-void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
+void SAlphalist::setCDKAlphalistContents(
+#ifdef pneu
+		      set<string> *plistp,
+#endif
+		CDK_CSTRING *list, int listSize)
 {
+#ifdef pneu
+	 plist=*plistp;
+#endif
    if (!createList(list, listSize))
       return;
    /* Set the information in the scrolling list. */
@@ -3994,6 +4027,9 @@ void SAlphalist::setCDKAlphalistContents(CDK_CSTRING *list, int listSize)
    this->drawCDKAlphalist(box);
 }
 
+#ifdef pneu
+#else
+#endif
 /*
  * This returns the contents of the widget.
  */
@@ -4015,6 +4051,9 @@ void SAlphalist::setCDKAlphalistCurrentItem(int item)
 {
    if (this->listSize) {
       scrollField->setCDKScrollCurrent(item);
+#ifdef pneu
+			entryField->setCDKEntryValue(next(plist.begin(),item)->c_str());
+#endif
       entryField->setCDKEntryValue(this->slist[scrollField->currentItem]);
    }
 }
@@ -4177,7 +4216,11 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
    }
 
    /* Look for a unique word match. */
-   Index = searchList((CDK_CSTRING2)alphalist->slist, alphalist->listSize, entry->info);
+   Index = searchList(
+#ifdef pneu
+		&alphalist->plist,
+#endif
+			 (CDK_CSTRING2)alphalist->slist, alphalist->listSize, entry->info);
 
    /* If the index is less than zero, return we didn't find a match. */
    if (Index < 0) {
@@ -4375,7 +4418,11 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 			Beep ();
 		} else if (!strlen (pattern)) {
 			empty = TRUE;
-		} else if ((Index = searchList((CDK_CSTRING2)alphalist->slist,
+		} else if ((Index = searchList(
+#ifdef pneu
+		&alphalist->plist,
+#endif
+						(CDK_CSTRING2)alphalist->slist,
 						alphalist->listSize,
 						pattern)) >= 0) {
 			/* *INDENT-EQLS* */
@@ -4427,7 +4474,10 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 			       int width,
 			       const char *title,
 			       const char *label,
-			       CDK_CSTRING *list,
+#ifdef pneu
+						 set<string> *plistp,
+#endif
+			       CDK_CSTRING *slist,
 			       int listSize,
 			       chtype fillerChar,
 			       chtype phighlight,
@@ -4436,7 +4486,7 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 						 // GSchade Anfang
 						 int highnr/*=0*/
 						 // GSchade Ende
-		):xpos(xplace),ypos(yplace),highlight(phighlight),fillerChar(fillerChar),shadow(shadow)
+		):xpos(xplace),ypos(yplace),highlight(phighlight),fillerChar(fillerChar),shadow(shadow),plist(*plistp)
 {
 	cdktype = vALPHALIST;
 	/* *INDENT-EQLS* */
@@ -4455,7 +4505,10 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 	/* *INDENT-ON* */
 
 	::CDKOBJS();
-	if (/*(alphalist = newCDKObject (SAlphalist, &my_funcs)) == 0 || */ !createList(list, listSize)) {
+#ifdef pneu
+#else
+#endif
+	if (/*(alphalist = newCDKObject (SAlphalist, &my_funcs)) == 0 || */ !createList(slist, listSize)) {
 		destroyCDKObject();
 		return;
 	}
@@ -4567,7 +4620,7 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 			RIGHT,
 			boxHeight - tempHeight,
 			tempWidth,
-			0, (CDK_CSTRING2)list, listSize,
+			0, (CDK_CSTRING2)slist, listSize,
 			NONUMBERS, A_REVERSE,
 			Box, FALSE);
 //	setCDKScrollULChar (this->scrollField, ACS_LTEE);
@@ -6493,13 +6546,20 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 
 	/* Create the file list. */
 	if ((list = typeMallocN (char *, fselect->fileCounter)) != 0) {
+#ifdef pneu
+		set<string> plist;
+#endif
 		int Index, x;
 		for (x = 0; x < fselect->fileCounter; x++) {
 			list[x] = fselect->contentToPath (/*fselect, */fselect->dirContents[x]);
 		}
 
 		/* Look for a unique filename match. */
-		Index = searchList ((CDK_CSTRING2)list, fselect->fileCounter, filename);
+		Index = searchList(
+#ifdef pneu
+		&plist,
+#endif
+				(CDK_CSTRING2)list, fselect->fileCounter, filename);
 		/* If the index is less than zero, return we didn't find a match. */
 		if (Index < 0) {
 			Beep ();

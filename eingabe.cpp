@@ -16,6 +16,8 @@ char *XCursesProgramName = "entry_ex";
 #endif
 #include <vector>
 #include <string>
+#include <cerrno>   // für errno, perror
+#include <iostream> // für cout
 using namespace std;
 vector<string> erg;
 
@@ -55,15 +57,17 @@ static int XXXCB(EObjectType cdktype GCC_UNUSED,
 }
 
 #ifdef pneu
-static int getUserList(set<string> *plist)
+static int getUserpList(set<string> *plist)
 {
 	int x{0};
 #if defined (HAVE_PWD_H)
+	endpwent();
 	struct passwd *ent;
   while ((ent=getpwent())) {
 		plist->insert(ent->pw_name);
 		++x;
 	}
+	endpwent();
 #endif
  return x;
 }
@@ -77,8 +81,13 @@ static int getUserList(char ***list)
 #if defined (HAVE_PWD_H)
 	unsigned used = 0;
 	struct passwd *ent;
+	errno=0;
+	endpwent();
 	while ((ent = getpwent())) {
 		used = CDKallocStrings(list, ent->pw_name,(unsigned)x++, used);
+	}
+	if (errno) {
+		perror("Fehler beim Benutzerholen");
 	}
 	endpwent();
 #endif
@@ -91,10 +100,10 @@ static void fill_undo(SAlphalist *widget, int deleted, char *data)
 {
 //	int top = getCDKScrollCurrentTop(widget->scrollField);
 	int top=widget->scrollField->currentTop;
-//	int item = widget->getCDKAlphalistCurrentItem();
-	int item=widget->scrollField->currentItem;
+	int item = widget->getCDKAlphalistCurrentItem();
 #ifdef pneu
 	myUndopList.push_back(string(data));
+	widget->plist.erase(next(widget->plist.begin(),item));
 #endif
 	myUndoList[undoSize].deleted = deleted;
 	myUndoList[undoSize].topline = top;
@@ -125,7 +134,11 @@ static int do_delete(CB_PARAMS)
 		fill_undo(widget, first, list[first]);
 		for (n = first; n < size; ++n)
 			list[n] = list[n + 1];
-		widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
+		widget->setCDKAlphalistContents(
+#ifdef pneu
+				&((SAlphalist*)widget)->plist,
+#endif
+				(CDK_CSTRING *)list, size - 1);
 		widget->scrollField->setCDKScrollCurrentTop(save);
 		widget->setCDKAlphalistCurrentItem(first);
 		widget->drawCDKAlphalist(BorderOf(widget));
@@ -151,7 +164,11 @@ static int do_delete1(CB_PARAMS)
 			fill_undo(widget, first, list[first]);
 			for (n = first; n < size; ++n)
 				list[n] = list[n + 1];
-			widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
+			widget->setCDKAlphalistContents(
+#ifdef pneu
+					&widget->plist,
+#endif
+					(CDK_CSTRING *)list, size - 1);
 			widget->scrollField->setCDKScrollCurrentTop(save);
 			widget->setCDKAlphalistCurrentItem(first);
 			widget->drawCDKAlphalist(BorderOf(widget));
@@ -184,7 +201,11 @@ static int do_reload(CB_PARAMS)
 	int result = FALSE;
 	if (userSize) {
 		SAlphalist *widget = (SAlphalist *)clientdata;
-		widget->setCDKAlphalistContents((CDK_CSTRING *)myUserList, userSize);
+		widget->setCDKAlphalistContents(
+#ifdef pneu
+					&widget->plist,
+#endif
+				(CDK_CSTRING *)myUserList, userSize);
 		widget->setCDKAlphalistCurrentItem(0);
 		widget->drawCDKAlphalist(BorderOf(widget));
 		result = TRUE;
@@ -217,10 +238,14 @@ static int do_undo(CB_PARAMS)
 			newlist[n] = copyChar(oldlist[n]);
 			--n;
 		}
-		widget->setCDKAlphalistContents((CDK_CSTRING *)newlist, size);
+		widget->setCDKAlphalistContents(
+#ifdef pneu
+					&widget->plist,
+#endif
+				(CDK_CSTRING *)newlist, size);
 		widget->scrollField->setCDKScrollCurrentTop(myUndoList[undoSize].topline);
 		widget->setCDKAlphalistCurrentItem(myUndoList[undoSize].position);
-		widget->drawCDKAlphalist(BorderOf(widget));
+		widget->drawCDKAlphalist(/*BorderOf(widget)*/widget->borderSize);
 		free(newlist);
 		result = TRUE;
 	}
@@ -313,7 +338,7 @@ int main(int argc, char **argv)
 
 	/* Get the user list. */
 #ifdef pneu
-	userSize=getUserList(&userpList);
+	userSize=getUserpList(&userpList);
 #endif
 	userSize = getUserList(&userList);
 	if (userSize <= 0) {
@@ -322,10 +347,9 @@ int main(int argc, char **argv)
 	}
 #ifdef pneu
 	myUserpList = userpList;
-	
 #endif
 	myUserList = copyCharList((const char **)userList);
-	myUndoList = (UNDO *) malloc((size_t) userSize * sizeof(UNDO));
+	myUndoList = (UNDO*)malloc((size_t) userSize * sizeof(UNDO));
 	undoSize = 0;
 	/*
 		 SEntry *directory  = 0,*file=0;
@@ -404,7 +428,12 @@ int main(int argc, char **argv)
 			case auswfld:
 				hk[aktent].eingabef=
 					//newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
-					new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
+					new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,
+#ifdef pneu
+						 &userpList,
+#endif
+							(CDK_CSTRING*)userList,userSize,
+							'.',A_REVERSE,0,0,hk[aktent].highinr);
 				break;
 			case eingfld:
 				hk[aktent].eingabef=
