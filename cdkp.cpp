@@ -1185,8 +1185,10 @@ void sortList(CDK_CSTRING *list, int length)
 int searchList(
 #ifdef pneu
 		set<string> *plistp,
+#else
+		CDK_CSTRING2 list, int listSize, 
 #endif
-		CDK_CSTRING2 list, int listSize, const char *pattern)
+		const char *pattern)
 {
 	int Index = -1;
 	/* Make sure the pattern isn't null. */
@@ -1205,7 +1207,6 @@ int searchList(
 			}
 		}
 #else
-#endif
 	for (int x = 0; x < listSize; x++) {
 		/* Do a string compare. */
 		int ret = strncmp(list[x], pattern, len);
@@ -1225,6 +1226,7 @@ int searchList(
 				break;
 			}
 		}
+#endif
 	}
 	return Index;
 }
@@ -1978,14 +1980,23 @@ void CDKOBJS::unregisterCDKObject(EObjectType cdktype/*, void *object*/)
 void SScroll::resequence(/*SScroll *scrollp*/)
 {
 	if (/*scrollp->*/numbers) {
-		int j, k;
-		for (j = 0; j < /*scrollp->*/listSize; ++j) {
+		int j{0};
+#ifdef pneu
+		for(piter=pitem.begin();piter!=pitem.end();++j,piter++) {
+#else
+		for (; j < /*scrollp->*/listSize; ++j) {
+#endif
 			char source[80];
-			chtype *target = /*scrollp->*/item[j];
-			sprintf (source, NUMBER_FMT, j + 1, "");
-			for (k = 0; source[k]; ++k) {
+			chtype *target =  // eigentlich const chtype *target
+#ifdef pneu
+				(chtype*)*piter;
+#else
+				/*scrollp->*/sitem[j];
+#endif
+			sprintf(source, NUMBER_FMT, j + 1, "");
+			for (int k = 0; source[k]; ++k) {
 				/* handle deletions that change the length of number */
-				if (source[k] == '.' && CharOf (target[k]) != '.') {
+				if (source[k] == '.' && CharOf(target[k]) != '.') {
 					int k2 = k;
 					while ((target[k2] = target[k2 + 1]))
 						++k2;
@@ -2001,7 +2012,7 @@ void SScroll::resequence(/*SScroll *scrollp*/)
 bool SScroll::insertListItem(/*SScroll *scrollp, */int inr)
 {
 	for (int x = /*scrollp->*/listSize; x > inr; --x) {
-		/*scrollp->*/item[x] = /*scrollp->*/item[x - 1];
+		/*scrollp->*/sitem[x] = /*scrollp->*/sitem[x - 1];
 		/*scrollp->*/itemLen[x] = /*scrollp->*/itemLen[x - 1];
 		/*scrollp->*/itemPos[x] = /*scrollp->*/itemPos[x - 1];
 	}
@@ -2066,10 +2077,10 @@ void SScroll::insertCDKScrollItem(/*SScroll *scrollp, */const char *item)
 void SScroll::deleteCDKScrollItem(/*SScroll *scrollp, */int position)
 {
 	if (position >= 0 && position < /*scrollp->*/listSize) {
-		freeChtype (/*scrollp->*/item[position]);
+		freeChtype (/*scrollp->*/sitem[position]);
 		/* Adjust the list. */
 		for (int x = position; x < /*scrollp->*/listSize; x++) {
-			/*scrollp->*/item[x] = /*scrollp->*/item[x + 1];
+			/*scrollp->*/sitem[x] = /*scrollp->*/sitem[x + 1];
 			/*scrollp->*/itemLen[x] = /*scrollp->*/itemLen[x + 1];
 			/*scrollp->*/itemPos[x] = /*scrollp->*/itemPos[x + 1];
 		}
@@ -2330,10 +2341,11 @@ void SAlphalist::destroyInfo()
 {
 #ifdef pneu
 	plist.clear();
-#endif
+#else
    CDKfreeStrings(slist);
    slist = 0;
    listSize = 0;
+#endif
 }
 
 SAlphalist::~SAlphalist()
@@ -2449,7 +2461,7 @@ SScroll::~SScroll(/*CDKOBJS *object*/)
 {
 		//SScroll *scrollp = (SScroll *)object;
 		cleanCdkTitle();
-		CDKfreeChtypes(this->item);
+		CDKfreeChtypes(this->sitem);
 		freeChecked(this->itemPos);
 		freeChecked(this->itemLen);
 		/* Clean up the windows. */
@@ -3760,7 +3772,6 @@ void CDKOBJS::saveDataCDK()
 
 #ifdef pneu
 #else
-#endif
 int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 {
 	int status = 0;
@@ -3795,6 +3806,7 @@ int SAlphalist::createList(CDK_CSTRING *list, int listSize)
 	}
 	return status;
 }
+#endif
 
 /*
  * The alphalist's focus resides in the entry widget.  But the scroll widget
@@ -3900,9 +3912,10 @@ int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
 void SAlphalist::setCDKAlphalist(
 #ifdef pneu
 		      set<string> *plistp,
-#endif
+#else
 		      CDK_CSTRING *list,
 		      int listSize,
+#endif
 		      chtype fillerChar,
 		      chtype highlight,
 		      bool Box)
@@ -3910,8 +3923,10 @@ void SAlphalist::setCDKAlphalist(
    setCDKAlphalistContents(
 #ifdef pneu
 			 plistp,
+#else
+			 list, listSize
 #endif
-			 list, listSize);
+			 );
    setCDKAlphalistFillerChar(fillerChar);
    setCDKAlphalistHighlight(highlight);
    setBox/*setCDKAlphalistBox*/(Box);
@@ -3936,7 +3951,7 @@ int SScroll::getCDKScrollItems(/*SScroll *scrollp, */char **list)
 {
 	if (list) {
 		for (int x = 0; x < /*scrollp->*/listSize; x++) {
-			list[x] = chtype2Char (/*scrollp->*/item[x]);
+			list[x] = chtype2Char (/*scrollp->*/sitem[x]);
 		}
 	}
 	return /*scrollp->*/listSize;
@@ -4004,14 +4019,17 @@ void SScroll::setCDKScrollPosition(int item)
 void SAlphalist::setCDKAlphalistContents(
 #ifdef pneu
 		      set<string> *plistp,
+#else
+		CDK_CSTRING *list, int listSize
 #endif
-		CDK_CSTRING *list, int listSize)
+		)
 {
 #ifdef pneu
 	 plist=*plistp;
-#endif
+#else
    if (!createList(list, listSize))
       return;
+#endif
    /* Set the information in the scrolling list. */
    scrollField->setCDKScroll(
 		 (CDK_CSTRING2)this->slist,
@@ -4027,16 +4045,27 @@ void SAlphalist::setCDKAlphalistContents(
    this->drawCDKAlphalist(box);
 }
 
-#ifdef pneu
-#else
-#endif
 /*
  * This returns the contents of the widget.
  */
-char **SAlphalist::getCDKAlphalistContents(int *size)
+#ifdef pneu
+set<string> *
+#else
+char ** 
+#endif
+SAlphalist::getCDKAlphalistContents(
+#ifdef pneu
+#else
+		int *size
+#endif
+		)
 {
+#ifdef pneu
+	return &plist;
+#else
    (*size) = listSize;
    return slist;
+#endif
 }
 
 /*
@@ -4053,8 +4082,9 @@ void SAlphalist::setCDKAlphalistCurrentItem(int item)
       scrollField->setCDKScrollCurrent(item);
 #ifdef pneu
 			entryField->setCDKEntryValue(next(plist.begin(),item)->c_str());
-#endif
+#else
       entryField->setCDKEntryValue(this->slist[scrollField->currentItem]);
+#endif
    }
 }
 
@@ -4179,7 +4209,7 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
       /* Adjust the scrolling list. */
       alphalist->injectMyScroller(key);
       /* Set the value in the entry field. */
-      current = chtype2Char(scrollp->item[scrollp->currentItem]);
+      current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
       entry->setCDKEntryValue(current);
       entry->drawObj(box);
       freeChecked(current);
@@ -4219,8 +4249,10 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
    Index = searchList(
 #ifdef pneu
 		&alphalist->plist,
+#else
+			 (CDK_CSTRING2)alphalist->slist, alphalist->listSize, 
 #endif
-			 (CDK_CSTRING2)alphalist->slist, alphalist->listSize, entry->info);
+			 entry->info);
 
    /* If the index is less than zero, return we didn't find a match. */
    if (Index < 0) {
@@ -4421,9 +4453,10 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 		} else if ((Index = searchList(
 #ifdef pneu
 		&alphalist->plist,
-#endif
+#else
 						(CDK_CSTRING2)alphalist->slist,
 						alphalist->listSize,
+#endif
 						pattern)) >= 0) {
 			/* *INDENT-EQLS* */
 			difference           = Index - scrollp->currentItem;
@@ -4476,9 +4509,10 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 			       const char *label,
 #ifdef pneu
 						 set<string> *plistp,
-#endif
+#else
 			       CDK_CSTRING *slist,
 			       int listSize,
+#endif
 			       chtype fillerChar,
 			       chtype phighlight,
 			       bool Box,
@@ -4486,7 +4520,10 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 						 // GSchade Anfang
 						 int highnr/*=0*/
 						 // GSchade Ende
-		):xpos(xplace),ypos(yplace),highlight(phighlight),fillerChar(fillerChar),shadow(shadow),plist(*plistp)
+		):xpos(xplace),ypos(yplace),highlight(phighlight),fillerChar(fillerChar),shadow(shadow)
+#ifdef pneu
+			,plist(*plistp)
+#endif
 {
 	cdktype = vALPHALIST;
 	/* *INDENT-EQLS* */
@@ -4507,11 +4544,11 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 	::CDKOBJS();
 #ifdef pneu
 #else
-#endif
 	if (/*(alphalist = newCDKObject (SAlphalist, &my_funcs)) == 0 || */ !createList(slist, listSize)) {
 		destroyCDKObject();
 		return;
 	}
+#endif
 	setBox(Box);
 	/*
 	 * If the height is a negative value, the height will
@@ -5027,7 +5064,7 @@ void SScroll::drawCDKScrollCurrent()
    writeChtypeAttrib(this->listWin,
 		      ((screenPos >= 0) ? screenPos : 0)+einrueck,
 		      this->currentHigh,
-		      this->item[this->currentItem],
+		      this->sitem[this->currentItem],
 		      highlight,
 		      HORIZONTAL,
 		      (screenPos >= 0) ? 0 : (1 - screenPos),
@@ -5061,11 +5098,11 @@ void SScroll::drawCDKScrollList(bool Box)
 				int screenPos = SCREENPOS(this, k);
 				/* Write in the correct line. */
 				// zeichnet alle, ohne das Aktuelle zu markieren
-				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,chtype2Char(item[k]));
+				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,chtype2Char(sitem[k]));
 				writeChtype(this->listWin,
 						((screenPos >= 0) ? screenPos : 1)+einrueck,
 						ypos,
-						this->item[k],
+						this->sitem[k],
 						HORIZONTAL,
 						(screenPos >= 0) ? 0 : (1 - screenPos),
 						this->itemLen[k]);
@@ -5290,14 +5327,14 @@ bool SScroll::allocListArrays(int oldSize, int newSize)
 	int *newPos          = typeCallocN (int, nchunk);
 	if (newList && newLen && newPos ) {
 		for (int n = 0; n < oldSize; ++n) {
-			newList[n] = this->item[n];
+			newList[n] = this->sitem[n];
 			newLen[n] = this->itemLen[n];
 			newPos[n] = this->itemPos[n];
 		}
-		freeChecked(this->item);
+		freeChecked(this->sitem);
 		freeChecked(this->itemPos);
 		freeChecked(this->itemLen);
-		this->item = newList;
+		this->sitem = newList;
 		this->itemLen = newLen;
 		this->itemPos = newPos;
 		result = TRUE;
@@ -5332,7 +5369,7 @@ bool SScroll::allocListItem(
 		sprintf(*work, NUMBER_FMT, number, value);
 		value = *work;
 	}
-	if ((this->item[which] = char2Chtypeh(value,
+	if ((this->sitem[which] = char2Chtypeh(value,
 					&(this->itemLen[which]),
 					&(this->itemPos[which]))) == 0)
 		return FALSE;
@@ -6159,7 +6196,7 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 		/* Move the scrolling list. */
 		fselect->injectMyScroller(key);
 		/* Get the currently highlighted filename. */
-		current = chtype2Char(scrollp->item[scrollp->currentItem]);
+		current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
 		trim1Char(current);
 		temp = make_pathname(fselect->pwd, current);
 		/* Set the value in the entry field. */
@@ -6545,21 +6582,27 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 	}
 
 	/* Create the file list. */
-	if ((list = typeMallocN (char *, fselect->fileCounter)) != 0) {
+	int x;
 #ifdef pneu
 		set<string> plist;
-#endif
-		int Index, x;
+		for (x = 0; x < fselect->fileCounter; x++) {
+			plist.insert(fselect-contentToPath(/*fselect,*/fselect->dirContents[x]);
+#else
+	if ((list = typeMallocN (char *, fselect->fileCounter)) != 0) {
 		for (x = 0; x < fselect->fileCounter; x++) {
 			list[x] = fselect->contentToPath (/*fselect, */fselect->dirContents[x]);
+#endif
 		}
 
+		int Index;
 		/* Look for a unique filename match. */
 		Index = searchList(
 #ifdef pneu
 		&plist,
+#else
+				(CDK_CSTRING2)list, fselect->fileCounter, 
 #endif
-				(CDK_CSTRING2)list, fselect->fileCounter, filename);
+				filename);
 		/* If the index is less than zero, return we didn't find a match. */
 		if (Index < 0) {
 			Beep ();
@@ -6619,7 +6662,10 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		}
 		freeCharList(list, (unsigned)fselect->fileCounter);
 		free(list);
+#ifdef pneu
+#else
 	}
+#endif
 	freeChecked(filename);
 	return(TRUE);
 }

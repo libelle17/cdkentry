@@ -96,15 +96,21 @@ static int getUserList(char ***list)
 
 #define brauchtsaano
 #ifdef brauchtsaano
-static void fill_undo(SAlphalist *widget, int deleted, char *data)
+static void fill_undo(SAlphalist *widget,int deleted
+#ifdef pneu
+#else
+                                                     , char *data
+#endif
+                                                                 	)
 {
 //	int top = getCDKScrollCurrentTop(widget->scrollField);
-	int top=widget->scrollField->currentTop;
-	int item = widget->getCDKAlphalistCurrentItem();
+	int top{widget->scrollField->currentTop};
+	int item{widget->getCDKAlphalistCurrentItem()};
 #ifdef pneu
-	myUndopList.push_back(string(data));
-	widget->plist.erase(next(widget->plist.begin(),item));
-#endif
+	set<string>::const_iterator itd=next(widget->plist.begin(),item);
+	myUndopList.push_back(*itd);
+	widget->plist.erase(itd);
+#else
 	myUndoList[undoSize].deleted = deleted;
 	myUndoList[undoSize].topline = top;
 	myUndoList[undoSize].original = -1;
@@ -115,60 +121,85 @@ static void fill_undo(SAlphalist *widget, int deleted, char *data)
 			break;
 		}
 	}
+#endif
 	++undoSize;
 }
 #define CB_PARAMS EObjectType cdktype GCC_UNUSED, void* object GCC_UNUSED, void* clientdata GCC_UNUSED, chtype key GCC_UNUSED
 static int do_delete(CB_PARAMS)
 {
+	int result{FALSE};
 	SAlphalist *widget = (SAlphalist *)clientdata;
+#ifdef pneu
+//	set<string> *list = widget->getCDKAlphalistContents();
+#else
 	int size;
 	char **list = widget->getCDKAlphalistContents(&size);
-	int result = FALSE;
-
+#endif
+#ifdef pneu
+#else
 	if (size) {
+#endif
 //		int save = getCDKScrollCurrentTop(widget->scrollField);
 		int save=widget->scrollField->currentTop;
 		int first = widget->getCDKAlphalistCurrentItem();
-		int n;
 
-		fill_undo(widget, first, list[first]);
-		for (n = first; n < size; ++n)
-			list[n] = list[n + 1];
-		widget->setCDKAlphalistContents(
+		fill_undo(widget, first
 #ifdef pneu
-				&((SAlphalist*)widget)->plist,
+#else
+														,list[first]
 #endif
-				(CDK_CSTRING *)list, size - 1);
+																	       );
+#ifdef pneu
+#else
+		for (int n = first; n < size; ++n)
+			list[n] = list[n + 1];
+		widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
+#endif
 		widget->scrollField->setCDKScrollCurrentTop(save);
 		widget->setCDKAlphalistCurrentItem(first);
 		widget->drawCDKAlphalist(BorderOf(widget));
 		result = TRUE;
+#ifdef pneu
+#else
 	}
+#endif
 	return result;
 }
 
 static int do_delete1(CB_PARAMS)
 {
+	int result{FALSE};
 	SAlphalist *widget =(SAlphalist *)clientdata;
 	int size;
+#ifdef pneu
+//	set<string> *list = widget->getCDKAlphalistContents();
+#else
+	int size;
 	char **list = widget->getCDKAlphalistContents(&size);
-	int result = FALSE;
-
+#endif
+#ifdef pneu
+	{
+#else
 	if (size) {
+#endif
 //		int save = getCDKScrollCurrentTop(widget->scrollField);
 		int save=widget->scrollField->currentTop;
 		int first = widget->getCDKAlphalistCurrentItem();
 
 		if (first-- > 0) {
 			int n;
-			fill_undo(widget, first, list[first]);
+  		fill_undo(widget, first
+#ifdef pneu
+#else
+  														,list[first]
+#endif
+  																	       );
+#ifdef pneu
+#else
 			for (n = first; n < size; ++n)
 				list[n] = list[n + 1];
-			widget->setCDKAlphalistContents(
-#ifdef pneu
-					&widget->plist,
+			widget->setCDKAlphalistContents((CDK_CSTRING *)list, size - 1);
 #endif
-					(CDK_CSTRING *)list, size - 1);
 			widget->scrollField->setCDKScrollCurrentTop(save);
 			widget->setCDKAlphalistCurrentItem(first);
 			widget->drawCDKAlphalist(BorderOf(widget));
@@ -203,9 +234,11 @@ static int do_reload(CB_PARAMS)
 		SAlphalist *widget = (SAlphalist *)clientdata;
 		widget->setCDKAlphalistContents(
 #ifdef pneu
-					&widget->plist,
+                          					&myUserpList
+#else
+                                            				(CDK_CSTRING *)myUserList, userSize
 #endif
-				(CDK_CSTRING *)myUserList, userSize);
+		                                                                                     );
 		widget->setCDKAlphalistCurrentItem(0);
 		widget->drawCDKAlphalist(BorderOf(widget));
 		result = TRUE;
@@ -222,7 +255,7 @@ static int do_undo(CB_PARAMS)
 #ifdef pneu
 		string zruck=*myUndopList.erase(myUndopList.end()-1);
 	  widget->plist.insert(zruck);
-#endif
+#else
 		int size;
 		int n;
 		char **oldlist = widget->getCDKAlphalistContents(&size);
@@ -238,15 +271,12 @@ static int do_undo(CB_PARAMS)
 			newlist[n] = copyChar(oldlist[n]);
 			--n;
 		}
-		widget->setCDKAlphalistContents(
-#ifdef pneu
-					&widget->plist,
+		widget->setCDKAlphalistContents((CDK_CSTRING *)newlist, size);
+		free(newlist);
 #endif
-				(CDK_CSTRING *)newlist, size);
 		widget->scrollField->setCDKScrollCurrentTop(myUndoList[undoSize].topline);
 		widget->setCDKAlphalistCurrentItem(myUndoList[undoSize].position);
 		widget->drawCDKAlphalist(/*BorderOf(widget)*/widget->borderSize);
-		free(newlist);
 		result = TRUE;
 	}
 	return result;
@@ -431,8 +461,9 @@ int main(int argc, char **argv)
 					new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,
 #ifdef pneu
 						 &userpList,
-#endif
+#else
 							(CDK_CSTRING*)userList,userSize,
+#endif
 							'.',A_REVERSE,0,0,hk[aktent].highinr);
 				break;
 			case eingfld:
