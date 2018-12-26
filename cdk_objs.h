@@ -156,7 +156,7 @@ typedef struct CDKOBJS {
    unsigned     bindingCount;
    CDKBINDING * bindingList;
    /* title-drawing */
-   chtype **	title;
+   chstr *title;
    int *	titlePos;
    int *	titleLen;
    int		titleLines;

@@ -170,7 +170,6 @@ static int do_delete1(CB_PARAMS)
 {
 	int result{FALSE};
 	SAlphalist *widget =(SAlphalist *)clientdata;
-	int size;
 #ifdef pneu
 //	set<string> *list = widget->getCDKAlphalistContents();
 #else

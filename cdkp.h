@@ -19,6 +19,7 @@
 #endif
 #include <map> // bindv
 #include <set> // plist
+#include <vector> // vector<chtstr> titles
 
 //#include "cdk_test.h"
 #ifndef CDKINCLUDES
@@ -549,7 +550,6 @@ int floorCDK (double value);
 int ceilCDK (double value);
 int setWidgetDimension (int parentDim, int proposedDim, int adjustment);
 static int encodeAttribute (const char *string, int from, chtype *mask);
-chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr=0);
 char **CDKsplitString (const char *string, int separator);
 static unsigned countChar (const char *string, int separator);
 unsigned CDKcountStrings (CDK_CSTRING2 list);
@@ -584,7 +584,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 			   chtype key GCC_UNUSED);
 char *chtype2Char (const chtype *string);
 int searchList(
-#define pneu
+//#define pneu
 #ifdef pneu
 		std::set<std::string> *plistp,
 #else
@@ -614,6 +614,19 @@ struct _all_screens
    SScreen *screen;
 };
 // ALL_SCREENS;
+
+// chtype string
+struct chtstr
+{
+	chtype *inh;
+	size_t len;
+	void gibaus() const;
+	chtstr(size_t len);
+	// chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr=0);
+	chtstr(const char *string, int *to, int *align, const int highnr=0);
+	int rauskopier(chtype **ziel);
+};
+
 
 
 void registerCDKObject(SScreen *screen, EObjectType cdktype, void *object);
@@ -646,7 +659,8 @@ struct CDKOBJS
    CDKBINDING * bindingList=0;
 #endif
    /* title-drawing */
-   chtype **	title=0;
+//   chtype **	title=0;
+	 std::vector<chtstr> titles;
    int *	titlePos=0;
    int *	titleLen=0;
    int		titleLines=0;
@@ -740,7 +754,8 @@ struct SEntry:CDKOBJS
    WINDOW *	shadowWin;
    WINDOW *	labelWin;
    WINDOW *	fieldWin;
-   chtype *	label;
+//   chtype *	label;
+	 chtstr *labelp=0;
    int		labelLen;
 	 int		labelumlz; // GSchade
    int		titleAdj;
@@ -782,7 +797,7 @@ struct SEntry:CDKOBJS
 			 int		/* xpos */,
 			 int		/* ypos */,
 			 const char *	/* title */,
-			 const char *	/* label */,
+			 const char *	/* labelstr */,
 			 chtype		/* fieldAttrib */,
 			 chtype		/* filler */,
 			 EDisplayType	/* disptype */,
@@ -822,8 +837,8 @@ struct SScroll_basis:public CDKOBJS
 	WINDOW * shadowWin; 
 	int      titleAdj;   /* unused */ 
 #ifdef pneu
-	std::set<chtype[]> pitem;
-	std::set<chtype[]>::iterator piter;
+	std::set<chtstr> pitem;
+	std::set<chtstr>::iterator piter;
 #else
 	chtype **    sitem=0; 
 #endif
@@ -901,7 +916,10 @@ struct SScroll:SScroll_basis
 	void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
 	void eraseObj(){eraseCDKScroll();}
 	int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
+#ifdef pneu
+#else
 	bool allocListArrays(int oldSize, int newSize);
+#endif
 	bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
 	int injectCDKScroll(/*CDKOBJS *object, */chtype input);
 	int injectObj(chtype ch){return injectCDKScroll(ch);}
