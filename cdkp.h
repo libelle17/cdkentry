@@ -1250,9 +1250,16 @@ struct SLabel:CDKOBJS {
    WINDOW *	parent;
    WINDOW *	win;
    WINDOW *	shadowWin;
-   chtype **	info;
+#ifdef pneu
+	std::vector<chtstr> pinfo;
+	std::vector<chtstr>::const_iterator pitinfo;
+	std::vector<int> infoLen;
+	std::vector<int> infoPos;
+#else
+   chtype **	sinfo;
    int *	infoLen;
    int *	infoPos;
+#endif
    int		boxWidth;
    int		boxHeight;
    int		xpos;
@@ -1265,7 +1272,10 @@ struct SLabel:CDKOBJS {
 	 void activateCDKLabel(/*SLabel *label, */chtype *actions GCC_UNUSED);
 	 void setCDKLabel(/*SLabel *label, */CDK_CSTRING2 mesg, int lines, bool Box);
 	 void setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 info, int infoSize);
+#ifdef pneu
+#else
 	 chtype **getCDKLabelMessage(/*SLabel *label, */int *size);
+#endif
 	 void setBKattrLabel(chtype attrib);
 	 void setBKattrObj(chtype attrib);
 	 void drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED);

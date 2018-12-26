@@ -4648,29 +4648,29 @@ void SScroll_basis::scroll_KEY_RIGHT()
 
 void SScroll_basis::scroll_KEY_PPAGE()
 {
-   int viewSize = viewSize - 1;
+   int vS = viewSize - 1;
    if (listSize <= 0 || currentTop <= 0) {
       Beep();
       return;
    }
-   if (currentTop < viewSize) {
+   if (currentTop < vS) {
       scroll_KEY_HOME();
    } else {
-      currentTop -= viewSize;
-      currentItem -= viewSize;
+      currentTop -= vS;
+      currentItem -= vS;
    }
 }
 
 void SScroll_basis::scroll_KEY_NPAGE()
 {
-   int viewSize = viewSize - 1;
+   int vS = viewSize - 1;
    if (listSize <= 0 || currentTop >= maxTopItem) {
       Beep();
       return;
    }
-   if ((currentTop + viewSize) <= maxTopItem) {
-      currentTop += viewSize;
-      currentItem += viewSize;
+   if ((currentTop + vS) <= maxTopItem) {
+      currentTop += vS;
+      currentItem += vS;
    } else {
       scroll_KEY_END();
    }
@@ -4773,7 +4773,7 @@ SScroll::SScroll(SScreen *cdkscreen,
 			 bool pshadow)
 {
 #ifdef pneu
-	int listSize=plistp->size();
+	size_t listSize{plistp->size()};
 #else
 #endif
 	cdktype=vSCROLL;
@@ -5116,15 +5116,15 @@ int SScroll::injectCDKScroll(/*CDKOBJS *object, */chtype input)
 					break;
 
 				case KEY_NPAGE:
-					scroll_KEY_NPAGE ();
+					scroll_KEY_NPAGE();
 					break;
 
 				case KEY_HOME:
-					scroll_KEY_HOME ();
+					scroll_KEY_HOME();
 					break;
 
 				case KEY_END:
-					scroll_KEY_END ();
+					scroll_KEY_END();
 					break;
 
 				case '$':
@@ -5530,26 +5530,40 @@ SLabel::SLabel(SScreen *cdkscreen,
 
 	::CDKOBJS();
    if (rows <= 0
+#ifdef pneu
+#else
        /*|| (label = newCDKObject (SLabel, &my_funcs)) == 0*/
-       || (/*label->*/info = typeCallocN (chtype *, rows + 1)) == 0
+       || (/*label->*/sinfo = typeCallocN (chtype *, rows + 1)) == 0
        || (/*label->*/infoLen = typeCallocN (int, rows + 1)) == 0
-       || (/*label->*/infoPos = typeCallocN (int, rows + 1)) == 0)
+       || (/*label->*/infoPos = typeCallocN (int, rows + 1)) == 0
+#endif
+			 )
    {
       destroyCDKObject(/*label*/);
       return /*(0)*/;
    }
 
-   setCDKLabelBox (/*label, */Box);
+   setCDKLabelBox(/*label, */Box);
    boxHeight = rows + 2 * /*BorderOf (label)*/ borderSize;
 
    /* Determine the box width. */
    for (x = 0; x < rows; x++) {
       /* Translate the char * to a chtype. */
 //      /*label->*/info[x] = char2Chtypeh(mesg[x], &/*label->*/infoLen[x], &/*label->*/infoPos[x]);
-		  chtstr infoneu(mesg[x],&infoLen[x],&infoPos[x]);
-			infoneu.rauskopier(&info[x]);
-      boxWidth = MAXIMUM(boxWidth, /*label->*/infoLen[x]);
-   }
+#ifdef pneu
+		 int len,pos;
+		 chtstr infoneu(mesg[x],&len,&pos);
+		 //	pos=justifyString(boxWidth,len,pos);
+		 pinfo.insert(pinfo.begin()+x,infoneu);
+		 // listSize++
+		 infoLen.insert(infoLen.begin()+x,len);
+		 infoPos.insert(infoPos.begin()+x,pos);
+#else
+		 chtstr infoneu(mesg[x],&infoLen[x],&infoPos[x]);
+		 infoneu.rauskopier(&sinfo[x]);
+#endif
+		 boxWidth = MAXIMUM(boxWidth, /*label->*/infoLen[x]);
+	 }
    boxWidth += 2 * /*BorderOf (label)*/ borderSize;
 
    /* Create the string alignments. */
@@ -5637,18 +5651,24 @@ void SLabel::setCDKLabel(/*SLabel *label, */CDK_CSTRING2 mesg, int lines, bool B
 /*
  * This sets the information within the label.
  */
-void SLabel::setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 pinfo, int infoSize)
+void SLabel::setCDKLabelMessage(/*SLabel *label, */CDK_CSTRING2 s_info, int infoSize)
 {
    int x;
    int limit;
 
    /* Clean out the old message. */
+#ifdef pneu
+	 pinfo.clear();
+	 infoPos.clear();
+	 infoLen.clear();
+#else
    for (x = 0; x < /*label->*/rows; x++) {
-      freeChtype (/*label->*/info[x]);
-      /*label->*/info[x] = 0;
+      freeChtype(/*label->*/sinfo[x]);
+      /*label->*/sinfo[x] = 0;
       /*label->*/infoPos[x] = 0;
       /*label->*/infoLen[x] = 0;
    }
+#endif
 
    /* update the label's length - but taking into account its window size */
    limit = /*label->*/boxHeight - (2 * /*BorderOf (label)*/ borderSize);
@@ -5658,12 +5678,22 @@ void SLabel::setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 pinfo, int info
 
    /* Copy in the new message. */
    for (x = 0; x < /*label->*/rows; x++) {
-//      /*label->*/info[x] = char2Chtypeh(pinfo[x], &/*label->*/infoLen[x], &/*label->*/infoPos[x]);
-      chtstr infoneu(pinfo[x],&infoLen[x],&infoPos[x]);
-			infoneu.rauskopier(&info[x]);
+//      /*label->*/info[x] = char2Chtypeh(s_info[x], &/*label->*/infoLen[x], &/*label->*/infoPos[x]);
+#ifdef pneu
+		 int len,pos;
+		 chtstr infoneu(s_info[x],&len,&pos);
+		 pos=justifyString(boxWidth-2*borderSize,len,pos);
+		 pinfo.insert(pinfo.begin()+x,infoneu);
+		 // listSize++
+		 infoLen.insert(infoLen.begin()+x,len);
+		 infoPos.insert(infoPos.begin()+x,pos);
+#else
+      chtstr infoneu(s_info[x],&infoLen[x],&infoPos[x]);
+			infoneu.rauskopier(&sinfo[x]);
       /*label->*/infoPos[x] = justifyString(/*label->*/boxWidth - 2 * /*BorderOf (label)*/ borderSize,
 					 /*label->*/infoLen[x],
 					 /*label->*/infoPos[x]);
+#endif
    }
 
    /* Redraw the label widget. */
@@ -5671,11 +5701,14 @@ void SLabel::setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 pinfo, int info
    drawCDKLabel(/*label, ObjOf (label)->*/box);
 }
 
+#ifdef pneu
+#else
 chtype **SLabel::getCDKLabelMessage(/*SLabel *label, */int *size)
 {
    (*size) = /*label->*/rows;
-   return /*label->*/info;
+   return /*label->*/sinfo;
 }
+#endif
 
 /*
  * This sets the background attribute of the widget.
@@ -5704,10 +5737,14 @@ void SLabel::drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED)
    }
    /* Draw in the message. */
    for (int x = 0; x < /*label->*/rows; x++) {
-      writeChtype (/*label->*/win,
+      writeChtype(/*label->*/win,
 		   /*label->*/infoPos[x] + /*BorderOf (label)*/ borderSize,
 		   x + /*BorderOf (label)*/ borderSize,
-		   /*label->*/info[x],
+#ifdef pneu
+						this->pinfo[x].inh,
+#else
+		   /*label->*/sinfo[x],
+#endif
 		   HORIZONTAL,
 		   0,
 		   /*label->*/infoLen[x]);
@@ -5783,9 +5820,12 @@ void SLabel::destroyCDKLabel(/*CDKOBJS *object*/)
 //   if (object) {
 //      SLabel *label = (SLabel *)object;
 
-      CDKfreeChtypes (/*label->*/info);
-      freeChecked (/*label->*/infoLen);
-      freeChecked (/*label->*/infoPos);
+#ifdef pneu
+#else
+      CDKfreeChtypes(/*label->*/sinfo);
+      freeChecked(/*label->*/infoLen);
+      freeChecked(/*label->*/infoPos);
+#endif
 
       /* Free up the window pointers. */
       deleteCursesWindow (/*label->*/shadowWin);
