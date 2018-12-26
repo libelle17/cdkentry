@@ -18,15 +18,16 @@ char *XCursesProgramName = "entry_ex";
 #include <string>
 #include <cerrno>   // für errno, perror
 #include <iostream> // für cout
+#include <algorithm> // für sort
 using namespace std;
 vector<string> erg;
 
 #ifdef pneu
-set<string> userpList,myUserpList;
+vector<string> userList,myUserList;
 #else
-#endif
 static char **myUserList = 0;
 char **userList              = 0;
+#endif
 static int userSize;
 
 
@@ -56,40 +57,42 @@ static int XXXCB(EObjectType cdktype GCC_UNUSED,
 	return(TRUE);
 }
 
-#ifdef pneu
-static int getUserpList(set<string> *plist)
-{
-	int x{0};
-#if defined (HAVE_PWD_H)
-	endpwent();
-	struct passwd *ent;
-  while ((ent=getpwent())) {
-		plist->insert(ent->pw_name);
-		++x;
-	}
-	endpwent();
-#endif
- return x;
-}
-#endif
 /*
  * This reads the passwd file and retrieves user information.
  */
-static int getUserList(char ***list)
+static int getUserList(
+#ifdef pneu
+		vector<string> *plistp
+#else
+		char ***list
+#endif
+		)
 {
 	int x = 0;
 #if defined (HAVE_PWD_H)
+#ifdef pneu
+#else
 	unsigned used = 0;
+#endif
 	struct passwd *ent;
 	errno=0;
 	endpwent();
 	while ((ent = getpwent())) {
-		used = CDKallocStrings(list, ent->pw_name,(unsigned)x++, used);
+#ifdef pneu
+		plistp->push_back(ent->pw_name);
+#else
+		used = CDKallocStrings(list, ent->pw_name ,(unsigned)x++, used);
+#endif
 	}
 	if (errno) {
 		perror("Fehler beim Benutzerholen");
 	}
 	endpwent();
+#ifdef pneu
+	sort(plistp->begin(),plistp->end());
+	return plistp->size();
+#else
+#endif
 #endif
 	return x;
 }
@@ -107,7 +110,7 @@ static void fill_undo(SAlphalist *widget,int deleted
 	int top{widget->scrollField->currentTop};
 	int item{widget->getCDKAlphalistCurrentItem()};
 #ifdef pneu
-	set<string>::const_iterator itd=next(widget->plist.begin(),item);
+	vector<string>::const_iterator itd=next(widget->plist.begin(),item);
 	myUndopList.push_back(*itd);
 	widget->plist.erase(itd);
 #else
@@ -130,7 +133,7 @@ static int do_delete(CB_PARAMS)
 	int result{FALSE};
 	SAlphalist *widget = (SAlphalist *)clientdata;
 #ifdef pneu
-//	set<string> *list = widget->getCDKAlphalistContents();
+//	vector<string> *list = widget->getCDKAlphalistContents();
 #else
 	int size;
 	char **list = widget->getCDKAlphalistContents(&size);
@@ -171,7 +174,7 @@ static int do_delete1(CB_PARAMS)
 	int result{FALSE};
 	SAlphalist *widget =(SAlphalist *)clientdata;
 #ifdef pneu
-//	set<string> *list = widget->getCDKAlphalistContents();
+//	vector<string> *list = widget->getCDKAlphalistContents();
 #else
 	int size;
 	char **list = widget->getCDKAlphalistContents(&size);
@@ -233,7 +236,7 @@ static int do_reload(CB_PARAMS)
 		SAlphalist *widget = (SAlphalist *)clientdata;
 		widget->setCDKAlphalistContents(
 #ifdef pneu
-                          					&myUserpList
+                          					&myUserList
 #else
                                             				(CDK_CSTRING *)myUserList, userSize
 #endif
@@ -253,7 +256,7 @@ static int do_undo(CB_PARAMS)
 		SAlphalist *widget =(SAlphalist *)clientdata;
 #ifdef pneu
 		string zruck=*myUndopList.erase(myUndopList.end()-1);
-	  widget->plist.insert(zruck);
+	  widget->plist.push_back(zruck);
 #else
 		int size;
 		int n;
@@ -366,19 +369,17 @@ int main(int argc, char **argv)
 	SScreen *cdkscreen = 0;
 
 	/* Get the user list. */
-#ifdef pneu
-	userSize=getUserpList(&userpList);
-#endif
 	userSize = getUserList(&userList);
 	if (userSize <= 0) {
 		fprintf(stderr, "Cannot get user list\n");
 		ExitProgram(EXIT_FAILURE);
 	}
 #ifdef pneu
-	myUserpList = userpList;
-#endif
+	myUserList = userList;
+#else
 	myUserList = copyCharList((const char **)userList);
 	myUndoList = (UNDO*)malloc((size_t) userSize * sizeof(UNDO));
+#endif
 	undoSize = 0;
 	/*
 		 SEntry *directory  = 0,*file=0;
@@ -459,7 +460,7 @@ int main(int argc, char **argv)
 					//newCDKAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,(CDK_CSTRING*)userList,userSize,'.',A_REVERSE,0,0,hk[aktent].highinr);
 					new SAlphalist(cdkscreen,xpos,yabst+aktent,10,40,"",hk[aktent].label,
 #ifdef pneu
-						 &userpList,
+						 &userList,
 #else
 							(CDK_CSTRING*)userList,userSize,
 #endif

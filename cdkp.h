@@ -18,7 +18,7 @@
 #include <curses.h>
 #endif
 #include <map> // bindv
-#include <set> // plist
+//#include <set> // plist
 #include <vector> // vector<chtstr> titles
 
 //#include "cdk_test.h"
@@ -586,12 +586,29 @@ char *chtype2Char (const chtype *string);
 int searchList(
 //#define pneu
 #ifdef pneu
-		std::set<std::string> *plistp,
+		std::vector<std::string> *plistp,
 #else
 		CDK_CSTRING2 list, int listSize, 
 #endif
 		const char *pattern);
-unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned used);
+// unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned used);
+#ifdef pneu
+void
+#else
+unsigned 
+#endif
+CDKallocStrings(
+#ifdef pneu
+		std::vector<std::string> *plistp,
+#else
+		char ***list, 
+#endif
+		char *item
+#ifdef pneu
+#else
+		, unsigned length, unsigned used
+#endif
+		);
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
 void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
 void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
@@ -837,13 +854,15 @@ struct SScroll_basis:public CDKOBJS
 	WINDOW * shadowWin; 
 	int      titleAdj;   /* unused */ 
 #ifdef pneu
-	std::set<chtstr> pitem;
-	std::set<chtstr>::iterator piter;
+	std::vector<chtstr> pitem;
+	std::vector<chtstr>::const_iterator piter;
+	std::vector<int> itemLen;
+	std::vector<int> itemPos;
 #else
 	chtype **    sitem=0; 
-#endif
 	int *    itemLen=0; 
 	int *    itemPos=0; 
+#endif
 
 	int      currentTop; 
 	int      currentItem; 
@@ -854,7 +873,10 @@ struct SScroll_basis:public CDKOBJS
 	int      maxchoicelen; 
 	int      leftChar; 
 	int      lastItem; 
-	int      listSize; 
+#ifdef pneu
+#else
+#endif
+	int      listSize=0; 
 	int      boxWidth; 
 	int      boxHeight; 
 	int      viewSize; 
@@ -905,8 +927,12 @@ struct SScroll:SScroll_basis
 			int		/* height */,
 			int		/* width */,
 			const char *	/* title */,
-			CDK_CSTRING2	/* itemList */,
-			int		/* items */,
+#ifdef pneu
+			 std::vector<std::string> *plistp,
+#else
+			 CDK_CSTRING2 list/* itemList */,
+			 int		/* items */,
+#endif
 			bool		/* numbers */,
 			chtype		/* highlight */,
 			bool		/* Box */,
@@ -915,12 +941,24 @@ struct SScroll:SScroll_basis
 	void destroyObj(){this->~SScroll();}
 	void eraseCDKScroll/*_eraseCDKScroll*/(/*CDKOBJS *object*/);
 	void eraseObj(){eraseCDKScroll();}
-	int createCDKScrollItemList(bool numbers, CDK_CSTRING2 list, int listSize);
+	int createCDKScrollItemList(bool numbers, 
+#ifdef pneu
+						std::vector<std::string> *plistp
+#else
+				    CDK_CSTRING2 list,
+				    int listSize
+#endif
+			);
 #ifdef pneu
 #else
 	bool allocListArrays(int oldSize, int newSize);
 #endif
-	bool allocListItem(int which, char **work, size_t * used, int number, const char *value);
+	bool allocListItem(int which, 
+#ifdef pneu
+#else
+                          			char **work, size_t * used, 
+#endif
+                                                      			int number, const char *value);
 	int injectCDKScroll(/*CDKOBJS *object, */chtype input);
 	int injectObj(chtype ch){return injectCDKScroll(ch);}
 	void drawCDKScrollList(bool Box);
@@ -930,9 +968,24 @@ struct SScroll:SScroll_basis
 	 void drawObj(bool Box);
 	 void drawCDKScrollCurrent();
 	 void moveCDKScroll(int xplace, int yplace, bool relative, bool refresh_flag);
-	 void setCDKScroll(CDK_CSTRING2 list, int listSize, bool numbers, chtype hl, bool Box);
+	 void setCDKScroll(
+#ifdef pneu
+               			 std::vector<std::string> *plistp,
+#else
+              			 CDK_CSTRING2 list, int listSize, 
+#endif
+                                               			 bool numbers, chtype hl, bool Box);
+#ifdef pneu
+#else
 	 int getCDKScrollItems(/*SScroll *scrollp, */char **list);
-	 void setCDKScrollItems(CDK_CSTRING2 list, int listSize, bool numbers);
+#endif
+	 void setCDKScrollItems(
+#ifdef pneu
+													 std::vector<std::string> *plistp,
+#else
+													 CDK_CSTRING2 list, int listSize, 
+#endif
+																													 bool numbers);
 	 void setCDKScrollCurrentTop(/*SScroll *widget, */int item);
 	 void setCDKScrollCurrent(int item);
 	 void setBKattrScroll(chtype attrib);
@@ -940,7 +993,10 @@ struct SScroll:SScroll_basis
 	 //void setCDKScrollBox(/*SScroll *scrollp, */bool Box);
 	 //bool getCDKScrollBox();
 	 void resequence(/*SScroll *scrollp*/);
+#ifdef pneu
+#else
 	 bool insertListItem (/*SScroll *scrollp, */int item);
+#endif
 	 void addCDKScrollItem(/*SScroll *scrollp,*/ const char *item);
 	 void insertCDKScrollItem(/*SScroll *scrollp, */const char *item);
 	 void deleteCDKScrollItem(/*SScroll *scrollp, */int position);
@@ -974,6 +1030,7 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
  */
 struct SFSelect:CDKOBJS
 {
+	 int setCDKFselectdirContents(/*SFSelect *fselect*/);
 	//   CDKOBJS	obj;
 	WINDOW *	parent;
 	WINDOW *	win;
@@ -981,8 +1038,12 @@ struct SFSelect:CDKOBJS
 	SEntry *	entryField;
 	SScroll *	scrollField;
 	CDKOBJS* bindableObject();
+#ifdef pneu
+	std::vector<std::string> dirContents;
+#else
 	char **	dirContents;
 	int		fileCounter;
+#endif
 	char *	pwd;
 	char *	pathname;
 	int		xpos;
@@ -1030,12 +1091,11 @@ struct SFSelect:CDKOBJS
 	 void drawMyScroller(/*SFSelect *widget*/);
 	 void drawObj(bool Box);
 	 void setPWD(/*SFSelect *fselect*/);
-	 int setCDKFselectDirContents(/*SFSelect *fselect*/);
 	 int injectCDKFselect(chtype input);
 	 int injectObj(chtype ch){return injectCDKFselect(ch);}
 	 void injectMyScroller(chtype key);
 	 void setCDKFselect(/*SFSelect *fselect, */const char *directory, chtype fieldAttrib, chtype filler, chtype highlight, const char *dirAttribute, const char *fileAttribute, const char *linkAttribute, const char *sockAttribute, bool Box GCC_UNUSED);
-	 char *contentToPath (/*SFSelect *fselect, */char *content);
+	 char *contentToPath (/*SFSelect *fselect, */const char *content);
 	 void focusCDKFileSelector();
 	 void focusObj(){focusCDKFileSelector();}
 	 void unfocusCDKFileSelector();
@@ -1051,7 +1111,7 @@ struct SAlphalist:CDKOBJS
    SEntry*	entryField;
    SScroll*	scrollField;
 #ifdef pneu
-	 std::set<std::string> plist;
+	 std::vector<std::string> plist;
 #else
    char **	slist=0;
    int		listSize;
@@ -1078,7 +1138,7 @@ struct SAlphalist:CDKOBJS
 			 const char *title,
 			 const char *label,
 #ifdef pneu
-			 std::set<std::string> *plistp,
+			 std::vector<std::string> *plistp,
 #else
 			 CDK_CSTRING *list,
 			 int listSize,
@@ -1106,20 +1166,20 @@ struct SAlphalist:CDKOBJS
 	 void destroyInfo();
 	 void setCDKAlphalist(
 #ifdef pneu
-			 std::set<std::string> *plistp,
+			 std::vector<std::string> *plistp,
 #else
 			 CDK_CSTRING *list, int listSize, 
 #endif
 			 chtype fillerChar, chtype highlight, bool Box);
 	 void setCDKAlphalistContents(
 #ifdef pneu
-		      std::set<std::string> *plistp
+		      std::vector<std::string> *plistp
 #else
 			 CDK_CSTRING *list, int listSize
 #endif
 			 );
 #ifdef pneu
-std::set<std::string> *
+std::vector<std::string> *
 #else
 char ** 
 #endif
