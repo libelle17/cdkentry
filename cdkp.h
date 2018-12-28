@@ -311,7 +311,7 @@ extern einbauart akteinbart;
 #define freeAndNull(p)          if ((p) != 0) { free (p); p = 0; }
 
 #define isChar(c)               ((int)(c) >= 0 && (int)(c) < KEY_MIN)
-#define CharOf(c)               ((unsigned char)(c))
+// #define CharOf(c)               ((unsigned char)(c))
 
 #define SIZEOF(v)               (sizeof(v)/sizeof((v)[0]))
 
@@ -524,8 +524,20 @@ struct SScreen
 	 void exitCancelCDKScreen(/*SScreen *screen*/);
 	 void traverseCDKOnce(/*SScreen *screen,*/ CDKOBJS *curobj, int keyCode, bool functionKey, CHECK_KEYCODE funcMenuKey);
 	 int traverseCDKScreen(/*SScreen *screen*/);
-	 void popupLabel (/*SScreen *screen, */CDK_CSTRING2 mesg, int count);
-	 void popupLabelAttrib (/*SScreen *screen, */CDK_CSTRING2 mesg, int count, chtype attrib);
+	 void popupLabel (/*SScreen *screen, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int count
+#endif
+			 );
+	 void popupLabelAttrib (/*SScreen *screen, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int count
+#endif
+			 , chtype attrib);
 	 virtual void refreshCDKScreen();
 };
 
@@ -548,11 +560,16 @@ int getmaxyf(WINDOW *win);
 void Beep();
 int floorCDK (double value);
 int ceilCDK (double value);
-int setWidgetDimension (int parentDim, int proposedDim, int adjustment);
-static int encodeAttribute (const char *string, int from, chtype *mask);
-char **CDKsplitString (const char *string, int separator);
-static unsigned countChar (const char *string, int separator);
-unsigned CDKcountStrings (CDK_CSTRING2 list);
+int setWidgetDimension(int parentDim, int proposedDim, int adjustment);
+static int encodeAttribute(const char *string, int from, chtype *mask);
+#ifdef pneu
+void aufSplit(std::vector<std::string> *tokens, const char* const text, const char sep=' ',bool auchleer=1);
+void aufSplit(std::vector<std::string> *tokens, const std::string& text, const char sep=' ',bool auchleer=1);
+#else
+char **CDKsplitString(const char *string, int separator);
+static unsigned countChar(const char *string, int separator);
+unsigned CDKcountStrings(CDK_CSTRING2 list);
+#endif
 chtype *char2Chtype(const char *string, int *to, int *align);
 int chlen(const chtype *string);
 void freeChtype(chtype *string);
@@ -561,8 +578,8 @@ void CDKfreeStrings(char **list);
 void CDKfreeChtypes(chtype **list);
 void alignxy(WINDOW *window, int *xpos, int *ypos, int boxWidth, int boxHeight);
 void cleanChar(char *s, int len, char character);
-void writeChtype(WINDOW *window, int xpos, int ypos, chtype *string, int align, int start, int end);
-void writeChtypeAttrib(WINDOW *window, int xpos, int ypos, chtype *string, chtype attr, int align, int start, int end);
+void writeChtype(WINDOW *window, int xpos, int ypos, const chtype *const string, int align, int start, int end);
+void writeChtypeAttrib(WINDOW *window, int xpos, int ypos, const chtype *const string, chtype attr, int align, int start, int end);
 void attrbox(WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
 void drawShadow (WINDOW *shadowWin);
 int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
@@ -582,7 +599,10 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
 static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED,
 			   void *clientData,
 			   chtype key GCC_UNUSED);
+#ifdef pneu
+#else
 char *chtype2Char (const chtype *string);
+#endif
 int searchList(
 //#define pneu
 #ifdef pneu
@@ -611,7 +631,7 @@ CDKallocStrings(
 		);
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
 void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
-void writeCharAttrib (WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
+void writeCharAttrib(WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
 static bool checkMenuKey(int keyCode, int functionKey);
 CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
 char **copyCharList (const char **list);
@@ -633,15 +653,23 @@ struct _all_screens
 // ALL_SCREENS;
 
 // chtype string
-struct chtstr
+class chtstr
 {
+	private:
 	chtype *inh;
+	char *ch=0;
 	size_t len;
+	public:
 	void gibaus() const;
-	chtstr(size_t len);
+//	chtstr(size_t len);
 	// chtype *char2Chtypeh(const char *string, int *to, int *align, int highinr=0);
 	chtstr(const char *string, int *to, int *align, const int highnr=0);
 	int rauskopier(chtype **ziel);
+#ifdef pneu
+	char *chtype2Char();
+#endif
+	inline chtype *getinh() const { return inh; }
+	inline size_t getlen() const { return len; }
 };
 
 
@@ -1266,12 +1294,30 @@ struct SLabel:CDKOBJS {
    int		ypos;
    int		rows;
    bool	shadow;
-	 SLabel(SScreen *cdkscreen, int xplace, int yplace, CDK_CSTRING2 mesg, int rows, bool Box, bool shadow);
+	 SLabel(SScreen *cdkscreen, int xplace, int yplace, 
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int rows
+#endif
+			 , bool Box, bool shadow);
 	 void setCDKLabelBox(/*SLabel *label, */bool Box);
 	 bool getCDKLabelBox(/*SLabel *label*/);
 	 void activateCDKLabel(/*SLabel *label, */chtype *actions GCC_UNUSED);
-	 void setCDKLabel(/*SLabel *label, */CDK_CSTRING2 mesg, int lines, bool Box);
-	 void setCDKLabelMessage (/*SLabel *label, */CDK_CSTRING2 info, int infoSize);
+	 void setCDKLabel(/*SLabel *label, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int lines
+#endif
+			 , bool Box);
+	 void setCDKLabelMessage (/*SLabel *label, */
+#ifdef pneu
+			 std::vector<std::string> s_info
+#else
+			 CDK_CSTRING2 s_info, int infoSize
+#endif
+			 );
 #ifdef pneu
 #else
 	 chtype **getCDKLabelMessage(/*SLabel *label, */int *size);

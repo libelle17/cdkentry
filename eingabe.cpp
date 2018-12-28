@@ -50,9 +50,19 @@ static int XXXCB(EObjectType cdktype GCC_UNUSED,
 		void *clientData GCC_UNUSED,
 		chtype key GCC_UNUSED)
 {
+#ifdef pneu
+	vector<string> mesg(1);
+#else
 	const char* mesg[2];
+#endif
 	mesg[0]="Hilfefunktion";
-	((SScreen*)allgscr)->popupLabel(/*(SScreen*)allgscr,*/(CDK_CSTRING2)mesg,1);
+	((SScreen*)allgscr)->popupLabel(/*(SScreen*)allgscr,*/
+#ifdef pneu
+		mesg
+#else
+		(CDK_CSTRING2)mesg,1
+#endif
+		);
 //	printf("Hilfefunktion aufgerufen\n\r\n\r");
 	return(TRUE);
 }
@@ -223,9 +233,17 @@ static int do_help(CB_PARAMS)
 		"F5 = undo deletion",
 		0
 	};
+#ifdef pneu
+	vector<string> mesv(message,message+sizeof(message)/sizeof(*message));
+#endif
 	allgscr->popupLabel(
+#ifdef pneu
+			mesv
+#else
 			(CDK_CSTRING2)message,
-			(int)CDKcountStrings ((CDK_CSTRING2)message));
+			(int)CDKcountStrings((CDK_CSTRING2)message)
+#endif
+			);
 	return TRUE;
 }
 

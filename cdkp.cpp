@@ -16,10 +16,8 @@ void chtstr::gibaus() const
 { 
 	for(size_t i=0;i<len;i++)cout<<inh[i]<<" ";cout<<endl;
 }
-chtstr::chtstr(size_t len):len(len)
-{
-	inh=new chtype[len];
-}
+// chtstr::chtstr(size_t len):len(len) { inh=new chtype[len]; }
+
 // GSchade 17.11.18; s. cdk.h
 einbauart akteinbart;
 
@@ -131,7 +129,7 @@ static int encodeAttribute(const char *string, int from, chtype *mask)
 		int digits;
 		pair = 0;
 		for (digits = 1; digits <= 3; ++digits) {
-			if (!isdigit (CharOf(string[1 + from])))
+			if (!isdigit ((unsigned char)string[1 + from]))
 				break;
 			pair *= 10;
 			pair += DigitOf(string[++from]);
@@ -156,7 +154,7 @@ static int encodeAttribute(const char *string, int from, chtype *mask)
 // highinr G.Schade 26.9.18
 chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 {
-//	chtype *result = 0;
+	//	chtype *result = 0;
 	inh=0;
 	chtype attrib,lastChar,mask;
 	(*to) = 0;
@@ -176,8 +174,8 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 			int start;
 			int x = 3;
 			if (pass) {
-//				if ((result = typeMallocN(chtype, used + 2)) == 0)
-        if (!(inh=new chtype[used+2])) {
+				//				if ((result = typeMallocN(chtype, used + 2)) == 0)
+				if (!(inh=new chtype[used+2])) {
 					used = 0;
 					break;
 				}
@@ -217,7 +215,7 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 					from = 2;
 					x = 0;
 					while (string[++from] != R_MARKER && string[from]) {
-						if (isdigit (CharOf (string[from]))) {
+						if (isdigit ((unsigned char)string[from])) {
 							adjust = (adjust * 10) + DigitOf (string[from]);
 							x++;
 						}
@@ -232,7 +230,7 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 			}
 			/* Set the format marker boolean to false.  */
 			insideMarker = FALSE;
-// GSchade 25.9.18
+			// GSchade 25.9.18
 			//size_t pos=0;
 			/* Start parsing the character string.  */
 			for (from = start; from < len; from++) {
@@ -247,7 +245,7 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 					} else if (string[from] == '\\' && string[from + 1] == L_MARKER) {
 						from++;
 						if (inh)
-							inh[used] = CharOf (string[from]) | attrib;
+							inh[used] = (unsigned char)string[from] | attrib;
 						used++;
 						from++;
 					} else if (string[from] == '\t') {
@@ -257,31 +255,31 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 							used++;
 						}
 						while (used & 7);
-					} // else if (inh && !strchr("ö",string[from])) { inh[used++]=CharOf('o')|attrib;
+					} // else if (inh && !strchr("ö",string[from])) KLA inh[used++]=(unsigned char)'o'|attrib;
 					// GSchade 25.9.18
 					/*
-					else if (strchr("äöüÄÖÜß",string[from])) {
-						printf("from: %i, string[from]: %i\n",from,(int)string[from]+256);
-						//if (inh) inh[used]=CharOf('z')|attrib; used++;
-						if (inh) inh[used]=CharOf(-61)|attrib; used++;
-						if (!strchr("ä",string[from])) { if (inh) inh[used]=CharOf(164-256)|attrib; used++; }
-						else if (!strchr("ö",string[from])) { if (inh) inh[used]=CharOf(182-256)|attrib; used++; }
-						else if (!strchr("ü",string[from])) { if (inh) inh[used]=CharOf(188-256)|attrib; used++; }
-						else if (!strchr("Ä",string[from])) { if (inh) inh[used]=CharOf(132)|attrib; used++; }
-						else if (!strchr("Ö",string[from])) { if (inh) inh[used]=CharOf(150)|attrib; used++; }
-						else if (!strchr("Ü",string[from])) { if (inh) inh[used]=CharOf(156)|attrib; used++; }
-						else if (!strchr("ß",string[from])) { if (inh) inh[used]=CharOf(159)|attrib; used++; }
+						 else if (strchr("äöüÄÖÜß",string[from])) {
+						 printf("from: %i, string[from]: %i\n",from,(int)string[from]+256);
+					//if (inh) inh[used]=(unsigned char)'z'|attrib; used++;
+					if (inh) inh[used]=(unsigned char)-61|attrib; used++;
+					if (!strchr("ä",string[from])) { if (inh) inh[used]=(unsigned char)164-256|attrib; used++; }
+					else if (!strchr("ö",string[from])) { if (inh) inh[used]=(unsigned char)182-256|attrib; used++; }
+					else if (!strchr("ü",string[from])) { if (inh) inh[used]=(unsigned char)188-256|attrib; used++; }
+					else if (!strchr("Ä",string[from])) { if (inh) inh[used]=(unsigned char)132|attrib; used++; }
+					else if (!strchr("Ö",string[from])) { if (inh) inh[used]=(unsigned char)150|attrib; used++; }
+					else if (!strchr("Ü",string[from])) { if (inh) inh[used]=(unsigned char)156|attrib; used++; }
+					else if (!strchr("ß",string[from])) { if (inh) inh[used]=(unsigned char)159|attrib; used++; }
 					}
-				*/
+					 */
 					// Ende GSchade 25.9.18
 					else {
 						if (inh) {
 							// GSchade 26.9.18
 							if (used==highinr-1) {
-								inh[used] = CharOf (string[from]) | attrib|COLOR_PAIR(1);
+								inh[used] = (unsigned char)string[from] | attrib|COLOR_PAIR(1);
 							} else {
 								// Ende GSchade 
-							inh[used] = CharOf (string[from]) | attrib;
+								inh[used] = (unsigned char)string[from] | attrib;
 							}
 						}
 						used++;
@@ -388,7 +386,7 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 										from++;
 										adjust = 0;
 										while (string[++from] != ')' && string[from]) {
-											if (isdigit (CharOf (string[from]))) {
+											if (isdigit ((unsigned char)string[from])) {
 												adjust = (adjust * 10) + DigitOf (string[from]);
 											}
 										}
@@ -431,12 +429,32 @@ chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 		 * would get a spurious null pointer whenever there is a blank line,
 		 * and CDKfreeChtypes() would fail to free the whole list.
 		 */
-//		inh = typeCallocN (chtype, 1);
+		//		inh = typeCallocN (chtype, 1);
 		inh=new chtype[1];
 	}
 	return /*result*/;
-}
+} // chtstr::chtstr(const char *string, int *to, int *align, const int highinr/*=0*/)
 
+#ifdef pneu
+/*
+ * This returns a pointer to char * of a chtype *
+ * Formatting codes are omitted.
+ */
+char *chtstr::chtype2Char()
+{
+	if (inh) {
+		int len = chlen(inh);
+		if (ch) delete[] ch;
+		if ((ch = new char[len+1])) {
+			for (int x = 0; x < len; x++) {
+				ch[x] = (char)(unsigned char)inh[x];
+			}
+			ch[len] = '\0';
+		}
+	}
+	return ch;
+}
+#else
 /*
  * This returns a pointer to char * of a chtype *
  * Formatting codes are omitted.
@@ -448,59 +466,12 @@ char *chtype2Char(const chtype *string)
 		int len = chlen(string);
 		if ((newstring = typeMallocN(char, len + 1))) {
 			for (int x = 0; x < len; x++) {
-				newstring[x] = (char)CharOf(string[x]);
+				newstring[x] = (char)(unsigned char)string[x];
 			}
 			newstring[len] = '\0';
 		}
 	}
 	return (newstring);
-}
-
-
-/*
- * Split a string into a list of strings.
- */
-char **CDKsplitString(const char *string, int separator)
-{
-	char **result = 0;
-	char *temp;
-
-	if (string && *string) {
-		unsigned need = countChar(string, separator) + 2;
-		if ((result = typeMallocN(char *, need))) {
-			unsigned nr = 0;
-			const char *first = string;
-			for (;;) {
-				while (*string && *string != separator)
-					string++;
-
-				need = (unsigned)(string - first);
-				if (!(temp = typeMallocN(char, need + 1)))
-					break;
-
-				memcpy(temp, first, need);
-				temp[need] = 0;
-				result[nr++] = temp;
-
-				if (!*string++)
-					break;
-				first = string;
-			}
-			result[nr] = 0;
-		}
-	}
-	return result;
-}
-
-static unsigned countChar(const char *string, int separator)
-{
-	unsigned result = 0;
-	int ch;
-	while ((ch = *string++)) {
-		if (ch == separator)
-			result++;
-	}
-	return result;
 }
 
 /*
@@ -515,6 +486,8 @@ unsigned CDKcountStrings(CDK_CSTRING2 list)
 	}
 	return result;
 }
+#endif
+
 
 /*
  * This determines the length of a chtype string
@@ -665,7 +638,7 @@ void cleanChar(char *s, int len, char character)
 void writeChtype(WINDOW *window,
 		int xpos,
 		int ypos,
-		chtype *string,
+		const chtype *const string,
 		int align,
 		int start,
 		int end)
@@ -679,7 +652,7 @@ void writeChtype(WINDOW *window,
 void writeChtypeAttrib(WINDOW *window,
 		int xpos,
 		int ypos,
-		chtype *string,
+		const chtype *const string,
 		chtype attr,
 		int align,
 		int start,
@@ -696,8 +669,8 @@ void writeChtypeAttrib(WINDOW *window,
 		int altumlz=0;
 		for (x = 0; x < display; x++) {
 			// GSchade 25.9.18
-			if (1&&((int)CharOf(string[x+start])==194||(int)CharOf(string[x+start])==195)) {
-				//			printf("Buchstabe: %c %i\r\n",CharOf(string[x+start]), (int)CharOf(string[x+start]));
+			if (1&&((int)(unsigned char)string[x+start]==194||(int)(unsigned char)string[x+start]==195)) {
+				//			printf("Buchstabe: %c %i\r\n",(unsigned char)string[x+start], (int)(unsigned char)string[x+start]);
 				char ausg[3];
 				*ausg=string[x+start];
 				ausg[1]=string[x+start+1];
@@ -715,7 +688,7 @@ void writeChtypeAttrib(WINDOW *window,
 				x++;
 				altumlz++;
 			} else {
-//				printf("Buchstabe: %c, Farbe: %lu\n\r",CharOf(string[x+start]),attr);
+//				printf("Buchstabe: %c, Farbe: %lu\n\r",(unsigned char)string[x+start],attr);
 				(void)mvwaddch(window, ypos, xpos + x-altumlz, string[x + start] |attr);
 			}
 		}
@@ -1057,7 +1030,7 @@ void writeCharAttrib(WINDOW *window,
 			(void)mvwaddch(window,
 					ypos,
 					xpos + x,
-					CharOf(string[x + start]) | attr);
+					(unsigned char)string[x + start] | attr);
 		}
 	} else {
 		/* Draw the message on a vertical axis. */
@@ -1066,7 +1039,7 @@ void writeCharAttrib(WINDOW *window,
 			(void)mvwaddch(window,
 					ypos + x,
 					xpos,
-					CharOf(string[x + start]) | attr);
+					(unsigned char)string[x + start] | attr);
 		}
 	}
 }
@@ -1146,19 +1119,19 @@ bool isHiddenDisplayType(EDisplayType type)
  */
 int filterByDisplayType(EDisplayType type, chtype input)
 {
-	int result = CharOf(input);
+	int result = (unsigned char)input;
 	if (!isChar(input)) {
 		result = ERR;
 	} else if ((type == vINT ||
 				type == vHINT) &&
-			!isdigit(CharOf(result))) {
+			!isdigit((unsigned char)result)) {
 		result = ERR;
 	} else if ((type == vCHAR ||
 				type == vUCHAR ||
 				type == vLCHAR ||
 				type == vUHCHAR ||
 				type == vLHCHAR) &&
-			isdigit(CharOf(result))) {
+			isdigit((unsigned char)result)) {
 		result = ERR;
 	} else if (type == vVIEWONLY) {
 		result = ERR;
@@ -1166,13 +1139,13 @@ int filterByDisplayType(EDisplayType type, chtype input)
 				type == vUHCHAR ||
 				type == vUMIXED ||
 				type == vUHMIXED) &&
-			isalpha(CharOf(result))) {
+			isalpha((unsigned char)result)) {
 		result = toupper(result);
 	} else if ((type == vLCHAR ||
 				type == vLHCHAR ||
 				type == vLMIXED ||
 				type == vLHMIXED) &&
-			isalpha(CharOf(result))) {
+			isalpha((unsigned char)result)) {
 		result = tolower(result);
 	}
 	return result;
@@ -1742,14 +1715,14 @@ void SScroll::resequence(/*SScroll *scrollp*/)
 			char source[80];
 			chtype *target =  // eigentlich const chtype *target
 #ifdef pneu
-				piter->inh;
+				piter->getinh();
 #else
 				/*scrollp->*/sitem[j];
 #endif
 			sprintf(source, NUMBER_FMT, j + 1, "");
 			for (int k = 0; source[k]; ++k) {
 				/* handle deletions that change the length of number */
-				if (source[k] == '.' && CharOf(target[k]) != '.') {
+				if (source[k] == '.' && (unsigned char)target[k] != '.') {
 					int k2 = k;
 					while ((target[k2] = target[k2 + 1]))
 						++k2;
@@ -2289,6 +2262,74 @@ SScroll::~SScroll(/*CDKOBJS *object*/)
 		unregisterCDKObject(vSCROLL);
 }
 
+#ifdef pneu
+void aufSplit(vector<string> *tokens, const char* const text, const char sep/*=' '*/,bool auchleer/*=1*/)
+{
+  aufSplit(tokens,string(text),sep,auchleer);
+} // void aufSplit(vector<string> *tokens, const char *text, const char sep/*=' '*/, bool auchler/*=1*/)
+
+void aufSplit(vector<string> *tokens, const string& text, const char sep/*=' '*/,bool auchleer/*=1*/)
+{
+	size_t start = 0, end = 0;
+	tokens->clear();
+	while ((end = text.find(sep, start)) != string::npos) {
+		if (end!=start || auchleer) {
+			tokens->push_back(text.substr(start,end-start));
+		} // 		if (!akttok.empty() || auchleer)
+		start = end + 1;
+	} //   while ((end = text.find(sep, start)) != (int)string::npos)
+	if (text.length() !=start || auchleer)
+		tokens->push_back(text.substr(start));
+} // void aufSplit(vector<string> *tokens, const string& text, const char sep,bool auchleer/*=1*/)
+#else
+
+/*
+ * Split a string into a list of strings.
+ */
+char **CDKsplitString(const char *string, int separator)
+{
+	char **result = 0;
+	char *temp;
+
+	if (string && *string) {
+		unsigned need = countChar(string, separator) + 2;
+		if ((result = typeMallocN(char *, need))) {
+			unsigned nr = 0;
+			const char *first = string;
+			for (;;) {
+				while (*string && *string != separator)
+					string++;
+
+				need = (unsigned)(string - first);
+				if (!(temp = typeMallocN(char, need + 1)))
+					break;
+
+				memcpy(temp, first, need);
+				temp[need] = 0;
+				result[nr++] = temp;
+
+				if (!*string++)
+					break;
+				first = string;
+			}
+			result[nr] = 0;
+		}
+	}
+	return result;
+}
+
+static unsigned countChar(const char *string, int separator)
+{
+	unsigned result = 0;
+	int ch;
+	while ((ch = *string++)) {
+		if (ch == separator)
+			result++;
+	}
+	return result;
+}
+#endif
+
 /*
  * Set the widget's title.
  */
@@ -2296,28 +2337,44 @@ int CDKOBJS::setCdkTitle(const char *titlec, int boxWidth)
 {
 	cleanCdkTitle();
 	if (titlec) {
+#if pneu
+		vector<string> temp;
+#else
 		char **temp = 0;
+#endif
 		int titleWidth;
 		int x;
 		int len;
 		int align;
 
 		/* We need to split the title on \n. */
+#ifdef pneu
+		aufSplit(&temp,titlec,'\n');
+		titleLines=temp.size();
+		titlePos = new int[titleLines];
+		titleLen=new int[titleLines];
+#else
 		temp = CDKsplitString(titlec, '\n');
 		titleLines = (int)CDKcountStrings((CDK_CSTRING2)temp);
 		//title = typeCallocN (chtype *, titleLines + 1);
 		titlePos = typeCallocN (int, titleLines + 1);
 		titleLen = typeCallocN (int, titleLines + 1);
+#endif
 		if (boxWidth >= 0) {
 			int maxWidth = 0;
 			/* We need to determine the widest title line. */
 			for (x = 0; x < titleLines; x++) {
 //				chtype *holder = char2Chtypeh(temp[x], &len, &align);
-				chtstr holder(temp[x],&len,&align);
+				chtstr holder(temp[x]
+#ifdef pneu
+	 					.c_str()
+#else
+#endif
+						,&len,&align);
 				maxWidth = MAXIMUM(maxWidth, len);
 //				freeChtype(holder);
 			}
-			boxWidth = MAXIMUM (boxWidth, maxWidth + 2 * borderSize);
+			boxWidth = MAXIMUM(boxWidth, maxWidth + 2 * borderSize);
 		} else {
 			boxWidth = -(boxWidth - 1);
 		}
@@ -2326,10 +2383,18 @@ int CDKOBJS::setCdkTitle(const char *titlec, int boxWidth)
 		titleWidth = boxWidth - (2 * borderSize);
 		for (x = 0; x < titleLines; x++) {
 //			title[x] = char2Chtypeh(temp[x], &titleLen[x], &titlePos[x]);
-			titles.push_back(chtstr(temp[x],&titleLen[x],&titlePos[x]));
+			titles.push_back(chtstr(temp[x]
+#ifdef pneu
+	 					.c_str()
+#else
+#endif
+						,&titleLen[x],&titlePos[x]));
 			titlePos[x] = justifyString(titleWidth, titleLen[x], titlePos[x]);
 		}
+#ifdef pneu
+#else
 		CDKfreeStrings(temp);
+#endif
 	}
 	return boxWidth;
 } // int CDKOBJS::setCdkTitle(const char *title, int boxWidth)
@@ -2339,12 +2404,11 @@ int CDKOBJS::setCdkTitle(const char *titlec, int boxWidth)
  */
 void CDKOBJS::drawCdkTitle(WINDOW *win)
 {
-	int x;
-	for (x = 0; x < titleLines; x++) {
+	for (int x = 0; x < titleLines; x++) {
 		writeChtype(win,
 				titlePos[x] + borderSize,
 				x + borderSize,
-				titles[x].inh,
+				titles[x].getinh(),
 				HORIZONTAL, 0,
 				titleLen[x]);
 	}
@@ -2787,7 +2851,7 @@ void SEntry::zeichneFeld()
 					x++;
 					aktumlz++;
 				} else {
-					(void)mvwaddch(fieldWin, 0, x - leftChar-aktumlz, CharOf (info[x]) | fieldAttr);
+					(void)mvwaddch(fieldWin, 0, x - leftChar-aktumlz, (unsigned char)info[x] | fieldAttr);
 				}
 			}
 		}
@@ -2856,8 +2920,8 @@ SEntry::SEntry(SScreen *cdkscreen,
 //		label = char2Chtypeh(labelstr, &labelLen, &junk /* GSchade Anfang*/ ,highnr /* GSchade Ende*/);
 		labelp=new chtstr(labelstr,&labelLen,&junk,highnr);
 		// GSchade Anfang
-		for(int i=0;labelp->inh[i];i++) {
-			if ((int)CharOf(labelp->inh[i])==194 || (int)CharOf(labelp->inh[i])==195) {
+		for(int i=0;labelp->getinh()[i];i++) {
+			if ((int)((unsigned char)labelp->getinh()[i])==194 || (int)((unsigned char)labelp->getinh()[i])==195) {
 				labelumlz++;
 			}
 		}
@@ -3085,7 +3149,7 @@ void SEntry::drawCDKEntry(bool Box)
 	/* Draw in the label to the widget. */
 	if (this->labelWin) {
 		//int f1,f2;
-		writeChtype(this->labelWin, 0, 0, this->labelp->inh, HORIZONTAL, 0, this->labelLen);
+		writeChtype(this->labelWin, 0, 0, this->labelp->getinh(), HORIZONTAL, 0, this->labelLen);
 		wrefresh(this->labelWin);
 	}
 	this->zeichneFeld();
@@ -3776,7 +3840,7 @@ int SScroll::getCDKScrollItems(/*SScroll *scrollp, */char **list)
 {
 	if (list) {
 		for (int x = 0; x < /*scrollp->*/listSize; x++) {
-			list[x] = chtype2Char (/*scrollp->*/sitem[x]);
+			list[x] = chtype2Char(/*scrollp->*/sitem[x]);
 		}
 	}
 	return /*scrollp->*/listSize;
@@ -4056,13 +4120,16 @@ static int adjustAlphalistCB(EObjectType objectType GCC_UNUSED, void
       alphalist->injectMyScroller(key);
       /* Set the value in the entry field. */
 #ifdef pneu
-			current=chtype2Char(scrollp->pitem[scrollp->currentItem].inh);
+			current=scrollp->pitem[scrollp->currentItem].chtype2Char();
 #else
       current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
 #endif
       entry->setCDKEntryValue(current);
       entry->drawObj(box);
+#ifdef pneu
+#else
       freeChecked(current);
+#endif
       return TRUE;
    }
    Beep();
@@ -4321,8 +4388,8 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 	} else if (alphalist->isCDKObjectBind(input)) {
 		result = 1;		/* don't try to use this key in editing */
 	} else if ((isChar (input) &&
-				(isalnum (CharOf (input)) ||
-				 ispunct (input))) ||
+				(isalnum((unsigned char)input) ||
+				 ispunct(input))) ||
 			input == KEY_BACKSPACE ||
 			input == KEY_DC) {
 		int Index, difference, absoluteDifference, x;
@@ -4977,7 +5044,7 @@ void SScroll::drawCDKScrollCurrent()
 		      ((screenPos >= 0) ? screenPos : 0)+einrueck,
 		      this->currentHigh,
 #ifdef pneu
-					this->pitem[this->currentItem].inh,
+					this->pitem[this->currentItem].getinh(),
 #else
 		      this->sitem[this->currentItem],
 #endif
@@ -5015,7 +5082,7 @@ void SScroll::drawCDKScrollList(bool Box)
 				/* Write in the correct line. */
 				// zeichnet alle, ohne das Aktuelle zu markieren
 #ifdef pneu
-				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,chtype2Char(pitem[k].inh));
+				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,pitem[k].chtype2Char());
 #else
 				mvwprintw(parent,anzy++,90,"%i: cury: %i %s",reihe,listWin->_cury,chtype2Char(sitem[k]));
 #endif
@@ -5023,7 +5090,7 @@ void SScroll::drawCDKScrollList(bool Box)
 						((screenPos >= 0) ? screenPos : 1)+einrueck,
 						ypos, 
 #ifdef pneu
-						this->pitem[k].inh,
+						this->pitem[k].getinh(),
 #else
 						this->sitem[k], 
 #endif
@@ -5513,10 +5580,20 @@ SScreen::SScreen(WINDOW *window)
 SLabel::SLabel(SScreen *cdkscreen,
 		       int xplace,
 		       int yplace,
+#ifdef pneu
+					 vector<string> mesg,
+#else
 		       CDK_CSTRING2 mesg,
 		       int prows,
+#endif
 		       bool Box,
-		       bool shadow): xpos(xplace),ypos(yplace),boxWidth(INT_MIN),rows(prows),shadow(shadow)
+		       bool shadow): xpos(xplace),ypos(yplace),boxWidth(INT_MIN),
+#ifdef pneu
+	rows(mesg.size()),
+#else
+	rows(prows),
+#endif
+	shadow(shadow)
 {
    /* *INDENT-EQLS* */
 //   SLabel *label      = 0;
@@ -5547,19 +5624,30 @@ SLabel::SLabel(SScreen *cdkscreen,
    boxHeight = rows + 2 * /*BorderOf (label)*/ borderSize;
 
    /* Determine the box width. */
-   for (x = 0; x < rows; x++) {
+   for (x = 0; x < 
+#ifdef pneu
+			 mesg.size()
+#else
+			 rows
+#endif
+			 ; x++) {
       /* Translate the char * to a chtype. */
 //      /*label->*/info[x] = char2Chtypeh(mesg[x], &/*label->*/infoLen[x], &/*label->*/infoPos[x]);
 #ifdef pneu
 		 int len,pos;
-		 chtstr infoneu(mesg[x],&len,&pos);
+		 chtstr infoneu(mesg[x].c_str(),&len,&pos);
 		 //	pos=justifyString(boxWidth,len,pos);
 		 pinfo.insert(pinfo.begin()+x,infoneu);
 		 // listSize++
 		 infoLen.insert(infoLen.begin()+x,len);
 		 infoPos.insert(infoPos.begin()+x,pos);
 #else
-		 chtstr infoneu(mesg[x],&infoLen[x],&infoPos[x]);
+		 chtstr infoneu(mesg[x]
+#ifdef pneu
+	 					.c_str()
+#else
+#endif
+				 ,&infoLen[x],&infoPos[x]);
 		 infoneu.rauskopier(&sinfo[x]);
 #endif
 		 boxWidth = MAXIMUM(boxWidth, /*label->*/infoLen[x]);
@@ -5611,7 +5699,7 @@ SLabel::SLabel(SScreen *cdkscreen,
    }
 
    /* Register this baby. */
-   registerCDKObject (cdkscreen, vLABEL/*, label*/);
+   registerCDKObject(cdkscreen, vLABEL/*, label*/);
 
    /* Return the label pointer. */
 //   return (label);
@@ -5642,16 +5730,33 @@ void SLabel::activateCDKLabel(/*SLabel *label, */chtype *actions GCC_UNUSED)
 /*
  * This sets multiple attributes of the widget.
  */
-void SLabel::setCDKLabel(/*SLabel *label, */CDK_CSTRING2 mesg, int lines, bool Box)
+void SLabel::setCDKLabel(/*SLabel *label, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int lines
+#endif
+		, bool Box)
 {
-   setCDKLabelMessage (/*label, */mesg, lines);
+   setCDKLabelMessage (/*label, */mesg
+#ifdef pneu
+#else
+			 , lines
+#endif
+	 );
    setCDKLabelBox (/*label, */Box);
 }
 
 /*
  * This sets the information within the label.
  */
-void SLabel::setCDKLabelMessage(/*SLabel *label, */CDK_CSTRING2 s_info, int infoSize)
+void SLabel::setCDKLabelMessage(/*SLabel *label, */
+#ifdef pneu
+			 std::vector<std::string> s_info
+#else
+			 CDK_CSTRING2 s_info, int infoSize
+#endif
+		)
 {
    int x;
    int limit;
@@ -5672,16 +5777,21 @@ void SLabel::setCDKLabelMessage(/*SLabel *label, */CDK_CSTRING2 s_info, int info
 
    /* update the label's length - but taking into account its window size */
    limit = /*label->*/boxHeight - (2 * /*BorderOf (label)*/ borderSize);
+#ifdef pneu
+	 rows=s_info.size();
+	 if (rows>limit) rows=limit;
+#else
    if (infoSize > limit)
       infoSize = limit;
    /*label->*/rows = infoSize;
+#endif
 
    /* Copy in the new message. */
    for (x = 0; x < /*label->*/rows; x++) {
 //      /*label->*/info[x] = char2Chtypeh(s_info[x], &/*label->*/infoLen[x], &/*label->*/infoPos[x]);
 #ifdef pneu
 		 int len,pos;
-		 chtstr infoneu(s_info[x],&len,&pos);
+		 chtstr infoneu(s_info[x].c_str(),&len,&pos);
 		 pos=justifyString(boxWidth-2*borderSize,len,pos);
 		 pinfo.insert(pinfo.begin()+x,infoneu);
 		 // listSize++
@@ -5741,7 +5851,7 @@ void SLabel::drawCDKLabel(/*CDKOBJS *object, */bool Box GCC_UNUSED)
 		   /*label->*/infoPos[x] + /*BorderOf (label)*/ borderSize,
 		   x + /*BorderOf (label)*/ borderSize,
 #ifdef pneu
-						this->pinfo[x].inh,
+						this->pinfo[x].getinh(),
 #else
 		   /*label->*/sinfo[x],
 #endif
@@ -5864,13 +5974,24 @@ char SLabel::waitCDKLabel(/*SLabel *label, */char key)
 /*
  * This pops up a message.
  */
-void SScreen::popupLabel(/*SScreen *screen, */CDK_CSTRING2 mesg, int count)
+void SScreen::popupLabel(/*SScreen *screen, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int count
+#endif
+		)
 {
 //   SLabel *popup = 0;
    int oldCursState;
    bool functionKey;
    /* Create the label. */
-   SLabel popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+   SLabel popup(this,CENTER, CENTER, mesg, 
+#ifdef pneu
+#else
+			 count, 
+#endif
+			 TRUE, FALSE);
    oldCursState = curs_set(0);
    /* Draw it on the screen. */
    popup.drawCDKLabel(/*popup, */TRUE);
@@ -5888,13 +6009,24 @@ void SScreen::popupLabel(/*SScreen *screen, */CDK_CSTRING2 mesg, int count)
 /*
  * This pops up a message.
  */
-void SScreen::popupLabelAttrib(/*SScreen *screen, */CDK_CSTRING2 mesg, int count, chtype attrib)
+void SScreen::popupLabelAttrib(/*SScreen *screen, */
+#ifdef pneu
+			 std::vector<std::string> mesg
+#else
+			 CDK_CSTRING2 mesg, int count
+#endif
+		, chtype attrib)
 {
 //   SLabel *popup = 0;
    int oldCursState;
    bool functionKey;
    /* Create the label. */
-   SLabel popup(this,CENTER, CENTER, mesg, count, TRUE, FALSE);
+   SLabel popup(this,CENTER, CENTER, mesg, 
+#ifdef pneu
+#else
+			 count, 
+#endif
+			 TRUE, FALSE);
 //   popup.setCDKLabelBackgroundAttrib(attrib);
    popup.setBKattrObj(attrib);
    oldCursState = curs_set(0);
@@ -5925,7 +6057,7 @@ void CDKOBJS::setCDKObjectBackgroundColor(/*CDKOBJS *obj, */const char *color)
 //   chtype *holder = char2Chtypeh(color, &junk1, &junk2);
 	 chtstr holder(color,&junk1,&junk2);
    /* Set the widget's background color. */
-   setBKattrObj(/*obj, */holder.inh[0]);
+   setBKattrObj(/*obj, */holder.getinh()[0]);
    /* Clean up. */
 //   freeChtype (holder);
 }
@@ -6279,7 +6411,7 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 		fselect->injectMyScroller(key);
 		/* Get the currently highlighted filename. */
 #ifdef pneu
-		current = chtype2Char(scrollp->pitem[scrollp->currentItem].inh);
+		current = scrollp->pitem[scrollp->currentItem].chtype2Char();
 #else
 		current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
 #endif
@@ -6288,7 +6420,10 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 		/* Set the value in the entry field. */
 		entry->setCDKEntryValue(temp);
 		entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
+#ifdef pneu
+#else
 		freeChecked(current);
+#endif
 		freeChecked(temp);
 		return (TRUE);
 	}
@@ -6503,21 +6638,34 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 
 		/* Change directories. */
 		if (chdir (newDirectory)) {
-			char *mesg[10];
+#ifdef pneu
+			vector<string> mesg(4);
+#else
+			char *mesg[4];
+#endif
 
 			Beep ();
 
 			/* Could not get into the directory, pop up a little message. */
-			mesg[0] = format1String ("<C>Could not change into %s", newDirectory);
-			mesg[1] = errorMessage ("<C></U>%s");
-			mesg[2] = copyChar (" ");
-			mesg[3] = copyChar ("<C>Press Any Key To Continue.");
+			mesg[0] = format1String("<C>Could not change into %s", newDirectory);
+			mesg[1] = errorMessage("<C></U>%s");
+			mesg[2] = copyChar(" ");
+			mesg[3] = copyChar("<C>Press Any Key To Continue.");
 
 			/* Pop Up a message. */
-			screen->popupLabel(/*ScreenOf (this), */(CDK_CSTRING2)mesg, 4);
+			screen->popupLabel(/*ScreenOf (this), */
+#ifdef pneu
+					mesg
+#else
+					(CDK_CSTRING2)mesg, 4
+#endif
+					);
 
 			/* Clean up some memory. */
-			freeCharList (mesg, 4);
+#ifdef pneu
+#else
+			freeCharList(mesg, 4);
+#endif
 
 			/* Get out of here. */
 			eraseCDKFselect(/*this*/);
@@ -6593,7 +6741,11 @@ char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
 
 //   chtype *tempChtype = char2Chtypeh(content, &j, &j2);
 	 chtstr tempChtype(content,&j,&j2);
-   tempChar = chtype2Char(tempChtype.inh);
+#ifdef pneu
+   tempChar = tempChtype.chtype2Char();
+#else
+   tempChar = chtype2Char(tempChtype.getinh());
+#endif
    trim1Char(tempChar);	/* trim the 'mode' stored on the end */
 
    /* Create the pathname. */
@@ -6601,7 +6753,10 @@ char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
 
    /* Clean up. */
 //   freeChtype(tempChtype);
+#ifdef pneu
+#else
    freeChecked(tempChar);
+#endif
    return result;
 }
 
@@ -6862,7 +7017,11 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 #endif
 	char *filename;
 	const char *filetype;
-	char *mesg[10];
+#ifdef pneu
+	vector<string> mesg(9);
+#else
+	char *mesg[9];
+#endif
 	char stringMode[15];
 	int intMode;
 	bool functionKey;
@@ -6926,13 +7085,20 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 	/* Create the pop up label. */
 	infoLabel = new SLabel(entry->/*obj.*/screen,
 			CENTER, CENTER,
-			(CDK_CSTRING2)mesg, 9,
+#ifdef pneu
+			mesg,
+#else
+			 (CDK_CSTRING2)mesg,9, 
+#endif
 			TRUE, FALSE);
 	infoLabel->drawCDKLabel(/*infoLabel, */TRUE);
 	infoLabel->getchCDKObject(/*ObjOf (infoLabel), */&functionKey);
 	/* Clean up some memory. */
 	infoLabel->destroyCDKLabel (/*infoLabel*/);
+#ifdef pneu
+#else
 	freeCharList (mesg, 9);
+#endif
 	/* Redraw the file selector. */
 	fselect->drawCDKFselect(/*fselect, ObjOf (fselect)->*/box);
 	return (TRUE);
