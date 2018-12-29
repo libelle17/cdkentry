@@ -281,7 +281,7 @@ extern einbauart akteinbart;
 /*
 #define ObjTypeOf(p)            MethodPtr(p,objectType)
 #define DataTypeOf(p)           MethodPtr(p,returnType)
-#define DrawObj(p)              MethodPtr(p,drawObj)         (p,p->box)
+#define DrawObj(p)              MethodPtr(p,drawObj)         (p,p->obbox)
 #define EraseObj(p)             MethodPtr(p,eraseObj)        (p)
 #define DestroyObj(p)           MethodPtr(p,destroyObj)      (p)
 #define InjectObj(p,k)          MethodPtr(p,injectObj)       (p,(k))
@@ -498,9 +498,13 @@ typedef bool (*CHECK_KEYCODE)(int /* keyCode */, int /* functionKey */);
 struct SScreen 
 { // SScreen
    WINDOW *		window;
+#ifdef pneu
+	 std::vector<CDKOBJS*> object;// CDKOBJS
+#else
    CDKOBJS**	object; // CDKOBJS
-   int			objectCount;	/* last-used index in object[] */
    int			objectLimit;	/* sizeof(object[]) */
+#endif
+   int			objectCount;	/* last-used index in object[] */
    EExitStatus		exitStatus;
    int			objectFocus;	/* focus index in object[] */
 	 void eraseCDKScreen();
@@ -587,8 +591,8 @@ void refreshCDKWindow(WINDOW *win);
 #ifdef pneu
 #else
 char *copyChar(const char *original);
-#endif
 chtype *copyChtype(const chtype *original);
+#endif
 void eraseCursesWindow(WINDOW *window);
 void deleteCursesWindow(WINDOW *window);
 void moveCursesWindow(WINDOW *window, int xdiff, int ydiff);
@@ -633,8 +637,8 @@ CDKallocStrings(
 #endif
 		);
 void writeBlanks(WINDOW *window, int xpos, int ypos, int align, int start, int end);
-void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int start, int end);
-void writeCharAttrib(WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
+void writeChar(WINDOW *window, int xpos, int ypos, const char *string, int align, int start, int end);
+void writeCharAttrib(WINDOW *window, int xpos, int ypos, const char *string, chtype attr, int align, int start, int end);
 static bool checkMenuKey(int keyCode, int functionKey);
 CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
 #ifdef pneu
@@ -693,7 +697,7 @@ struct CDKOBJS
    SScreen *  screen;
 	 EObjectType cdktype; 
 	 //const CDKFUNCS * fn;
-   bool      box;
+   bool      obbox;
    int          borderSize;
    bool      acceptsFocus;
    bool      hasFocus;
@@ -715,7 +719,7 @@ struct CDKOBJS
    int *	titlePos=0;
    int *	titleLen=0;
    int		titleLines=0;
-   /* line-drawing (see 'box') */
+   /* line-drawing (see 'obbox') */
    chtype       ULChar;		/* lines: upper-left */
    chtype       URChar;		/* lines: upper-right */
    chtype       LLChar;		/* lines: lower-left */
@@ -780,7 +784,11 @@ struct CDKOBJS
 	 bool validObjType(EObjectType type);
 	 void registerCDKObject(SScreen *screen, EObjectType cdktype);
 	 void reRegisterCDKObject(EObjectType cdktype/*, void *object*/);
+#ifdef pneu
+	 void setScreenIndex(SScreen *pscreen);
+#else
 	 void setScreenIndex(SScreen *pscreen, int number);
+#endif
 	 void drawObjBox(WINDOW *win);
 	 int getcCDKObject();
 	 int getchCDKObject(bool *functionKey);
@@ -868,7 +876,7 @@ struct SEntry:CDKOBJS
 	 ~SEntry();
 	 void destroyObj(){this->~SEntry();}
 	 void drawCDKEntry(bool);
-	 void drawObj(bool box);
+	 void drawObj(bool Box);
 	 void cleanCDKEntry();
 	 int injectCDKEntry(chtype);
 	 int injectObj(chtype ch){return injectCDKEntry(ch);}
@@ -1210,7 +1218,7 @@ struct SAlphalist:CDKOBJS
 	 void destroyObj(){this->~SAlphalist();}
 	 void drawMyScroller(/*SAlphalist *widget*/);
 	 void drawCDKAlphalist(bool Box GCC_UNUSED);
-	 void drawObj(bool box);
+	 void drawObj(bool Box);
 	 void moveCDKAlphalist(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void injectMyScroller(chtype key);
 	 const char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
