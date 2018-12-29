@@ -802,6 +802,8 @@ void refreshCDKWindow(WINDOW *win)
    wrefresh(win);
 }
 
+#ifdef pneu
+#else
 /*
  * This performs a safe copy of a string. This means it adds the null
  * terminator on the end of the string, like strdup().
@@ -815,6 +817,7 @@ char *copyChar(const char *original)
 	}
 	return (newstring);
 }
+#endif
 
 chtype *copyChtype(const chtype *original)
 {
@@ -1173,6 +1176,8 @@ static bool checkMenuKey(int keyCode, int functionKey)
 }
 // aus cdk.c:
 
+#ifdef pneu
+#else
 /*
  * Copy the given lists.
  */
@@ -1187,6 +1192,7 @@ char **copyCharList(const char **list)
 	}
 	return result;
 }
+#endif
 
 /*
  * Return the length of the given lists.
@@ -2042,18 +2048,18 @@ void SFSelect::moveCDKFselect(/*CDKOBJS *object,*/
  * from the keyboard, and when it's done, it fills the entry info
  * element of the structure with what was typed.
  */
-char *SFSelect::activateCDKFselect(/*SFSelect *fselect, */chtype *actions)
+const char *SFSelect::activateCDKFselect(/*SFSelect *fselect, */chtype *actions)
 {
 	chtype input = 0;
 	bool functionKey;
-	char *ret = 0;
+	const char *ret = 0;
 	/* Draw the widget. */
 	drawCDKFselect(/*fselect, ObjOf (fselect)->*/box);
 	if (!actions) {
 		for (;;) {
 			input =(chtype)getchCDKObject(/*ObjOf (fselect->entryField), */&functionKey);
 			/* Inject the character into the widget. */
-			ret=injectCDKFselect(input)?resultData.valueString:unknownString;
+			ret=injectCDKFselect(input)?resultData.valueString:0/*unknownString*/;
 			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -2062,7 +2068,7 @@ char *SFSelect::activateCDKFselect(/*SFSelect *fselect, */chtype *actions)
 		int length = chlen (actions);
 		/* Inject each character one at a time. */
 		for (int x = 0; x < length; x++) {
-			ret=injectCDKFselect(actions[x])?resultData.valueString:unknownString;
+			ret=injectCDKFselect(actions[x])?resultData.valueString:0/*unknownString*/;
 			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -2170,12 +2176,18 @@ SFSelect::~SFSelect()
       cleanCDKObjectBindings(/*vFSELECT, fselect*/);
 
       /* Free up the character pointers. */
+#ifdef pneu
+#else
       freeChecked(this->pwd);
       freeChecked(this->pathname);
+#endif
+#ifdef pneu
+#else
       freeChecked(this->dirAttribute);
       freeChecked(this->fileAttribute);
       freeChecked(this->linkAttribute);
       freeChecked(this->sockAttribute);
+#endif
 #ifdef pneu
 #else
       CDKfreeStrings(this->dirContents);
@@ -2895,9 +2907,8 @@ SEntry::SEntry(SScreen *cdkscreen,
 
 	//	if ((entry = newCDKObject (SEntry, &my_funcs)) == 0) return (0);
 	::CDKOBJS();
-
 	setBox(Box);
-	boxHeight = (BorderOf (this) * 2) + 1;
+	boxHeight = (borderSize * 2) + 1;
 
 	/*
 	 * If the fieldWidth is a negative value, the fieldWidth will
@@ -2905,7 +2916,7 @@ SEntry::SEntry(SScreen *cdkscreen,
 	 * given width.
 	 */
 	fieldWidth = setWidgetDimension(parentWidth, fieldWidth, 0);
-	boxWidth = fieldWidth + 2 * BorderOf (this);
+	boxWidth = fieldWidth + 2 * borderSize;
 
 	/* Set some basic values of the entry field. */
 	//label = 0;
@@ -2941,7 +2952,7 @@ SEntry::SEntry(SScreen *cdkscreen,
 	boxWidth = MINIMUM(boxWidth, parentWidth);
 	boxHeight = MINIMUM(boxHeight, parentHeight);
 	fieldWidth = MINIMUM(fieldWidth,
-			boxWidth - labelLen +labelumlz - 2 * BorderOf (this));
+			boxWidth - labelLen +labelumlz - 2 * borderSize);
 
 	/* Rejustify the x and y positions if we need to. */
 	alignxy(cdkscreen->window, &xpos, &ypos, boxWidth, boxHeight);
@@ -2956,10 +2967,10 @@ SEntry::SEntry(SScreen *cdkscreen,
 
 		/* Make the field window. */
 		fieldWin = subwin(win, 1, fieldWidth,
-				(ypos + TitleLinesOf (this) + BorderOf (this)),
+				(ypos + TitleLinesOf (this) + borderSize),
 				(xpos + labelLen -labelumlz
 				 + horizontalAdjust
-				 + BorderOf (this)));
+				 + borderSize));
 		if (!fieldWin) {
 			destroyCDKObject();
 		} else {
@@ -2968,8 +2979,8 @@ SEntry::SEntry(SScreen *cdkscreen,
 			/* Make the label win, if we need to. */
 			if (labelstr) {
 				labelWin = subwin (win, 1, labelLen,
-						ypos + TitleLinesOf (this) + BorderOf (this),
-						xpos + horizontalAdjust + BorderOf (this));
+						ypos + TitleLinesOf (this) + borderSize,
+						xpos + horizontalAdjust + borderSize);
 			}
 
 			/* Make room for the info char * pointer. */
@@ -3025,11 +3036,11 @@ SEntry::SEntry(SScreen *cdkscreen,
  * from the keyboard, and when its done, it fills the entry info
  * element of the structure with what was typed.
  */
-char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
+const char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/)
 {
 	chtype input = 0;
 	bool functionKey;
-	char *ret = 0;
+	const char *ret = 0;
 	int zweit;
 	if (!Zweitzeichen) Zweitzeichen=&zweit;
 	/* Draw the widget. */
@@ -3068,7 +3079,7 @@ char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drit
 			// GSchade Ende
 			/* Inject the character into the widget. */
 //			ret = injectCDKEntry(entry, input);
-			ret=injectCDKEntry(input)?resultData.valueString:unknownString;
+			ret=injectCDKEntry(input)?resultData.valueString:0/*unknownString*/;
 			// GSchade Anfang
       /*
 			mvwprintw(entry->parent,1,80,"info:%s ",entry->info);
@@ -3092,7 +3103,7 @@ char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drit
 		for (int x = 0; x < length; x++) {
 //					mvwprintw(entry->parent,4,2,"vor inject 2");
 //			ret = injectCDKEntry(entry, actions[x]);
-			ret = injectCDKEntry(actions[x])?resultData.valueString:unknownString;
+			ret = injectCDKEntry(actions[x])?resultData.valueString:0/*unknownString*/;
 			if (this->exitType != vEARLY_EXIT) {
 				return ret;
 			}
@@ -3110,9 +3121,9 @@ char* SEntry::activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drit
 /*
  * This activates the file selector.
  */
-char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/)
+const char* SAlphalist::activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/)
 {
-   char *ret = 0;
+   const char *ret = 0;
    /* Draw the widget. */
    drawCDKAlphalist(box);
    /* Activate the widget. */
@@ -3162,7 +3173,7 @@ int SEntry::injectCDKEntry(chtype input)
 {
 //	SEntry *widget = (SEntry *)object;
 	int ppReturn = 1;
-	char *ret = unknownString;
+	char *ret = 0/*unknownString*/;
 	bool complete = FALSE;
 	static char umlaut[3]={0};
 	const int inpint=input;
@@ -3332,8 +3343,12 @@ int SEntry::injectCDKEntry(chtype input)
 					break;
 				case CDK_CUT:
 					if (infoLength) {
+#ifdef pneu
+						GPasteBuffer=info;
+#else
 						freeChecked(GPasteBuffer);
-						GPasteBuffer = copyChar (this->info);
+						GPasteBuffer = copyChar(this->info);
+#endif
 						cleanCDKEntry();
 						this->zeichneFeld();
 					} else {
@@ -3342,15 +3357,24 @@ int SEntry::injectCDKEntry(chtype input)
 					break;
 				case CDK_COPY:
 					if (infoLength) {
+#ifdef pneu
+						GPasteBuffer=info;
+#else
 						freeChecked(GPasteBuffer);
-						GPasteBuffer = copyChar (this->info);
+						GPasteBuffer = copyChar(this->info);
+#endif
 					} else {
 						Beep ();
 					}
 					break;
 				case CDK_PASTE:
+#ifdef pneu
+					if (!GPasteBuffer.empty()) {
+						setCDKEntryValue(GPasteBuffer.c_str());
+#else
 					if (GPasteBuffer) {
 						setCDKEntryValue(GPasteBuffer);
+#endif
 						this->zeichneFeld();
 					} else {
 						Beep ();
@@ -3403,7 +3427,7 @@ int SEntry::injectCDKEntry(chtype input)
 	}
 	if (!complete) setExitType(0);
 	ResultOf (this).valueString = ret;
-	return (ret != unknownString);
+	return (ret != 0/*unknownString*/);
 } // int SEntry::injectCDKEntry(chtype input)
 
 /*
@@ -3718,18 +3742,18 @@ void SFSelect::injectMyScroller(chtype key)
 int SAlphalist::injectCDKAlphalist(chtype input)
 {
 //   SAlphalist *alphalist = (SAlphalist *)object;
-   char *ret;
+   const char *ret;
    /* Draw the widget. */
    drawCDKAlphalist(box);
    /* Inject a character into the widget. */
-	 ret=entryField->injectCDKEntry(input)?entryField->resultData.valueString:unknownString;
+	 ret=entryField->injectCDKEntry(input)?entryField->resultData.valueString:0/*unknownString*/;
 	 /* Copy the exit type from the entry field. */
    copyExitType(this, this->entryField);
    /* Determine the exit status. */
    if (this->exitType == vEARLY_EXIT)
-      ret = unknownString;
+      ret = 0/*unknownString*/;
    ResultOf (this).valueString = ret;
-   return (ret != unknownString);
+   return (ret != 0/*unknownString*/);
 }
 
 /*
@@ -3738,13 +3762,21 @@ int SAlphalist::injectCDKAlphalist(chtype input)
 int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
 {
 	//   SFSelect *fselect = (SFSelect *)object;
-	const char *filename;
+	const char *filename{""};
 	bool file;
-	char *ret = unknownString;
+#ifdef pneu
+#else
+	char *ret = 0/*unknownString*/;
+#endif
 	bool complete = FALSE;
 	/* Let the user play. */
 	if (entryField) {
-	 filename = entryField->injectCDKEntry(/*this->entryField, */input)?entryField->resultData.valueString:unknownString;
+#ifdef pneu
+	 if (entryField->injectCDKEntry(/*this->entryField, */input)) 
+		 filename=entryField->resultData.valueString;
+#else
+	 filename = entryField->injectCDKEntry(/*this->entryField, */input)?entryField->resultData.valueString:0/*unknownString*/;
+#endif
   }
 	/* Copy the entry field exitType to the fileselector. */
 	copyExitType(this, this->entryField);
@@ -3753,24 +3785,54 @@ int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
 		return 0;
 	}
 	/* Can we change into the directory? */
-	file = chdir (filename);
-	if (chdir(this->pwd)) {
+	file = chdir(filename);
+	if (chdir(this->pwd
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				)) {
 		return 0;
 	}
 	/* If it's not a directory, return the filename. */
 	if (file) {
 		/* It's a regular file, create the full path. */
-		this->pathname = copyChar (filename);
+#ifdef pneu
+		this->pfadname=filename;
+		/* Return the complete pathname. */
+#else
+		this->pathname = copyChar(filename);
 		/* Return the complete pathname. */
 		ret = (this->pathname);
+#endif
 		complete = TRUE;
 	} else {
 		/* Set the file selector information. */
 		setCDKFselect(/*this, */filename,
 				this->fieldAttribute, this->fillerCharacter,
 				this->highlight,
-				this->dirAttribute, this->fileAttribute,
-				this->linkAttribute, this->sockAttribute,
+				this->dirAttribute
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				, this->fileAttribute
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				,
+				this->linkAttribute
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				, this->sockAttribute
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				,
 				/*ObjOf (this)->*/box);
 
 		/* Redraw the scrolling list. */
@@ -3778,8 +3840,16 @@ int SFSelect::injectCDKFselect(/*CDKOBJS *object, */chtype input)
 	}
 	if (!complete)
 		setExitType(/*this, */0);
-	ResultOf (this).valueString = ret;
-	return (ret != unknownString);
+#ifdef pneu
+  resultData.valueString=pfadname.c_str();
+#else
+	ResultOf(this).valueString = ret;
+#endif
+#ifdef pneu
+	return !pfadname.empty();
+#else
+	return (ret != 0/*unknownString*/);
+#endif
 }
 
 
@@ -4609,7 +4679,7 @@ SAlphalist::SAlphalist(SScreen *cdkscreen,
 	 * Create the scrolling list.  It overlaps the entry field by one line if
 	 * we are using box-borders.
 	 */
-	tempHeight = getmaxy(this->entryField->win) - BorderOf(this);
+	tempHeight = getmaxy(this->entryField->win) - borderSize;
 	tempWidth = (isFullWidth(width) ? FULL : boxWidth - 1);
 	this->scrollField = new SScroll(cdkscreen,
 			getbegx(this->win),
@@ -4930,7 +5000,7 @@ SScroll::SScroll(SScreen *cdkscreen,
 				      MaxViewSize(), 1,
 				      SCREEN_YPOS (this, ypos),
 				      xpos + boxWidth
-				      - BorderOf (this) - 1);
+				      - borderSize - 1);
    } else if (splace == LEFT) {
       scrollbarWin = subwin (win,
 				      MaxViewSize(), 1,
@@ -4945,7 +5015,7 @@ SScroll::SScroll(SScreen *cdkscreen,
    listWin = subwin (win,
 			      MaxViewSize(),
 			      boxWidth
-			      - 2 * BorderOf (this) - scrollAdjust,
+			      - 2 * borderSize - scrollAdjust,
 			      SCREEN_YPOS (this, ypos),
 			      SCREEN_XPOS (this, xpos)
 			      + (splace == LEFT ? 1 : 0));
@@ -5074,7 +5144,7 @@ void SScroll::drawCDKScrollList(bool Box)
 		for (int j = 0; j < this->viewSize; j++) {
 			int xpos = SCREEN_YPOS (this, 0);
 			int ypos = SCREEN_YPOS (this, j);
-			writeBlanks(this->listWin, xpos, ypos, HORIZONTAL, 0, this->boxWidth - 2 * BorderOf (this));
+			writeBlanks(this->listWin, xpos, ypos, HORIZONTAL, 0, this->boxWidth - 2 * borderSize);
 			int k = j + this->currentTop;
 			/* Draw the elements in the scroll list. */
 			if (k < this->listSize) {
@@ -6167,10 +6237,17 @@ void SFSelect::drawMyScroller(/*SFSelect *widget*/)
 void SFSelect::setPWD(/*SFSelect *fselect*/)
 {
    char buffer[512];
+#ifdef pneu
+#else
    freeChecked(this->pwd);
+#endif
    if (!getcwd(buffer, sizeof (buffer)))
       strcpy(buffer, ".");
+#ifdef pneu
+	 this->pwd=buffer;
+#else
    this->pwd = copyChar(buffer);
+#endif
 }
 
 /*
@@ -6282,7 +6359,12 @@ int SFSelect::setCDKFselectdirContents(/*CDKFSELECT *fselect*/)
 #endif
 	int fileCount;
 	/* Get the directory contents. */
-	fileCount = CDKgetDirectoryContents(this->pwd, &dirList);
+	fileCount = CDKgetDirectoryContents(this->pwd
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			, &dirList);
 	if (fileCount <= 0) {
 #ifdef pneu
 #else
@@ -6329,18 +6411,38 @@ int SFSelect::setCDKFselectdirContents(/*CDKFSELECT *fselect*/)
 		}
 		switch (mode2Filetype (fileStat.st_mode)) {
 			case 'l':
-				attr = this->linkAttribute;
+				attr = this->linkAttribute
+#ifdef pneu
+					.c_str()
+#else
+#endif
+					;
 				mode = "@";
 				break;
 			case '@':
-				attr = this->sockAttribute;
+				attr = this->sockAttribute
+#ifdef pneu
+					.c_str()
+#else
+#endif
+					;
 				mode = "&";
 				break;
 			case '-':
-				attr = this->fileAttribute;
+				attr = this->fileAttribute
+#ifdef pneu
+					.c_str()
+#else
+#endif
+					;
 				break;
 			case 'd':
-				attr = this->dirAttribute;
+				attr = this->dirAttribute
+#ifdef pneu
+					.c_str()
+#else
+#endif
+					;
 				mode = "/";
 				break;
 			default:
@@ -6416,7 +6518,12 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 		current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
 #endif
 		trim1Char(current);
-		temp = make_pathname(fselect->pwd, current);
+		temp = make_pathname(fselect->pwd
+#ifdef pneu
+				.c_str()
+#else
+#endif
+				, current);
 		/* Set the value in the entry field. */
 		entry->setCDKEntryValue(temp);
 		entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
@@ -6431,19 +6538,34 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 	return (FALSE);
 }
 
+#ifdef pneu
+// Pfadname einer Datei
+//std::string dirName(const std::string& path)
+std::string dirName(string path)
+{
+  size_t letzt=path.find_last_of("/\\");
+	if (letzt==string::npos) return {};
+  return path.substr(0,letzt);
+} // std::string dir_name(std::string const & path)
+std::string dirName(const char* pfad)
+{
+	string path{pfad};
+	return dirName(path);
+} // std::string dir_name(std::string const & path)
+#else
 /*
  * Returns the directory for the given pathname, i.e., the part before the
  * last slash.
  */
-char *dirName(char *pathname)
+char *dirName(const char *pathname)
 {
 	char *dir = 0;
 	size_t pathLen;
 
 	/* Check if the string is null.  */
 	if (pathname
-			&& (dir = copyChar (pathname))
-			&& (pathLen = strlen (pathname)))
+			&& (dir = copyChar(pathname))
+			&& (pathLen = strlen(pathname)))
 	{
 		size_t x = pathLen;
 		while ((dir[x] != '/') && (x > 0))
@@ -6451,77 +6573,98 @@ char *dirName(char *pathname)
 			dir[x--] = '\0';
 		}
 	}
-
 	return dir;
 }
+#endif
 
 /*
  * This takes a ~ type account name and returns the full pathname.
  */
-static char *expandTilde (const char *filename)
+static char *expandTilde(const char *filename)
 {
-   char *result = 0;
-   char *account;
-   char *pathname;
-   int len;
-
-   /* Make sure the filename is not null/empty, and begins with a tilde */
-   if ((filename) &&
-       (len = (int)strlen (filename)) &&
-       filename[0] == '~' &&
-       (account = copyChar (filename)) &&
-       (pathname = copyChar (filename)))
-   {
-      bool slash = FALSE;
-      const char *home;
-      int x;
-      int len_a = 0;
-      int len_p = 0;
-      struct passwd *accountInfo;
-
-      /* Find the account name in the filename. */
-      for (x = 1; x < len; x++)
-      {
-	 if (filename[x] == '/' && !slash)
-	 {
-	    slash = TRUE;
-	 }
-	 else if (slash)
-	 {
-	    pathname[len_p++] = filename[x];
-	 }
-	 else
-	 {
-	    account[len_a++] = filename[x];
-	 }
-      }
-      account[len_a] = '\0';
-      pathname[len_p] = '\0';
-
-      home = 0;
-#ifdef HAVE_PWD_H
-      if (strlen (account) &&
-	  (accountInfo = getpwnam (account)))
-      {
-	 home = accountInfo->pw_dir;
-      }
+	char *result = 0;
+#ifdef pneu
+	std::string account,pathname;
+#else
+	char *account;
+	char *pathname;
 #endif
-      if (home == 0 || *home == '\0')
-	 home = getenv ("HOME");
-      if (home == 0 || *home == '\0')
-	 home = "/";
+	int len;
 
-      /*
-       * Construct the full pathname. We do this because someone
-       * may have a pathname at the end of the account name
-       * and we want to keep it.
-       */
-      result = make_pathname (home, pathname);
+	/* Make sure the filename is not null/empty, and begins with a tilde */
+	if ((filename) &&
+			(len = (int)strlen(filename)) &&
+			filename[0] == '~' &&
+#ifdef pneu
+			(account=filename,!account.empty())
+			&& (pathname=filename,!pathname.empty())
+#else
+			(account = copyChar(filename))
+				&& (pathname = copyChar(filename))
+#endif
+		)
+	{
+		bool slash = FALSE;
+		const char *home;
+		int x;
+		int len_a = 0;
+		int len_p = 0;
+		struct passwd *accountInfo;
 
-      freeChecked(account);
-      freeChecked(pathname);
-   }
-   return result;
+		/* Find the account name in the filename. */
+		for (x = 1; x < len; x++)
+		{
+			if (filename[x] == '/' && !slash) {
+				slash = TRUE;
+			} else if (slash) {
+				pathname[len_p++] = filename[x];
+			} else {
+				account[len_a++] = filename[x];
+			}
+		}
+#ifdef pneu
+		account.resize(len_a);
+		pathname.resize(len_p);
+#else
+		account[len_a] = '\0';
+		pathname[len_p] = '\0';
+#endif
+
+		home = 0;
+#ifdef HAVE_PWD_H
+#ifdef pneu
+		if (!account.empty() && (accountInfo=getpwnam(account.c_str())))
+#else
+		if (strlen(account) &&
+				(accountInfo = getpwnam(account)))
+#endif
+		{
+			home = accountInfo->pw_dir;
+		}
+#endif
+		if (home == 0 || *home == '\0')
+			home = getenv ("HOME");
+		if (home == 0 || *home == '\0')
+			home = "/";
+
+		/*
+		 * Construct the full pathname. We do this because someone
+		 * may have a pathname at the end of the account name
+		 * and we want to keep it.
+		 */
+#ifdef pneu
+		result = make_pathname(home, pathname.c_str());
+#else
+		result = make_pathname(home, pathname);
+#endif
+
+#ifdef pneu
+#else
+		freeChecked(account);
+		freeChecked(pathname);
+#endif
+	}
+	return result;
 }
 
 static char *format1String (const char *format, const char *string)
@@ -6627,30 +6770,48 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 
 	/* Only do the directory stuff if the directory is not null. */
 	if (directory) {
+#ifdef pneu
+		string newDirectory;
+#else
 		char *newDirectory;
+#endif
 
 		/* Try to expand the directory if it starts with a ~ */
-		if ((tempDir = expandTilde (directory))) {
+		if ((tempDir = expandTilde(directory))) {
 			newDirectory = tempDir;
 		} else {
-			newDirectory = copyChar (directory);
+#ifdef pneu
+			newDirectory=directory;
+#else
+			newDirectory = copyChar(directory);
+#endif
 		}
 
 		/* Change directories. */
-		if (chdir (newDirectory)) {
 #ifdef pneu
+		if (chdir(newDirectory.c_str())) {
 			vector<string> mesg(4);
 #else
+		if (chdir(newDirectory)) {
 			char *mesg[4];
 #endif
-
-			Beep ();
+			Beep();
 
 			/* Could not get into the directory, pop up a little message. */
-			mesg[0] = format1String("<C>Could not change into %s", newDirectory);
+			mesg[0] = format1String("<C>Could not change into %s", newDirectory
+#ifdef pneu
+					.c_str()
+#else
+#endif
+					);
 			mesg[1] = errorMessage("<C></U>%s");
+#ifdef pneu
+			mesg[2]=" ";
+			mesg[3]="<C>Press Any Key To Continue.";
+#else
 			mesg[2] = copyChar(" ");
 			mesg[3] = copyChar("<C>Press Any Key To Continue.");
+#endif
 
 			/* Pop Up a message. */
 			screen->popupLabel(/*ScreenOf (this), */
@@ -6670,47 +6831,60 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 			/* Get out of here. */
 			eraseCDKFselect(/*this*/);
 			drawCDKFselect (/*this, ObjOf (this)->*/box);
+#ifdef pneu
+#else
 			freeChecked(newDirectory);
+#endif
 			return;
 		}
+#ifdef pneu
+#else
 		freeChecked(newDirectory);
+#endif
 	}
 
 	/*
 	 * If the information coming in is the same as the information
 	 * that is already there, there is no need to destroy it.
 	 */
-	if (this->pwd != directory)
-	{
+	if (this->pwd != directory) {
 		setPWD(/*this*/);
 	}
-	if (this->fileAttribute != fileAttribute)
-	{
+#ifdef pneu
+	this->fileAttribute=fileAttribute;
+	this->dirAttribute=dirAttribute;
+	this->linkAttribute=linkAttribute;
+	this->sockAttribute=sockAttribute;
+#else
+	if (this->fileAttribute != fileAttribute) {
 		/* Remove the old pointer and set the new value. */
 		freeChecked(this->fileAttribute);
-		this->fileAttribute = copyChar (fileAttribute);
+		this->fileAttribute = copyChar(fileAttribute);
 	}
-	if (this->dirAttribute != dirAttribute)
-	{
+	if (this->dirAttribute != dirAttribute) {
 		/* Remove the old pointer and set the new value. */
 		freeChecked(this->dirAttribute);
 		this->dirAttribute = copyChar (dirAttribute);
 	}
-	if (this->linkAttribute != linkAttribute)
-	{
+	if (this->linkAttribute != linkAttribute) {
 		/* Remove the old pointer and set the new value. */
 		freeChecked(this->linkAttribute);
-		this->linkAttribute = copyChar (linkAttribute);
+		this->linkAttribute = copyChar(linkAttribute);
 	}
-	if (this->sockAttribute != sockAttribute)
-	{
+	if (this->sockAttribute != sockAttribute) {
 		/* Remove the old pointer and set the new value. */
 		freeChecked(this->sockAttribute);
-		this->sockAttribute = copyChar (sockAttribute);
+		this->sockAttribute = copyChar(sockAttribute);
 	}
+#endif
 
 	/* Set the contents of the entry field. */
-	fentry->setCDKEntryValue(/*fentry, */this->pwd);
+	fentry->setCDKEntryValue(/*fentry, */this->pwd
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			);
 	fentry->drawCDKEntry(/*fentry, ObjOf (fentry)->*/box);
 
 	/* Get the directory contents. */
@@ -6749,7 +6923,12 @@ char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
    trim1Char(tempChar);	/* trim the 'mode' stored on the end */
 
    /* Create the pathname. */
-   result = make_pathname (this->pwd, tempChar);
+   result = make_pathname(this->pwd
+#ifdef pneu
+			 .c_str()
+#else
+#endif
+			 , tempChar);
 
    /* Clean up. */
 //   freeChtype(tempChtype);
@@ -6773,48 +6952,101 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 	SFSelect *fselect  = (SFSelect *)clientData;
 	SScroll *scrollp   = fselect->scrollField;
 	SEntry *entry      = fselect->entryField;
-	char *filename       = copyChar (entry->info);
-	char *mydirname      = dirName (filename);
-	char *newFilename    = 0;
+#ifdef pneu
+	string filename(entry->info);
+	string mydirname      = dirName(filename);
+#else
+	char *filename       = copyChar(entry->info);
+	char *mydirname      = dirName(filename);
 	size_t filenameLen   = 0;
+#endif
+	char *newFilename    = 0;
 	int isDirectory;
 	char **list;
 
 	/* Make sure the filename is not null/empty. */
-	if (filename == 0 || !(filenameLen = strlen (filename))) {
+#ifdef pneu
+	size_t filenameLen{filename.length()};
+	if (filename.empty()) {
+#else
+	if (filename == 0 || !(filenameLen = strlen(filename))) {
+#endif
 		Beep ();
+#ifdef pneu
+#else
 		freeChecked(filename);
 		freeChecked(mydirname);
+#endif
 		return (TRUE);
 	}
 
 	/* Try to expand the filename if it starts with a ~ */
-	if ((newFilename = expandTilde (filename))) {
+#ifdef pneu
+	if ((newFilename = expandTilde(filename.c_str()))) {
+#else
+	if ((newFilename = expandTilde(filename))) {
 		freeChecked(filename);
+#endif
 		filename = newFilename;
+#ifdef pneu
+		entry->setCDKEntryValue(filename.c_str());
+#else
 		entry->setCDKEntryValue(filename);
+#endif
 		entry->drawCDKEntry(box);
 	}
 
 	/* Make sure we can change into the directory. */
-	isDirectory = chdir (filename);
-	if (chdir (fselect->pwd)) {
+#ifdef pneu
+	isDirectory = chdir(filename.c_str());
+	if (chdir(fselect->pwd.c_str())) {
+#else
+	isDirectory = chdir(filename);
+	if (chdir(fselect->pwd)) {
 		freeChecked(filename);
 		freeChecked(mydirname);
+#endif
 		return FALSE;
 	}
-
 	fselect->setCDKFselect (/*fselect,*/
-			isDirectory ? mydirname : filename,
+			(isDirectory ? mydirname : filename)
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			,
 			fselect->fieldAttribute,
 			fselect->fillerCharacter,
 			fselect->highlight,
-			fselect->dirAttribute,
-			fselect->fileAttribute,
-			fselect->linkAttribute,
-			fselect->sockAttribute,
+			fselect->dirAttribute
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			,
+			fselect->fileAttribute
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			,
+			fselect->linkAttribute
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			,
+			fselect->sockAttribute
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			,
 			ObjOf (fselect)->box);
+#ifdef pneu
+#else
 	freeChecked(mydirname);
+#endif
 
 	/* If we can, change into the directory. */
 	if (isDirectory) {
@@ -6822,7 +7054,11 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		 * Set the entry field with the filename so the current
 		 * filename selection shows up.
 		 */
+#ifdef pneu
+		entry->setCDKEntryValue(/*entry, */filename.c_str());
+#else
 		entry->setCDKEntryValue(/*entry, */filename);
+#endif
 		entry->drawCDKEntry(/*entry, ObjOf (entry)->*/box);
 	}
 
@@ -6844,10 +7080,11 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		Index = searchList(
 #ifdef pneu
 		&plist,
+				filename.c_str());
 #else
 				(CDK_CSTRING2)list, fselect->fileCounter, 
-#endif
 				filename);
+#endif
 		/* If the index is less than zero, return we didn't find a match. */
 		if (Index < 0) {
 			Beep ();
@@ -6874,7 +7111,11 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 					fileCounter 
 #endif
 					&& 0 != list[Index + 1] &&
-					0 == strncmp (list[Index + 1], filename, filenameLen)) {
+#ifdef pneu
+					0 == strncmp(list[Index + 1], filename.c_str(), filenameLen)) {
+#else
+					0 == strncmp(list[Index + 1], filename, filenameLen)) {
+#endif
 				int currentIndex = Index;
 				int baseChars = (int)filenameLen;
 				int matches = 0;
@@ -6888,7 +7129,11 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 #endif
 						) {
 					if (list[currentIndex]) {
-						if (strncmp (list[currentIndex], filename, filenameLen) == 0) {
+#ifdef pneu
+					  if (filename==list[currentIndex]) {
+#else
+						if (!strncmp(list[currentIndex], filename, filenameLen)) {
+#endif
 							matches++;
 						}
 					}
@@ -6921,8 +7166,8 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		freeCharList(list, (unsigned)fselect->fileCounter);
 		free(list);
 	}
-#endif
 	freeChecked(filename);
+#endif
 	return(TRUE);
 }
 
@@ -7064,7 +7309,12 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 	/* Convert the mode_t type to both string and int. */
 	intMode = mode2Char(stringMode, fileStat.st_mode);
 	/* Create the message. */
-	mesg[0] = format1String ("Directory  : </U>%s", fselect->pwd);
+	mesg[0] = format1String ("Directory  : </U>%s", fselect->pwd
+#ifdef pneu
+			.c_str()
+#else
+#endif
+			);
 	mesg[1] = format1String ("Filename   : </U>%s", filename);
 #ifdef HAVE_PWD_H
 	mesg[2] = format1StrVal ("Owner      : </U>%s<!U> (%d)",
@@ -7155,7 +7405,6 @@ SFSelect::SFSelect(
 
 //	if ((fselect = newCDKObject (SFSelect, &my_funcs)) == 0) return (0);
 	::CDKOBJS();
-
 	setBox(Box);
 
 	/*
@@ -7192,10 +7441,17 @@ SFSelect::SFSelect(
 	/* *INDENT-EQLS* Set some variables. */
 	ScreenOf (this)           = cdkscreen;
 	this->parent              = cdkscreen->window;
-	this->dirAttribute        = copyChar (dAttribute);
-	this->fileAttribute       = copyChar (fAttribute);
-	this->linkAttribute       = copyChar (lAttribute);
-	this->sockAttribute       = copyChar (sAttribute);
+#ifdef pneu
+	this->dirAttribute				=	dAttribute;
+	this->fileAttribute       = fAttribute;
+	this->linkAttribute				= lAttribute;
+	this->sockAttribute				= sAttribute;
+#else
+	this->dirAttribute        = copyChar(dAttribute);
+	this->fileAttribute       = copyChar(fAttribute);
+	this->linkAttribute       = copyChar(lAttribute);
+	this->sockAttribute       = copyChar(sAttribute);
+#endif
 	this->highlight           = phighlight;
 	this->fillerCharacter     = fillerChar;
 	this->fieldAttribute      = fieldAttribute;
@@ -7204,8 +7460,8 @@ SFSelect::SFSelect(
 #ifdef pneu
 #else
 	this->fileCounter         = 0;
-#endif
 	this->pwd                 = 0;
+#endif
 	initExitType (this);
 	ObjOf (this)->inputWindow = this->win;
 	this->shadow              = shadow;
@@ -7277,10 +7533,15 @@ SFSelect::SFSelect(
 		  this);
 
    /* Put the current working directory in the entry field. */
-   entryField->setCDKEntryValue (/*this->entryField, */this->pwd);
+   entryField->setCDKEntryValue(/*this->entryField, */this->pwd
+#ifdef pneu
+			 .c_str()
+#else
+#endif
+			 );
 
    /* Create the scrolling list in the selector. */
-   tempHeight = getmaxy (this->entryField->win) - BorderOf (this);
+   tempHeight = getmaxy (this->entryField->win) - borderSize;
    tempWidth = (isFullWidth (width)
 		? FULL
 		: boxWidth - 1);

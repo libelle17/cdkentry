@@ -322,6 +322,7 @@ struct hotkst {
 	{"</R/U/6>Döüßatei:<!R!6>",4,auswfld},
 	{"</R/U/6>Ordner:<!R!6>",4,auswfld},
 	//		 */
+	/*
 	{"</R/U/6>Alphälißt:<!R!6>",4},
 	{"</R/U/6>Betalist:<!R!6>",2,dteifld},
 	{"</R/U/6>Betalist:<!R!6>",3},
@@ -332,12 +333,12 @@ struct hotkst {
 	{"</R/U/6>Datei:<!R!6>",3,auswfld},
 	{"</R/U/6>Döüßatei:<!R!6>",4,auswfld},
 	{"</R/U/6>Ordner:<!R!6>",4,auswfld},
-	//		 */
 	{"</R/U/6>Alphälißt:<!R!6>",4},
 	{"</R/U/6>Betalist:<!R!6>",2},
 	{"</R/U/6>Betalist:<!R!6>",3},
 	{"</R/U/6>Dürectory:<!R!6>",3},
 	{"</R/U/4>Dürectory:<!R!4>",3},
+	*/
 };
 const int maxhk=sizeof hk/sizeof *hk;
 const int yabst=7;

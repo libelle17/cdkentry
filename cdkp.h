@@ -374,7 +374,7 @@ enum EExitStatus
 };
 
 union CDKDataUnion {
-   char * valueString;
+   char const * valueString;
    int    valueInt;
    float  valueFloat;
    double valueDouble;
@@ -584,7 +584,10 @@ void attrbox(WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype
 void drawShadow (WINDOW *shadowWin);
 int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
 void refreshCDKWindow(WINDOW *win);
+#ifdef pneu
+#else
 char *copyChar(const char *original);
+#endif
 chtype *copyChtype(const chtype *original);
 void eraseCursesWindow(WINDOW *window);
 void deleteCursesWindow(WINDOW *window);
@@ -634,7 +637,10 @@ void writeChar(WINDOW *window, int xpos, int ypos, char *string, int align, int 
 void writeCharAttrib(WINDOW *window, int xpos, int ypos, char *string, chtype attr, int align, int start, int end);
 static bool checkMenuKey(int keyCode, int functionKey);
 CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
+#ifdef pneu
+#else
 char **copyCharList (const char **list);
+#endif
 int lenCharList(const char **list);
 void initCDKColor(void);
 void endCDK(void);
@@ -832,7 +838,11 @@ struct SEntry:CDKOBJS
    bool	shadow;
    chtype	filler;
    chtype	hidden;
+#ifdef pneu
+	 std::string GPasteBuffer;
+#else
 	 char *GPasteBuffer = 0;
+#endif
 	 void		*callbackData;
 	 /*
 		* This creates a pointer to a new CDK entry widget.
@@ -865,7 +875,7 @@ struct SEntry:CDKOBJS
 	 void setCDKEntryValue(const char *newValue);
 	 void eraseCDKEntry();
 	 void eraseObj(){eraseCDKEntry();}
-	 char* activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
+	 const char* activateCDKEntry(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/, int obpfeil/*=0*/);
 	 void moveCDKEntry(int,int,bool,bool);
 	 void CDKEntryCallBack(chtype character);
 	 void (SEntry::*callbfn)(chtype character)=NULL;
@@ -1042,7 +1052,12 @@ static char *format1StrVal (const char *format, const char *string, int value);
 static char *format1Number (const char *format, long value);
 static char *format1Date (const char *format, time_t value);
 static char *expandTilde (const char *filename);
-char *dirName(char *pathname);
+#ifdef pneu
+std::string dirName(std::string path);
+std::string dirName(const char* pfad);
+#else
+char *dirName(const char *pathname);
+#endif
 static char *trim1Char(char *source);
 static char *make_pathname (const char *directory, const char *filename);
 char *format3String(const char *format, const char *s1, const char *s2, const char *s3);
@@ -1068,12 +1083,17 @@ struct SFSelect:CDKOBJS
 	CDKOBJS* bindableObject();
 #ifdef pneu
 	std::vector<std::string> dirContents;
+	std::string pwd;
 #else
 	char **	dirContents;
 	int		fileCounter;
-#endif
 	char *	pwd;
+#endif
+#ifdef pneu
+	std::string pfadname;
+#else
 	char *	pathname;
+#endif
 	int		xpos;
 	int		ypos;
 	int		boxHeight;
@@ -1081,10 +1101,17 @@ struct SFSelect:CDKOBJS
 	chtype	fieldAttribute;
 	chtype	fillerCharacter;
 	chtype	highlight;
+#ifdef pneu
+	std::string dirAttribute;
+	std::string fileAttribute;
+	std::string linkAttribute;
+	std::string sockAttribute;
+#else
 	char *	dirAttribute;
 	char *	fileAttribute;
 	char *	linkAttribute;
 	char *	sockAttribute;
+#endif
 	bool	shadow;
 /*
  * This creates a new CDK file selector widget.
@@ -1111,7 +1138,7 @@ struct SFSelect:CDKOBJS
 		);
 	~SFSelect();
 	void moveCDKFselect(/*CDKOBJS *object, */int xplace, int yplace, bool relative, bool refresh_flag);
-	char *activateCDKFselect(/*SFSelect *fselect, */chtype *actions);
+	const char *activateCDKFselect(/*SFSelect *fselect, */chtype *actions);
 	void destroyObj(){this->~SFSelect();}
 	void eraseCDKFselect();
 	void eraseObj(){eraseCDKFselect();}
@@ -1186,7 +1213,7 @@ struct SAlphalist:CDKOBJS
 	 void drawObj(bool box);
 	 void moveCDKAlphalist(int xplace, int yplace, bool relative, bool refresh_flag);
 	 void injectMyScroller(chtype key);
-	 char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
+	 const char* activateCDKAlphalist(chtype *actions,int *Zweitzeichen/*=0*/,int *Drittzeichen/*=0*/,int obpfeil/*=0*/);
 	 int injectCDKAlphalist(chtype input);
 	 int injectObj(chtype ch){return injectCDKAlphalist(ch);}
 	 void eraseCDKAlphalist();
