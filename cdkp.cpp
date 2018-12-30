@@ -2814,7 +2814,8 @@ void SEntry::schreibl(chtype character)
   if (altobuml||obuml) plainchar=character; else plainchar=filterByDisplayType(dispType, character);
 	// wenn Ende erreicht wuerde, dann von 2-Buchstabenlaengen langen Buchstaben keinen schreiben
 #ifdef ineu
-	const int slen=strlen(efld.c_str());
+//	const int slen=strlen(efld.c_str());
+	const int slen=efld.length();
 #else
 	const int slen=strlen(efld);
 #endif
@@ -2823,21 +2824,25 @@ void SEntry::schreibl(chtype character)
   } else {
     /* Update the screen and pointer. */
     if (sbuch != fieldWidth - 1) {
+#ifdef ineu
+			efld.insert(efld.begin()+screenCol+leftChar,(char)plainchar);
+#else
       for (int x = slen; x > (screenCol + leftChar); x--) {
         efld[x] = efld[x - 1];
       }
       efld[screenCol + leftChar] = (char)plainchar;
+#endif
       screenCol++;
       if (!obuml) sbuch++;
     } else {
       /* Update the character pointer. */
       size_t temp = slen;
-      efld[temp] = (char)plainchar;
 #ifdef ineu
 			efld.resize(temp+1);
 #else
       efld[temp + 1] = '\0';
 #endif
+      efld[temp] = (char)plainchar;
 			if (obuml) {
 				screenCol++;
 			} else {
@@ -2873,8 +2878,10 @@ void SEntry::zeichneFeld()
 	(void)mvwhline(fieldWin, 0, x, filler | fieldAttr, fieldWidth);
 	/* If there is information in the field. Then draw it in. */
 #ifdef ineu
-	if (!efld.empty()) {
-		const int infoLength = (int)strlen(efld.c_str());
+//	if (!efld.empty()) {
+	if (1) {
+//		const int infoLength = (int)strlen(efld.c_str());
+		const int infoLength = efld.length();
 #else
 	if (efld) {
 		const int infoLength = (int)strlen(efld);
@@ -3038,7 +3045,8 @@ SEntry::SEntry(SScreen *cdkscreen,
 			/* Make room for the info char * pointer. */
 #ifdef ineu
 			// info ist vorher noch leer
-			efld.resize(maxp+3);
+			//efld.resize(maxp+3);
+			efld.reserve(maxp+3);
 			{
 #else
 			efld = typeMallocN(char, maxp + 3);
@@ -3273,7 +3281,8 @@ int SEntry::injectCDKEntry(chtype input)
 			complete = TRUE;
 		} else {
 #ifdef ineu
-			const int infoLength = (int)strlen(this->efld.c_str());
+//			const int infoLength = (int)strlen(this->efld.c_str());
+			const size_t infoLength=efld.length();
 #else
 			const int infoLength = (int)strlen(this->efld);
 #endif
@@ -3359,21 +3368,17 @@ int SEntry::injectCDKEntry(chtype input)
 						if (currPos >= 0 && infoLength > 0) {
 							if (currPos < infoLength) {
 						// mvwprintw(this->parent,2,100,"!!!!!!!!!, currPos: %i, obuml: %i",currPos,obuml);
-						wrefresh(this->parent);
-								int x;
-								for (x = currPos; x < infoLength; x++) {
-									if (x+1+obuml>this->max-1) 
+								// wrefresh(this->parent);
 #ifdef ineu
-										efld.resize(x);
+								efld.erase(currPos,1+obuml);
 #else
+								for (int x = currPos; x < infoLength; x++) {
+									if (x+1+obuml>this->max-1) 
 										this->efld[x]=0;
-#endif
-									else 												 this->efld[x]=this->efld[x+1+obuml];
+									else 
+										this->efld[x]=this->efld[x+1+obuml];
 								}
 								if (obuml) if (infoLength>1) 
-#ifdef ineu
-									efld.resize(infoLength-2);
-#else
 									this->efld[infoLength-2]=0;
 #endif
 								success = TRUE;
@@ -3417,7 +3422,6 @@ int SEntry::injectCDKEntry(chtype input)
 				case KEY_ESC:
 					setExitType(input);
 					complete = TRUE;
-
 					mvwprintw(this->parent,2,2,"Key_esc");
 					break;
 				case CDK_ERASE:
@@ -3473,7 +3477,7 @@ int SEntry::injectCDKEntry(chtype input)
 #ifdef ineu
 						ret = efld.c_str();
 #else
-						ret = (this->efld);
+						ret = this->efld;
 #endif
 						complete = TRUE;
 					} else {
@@ -3532,7 +3536,7 @@ void SEntry::setCDKEntryValue(const char *newValue)
 			/* Then we want to just erase the old value. */
 #ifdef ineu
 			efld.clear();
-			efld.resize(infoWidth);
+//			efld.resize(infoWidth);
 #else
 			cleanChar(this->efld, this->infoWidth, '\0');
 #endif
@@ -3548,7 +3552,7 @@ void SEntry::setCDKEntryValue(const char *newValue)
 			/* OK, erase the old value, and copy in the new value. */
 #ifdef ineu
 			efld=newValue;
-			if (max>efld.length()) efld.resize(max);
+//			if (max>efld.length()) efld.resize(max);
 #else
 			cleanChar(this->efld, this->max, '\0');
 			strncpy (this->efld, newValue, (unsigned)copychars);
@@ -3586,7 +3590,7 @@ void SEntry::settoend()
 {
   screenCol=sbuch=leftChar=lbuch=0;
 #ifdef ineu
-  for(int i=strlen(efld.c_str());i;) {
+  for(int i=efld.length();i;) {
 #else
   for(int i=strlen(efld);i;) {
 #endif
@@ -3616,7 +3620,7 @@ void SEntry::cleanCDKEntry()
 	/* Erase the information in the character pointer. */
 #ifdef ineu
 	efld.clear();
-	efld=string(infoWidth,'\0');
+//	efld=string(infoWidth,'\0');
 #else
 	cleanChar(efld,infoWidth,'\0');
 #endif
@@ -4336,7 +4340,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
    char **altWords         = 0;
 #endif
 #ifdef ineu
-	 if (entry->efld.empty()) {
+	 if (0) {
 #else
    if (!entry->efld) {
 #endif
@@ -4344,7 +4348,8 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
       return TRUE;
    }
 #ifdef ineu
-   wordLength = (int)strlen(entry->efld.c_str());
+//   wordLength = (int)strlen(entry->efld.c_str());
+	 wordLength=entry->efld.length();
 #else
    wordLength = (int)strlen(entry->efld);
 #endif
@@ -4584,7 +4589,8 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 	SScroll *scrollp      = alphalist->scrollField;
 	SEntry *entry         = alphalist->entryField;
 #ifdef ineu
-	int infoLen             = strlen(entry->efld.c_str());
+//	int infoLen             = strlen(entry->efld.c_str());
+	int infoLen=entry->efld.length();
 #else
 	int infoLen             = (entry->efld ? (int)strlen(entry->efld) : 0);
 #endif
@@ -4593,7 +4599,7 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 
 	/* Make sure the entry field isn't empty. */
 #ifdef ineu
-	if (entry->efld.empty()) {
+	if (0) {
 #else
 	if (!entry->efld) {
 #endif
@@ -4607,48 +4613,91 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 			input == KEY_DC) {
 		int Index, difference, absoluteDifference, x;
 		int currPos = (entry->screenCol + entry->leftChar);
+#ifdef qneu
+		string pattern;
+#else
 		char *pattern = (char *)malloc ((size_t) infoLen + 2);
+#endif
 
-		if (pattern) {
 #ifdef ineu
-			strcpy(pattern, entry->efld.c_str());
+#ifdef qneu
+			pattern=entry->efld;
+			{
+#else
+			strcpy(pattern,&entry->efld[0]);
+			if (pattern) {
+#endif
+#else
+#ifdef qneu
+			pattern=entry->efld;
+			{
 #else
 			strcpy(pattern, entry->efld);
+			if (pattern) {
+#endif
 #endif
 
 			if (input == KEY_BACKSPACE || input == KEY_DC) {
 				if (input == KEY_BACKSPACE)
 					--currPos;
 				if (currPos >= 0)
+#ifdef qneu
+					pattern.erase(currPos,1);
+#else
 #ifdef ineu
-					strcpy(pattern + currPos, entry->efld.c_str() + currPos + 1);
+					strcpy(pattern + currPos, entry->efld.substr(currPos+1).c_str());
 #else
 					strcpy(pattern + currPos, entry->efld + currPos + 1);
 #endif
+#endif
 			} else {
+#ifdef qneu
+				/*
+				if (currPos==pattern.length()-1) {
+					pattern.append(1,(char)input);
+				} else {
+				*/
+	//mvwprintw(entry->screen->window,3,2,"preProcessEntryField,input: %c,crrPos: %i, pattern.length(): %i,screenCol: %i, leftChar: %i          ",input,currPos,pattern.length(),entry->screenCol, entry->leftChar);
+					pattern.insert(pattern.begin()+currPos,(char)input);
+					/*
+				}
+				*/
+#else
 				pattern[currPos] = (char)input;
 #ifdef ineu
-				strcpy(pattern + currPos + 1, entry->efld.c_str() + currPos);
+				strcpy(pattern + currPos+1, entry->efld.substr(currPos).c_str());
 #else
-				strcpy(pattern + currPos + 1, entry->efld + currPos);
+				strcpy(pattern + currPos+1, entry->efld+currPos);
 #endif
+#endif
+	// wrefresh(entry->screen->window);
 			}
 		}
+#ifdef qneu
+			if (!strlen(pattern.c_str())) empty=TRUE;
+#else
 		if (!pattern) {
 			Beep ();
-		} else if (!strlen (pattern)) {
+		} else if (!strlen(pattern)) {
 			empty = TRUE;
-		} else if ((Index = searchList(
+		}
+#endif
+		else if ((Index = searchList(
 #ifdef pneu
 		&alphalist->plist,
 #else
 						(CDK_CSTRING2)alphalist->slist,
 						alphalist->listSize,
 #endif
-						pattern)) >= 0) {
+#ifdef qneu
+						pattern.c_str()
+#else
+						pattern
+#endif
+							))>=0) {
 			/* *INDENT-EQLS* */
 			difference           = Index - scrollp->currentItem;
-			absoluteDifference   = abs (difference);
+			absoluteDifference   = abs(difference);
 
 			/*
 			 * If the difference is less than zero, then move up.
@@ -4674,8 +4723,11 @@ static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
 			result = 0;
 			*/
 		}
+#ifdef pneu
+#else
 		if (pattern)
 			free (pattern);
+#endif
 	}
 	if (empty) {
 		scrollp->SetPosition(0);

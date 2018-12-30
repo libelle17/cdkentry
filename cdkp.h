@@ -821,6 +821,7 @@ struct SEntry:CDKOBJS
    chtype	fieldAttr;
    int		fieldWidth;
 #ifdef pneu
+#define qneu
 #define ineu
 #endif
 #ifdef ineu
