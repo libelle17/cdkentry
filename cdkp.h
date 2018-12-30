@@ -820,7 +820,14 @@ struct SEntry:CDKOBJS
    int		titleAdj;
    chtype	fieldAttr;
    int		fieldWidth;
-   char *	info;
+#ifdef pneu
+#define ineu
+#endif
+#ifdef ineu
+	 std::string efld/*info*/;
+#else
+   char *	efld/*info*/;
+#endif
    int		infoWidth;
    int		screenCol;
    int    sbuch; // GSchade
@@ -834,7 +841,7 @@ struct SEntry:CDKOBJS
    void schreibl(chtype); // GSchade, callbackfn
    void zeichneFeld(); // GSchade
 	 void setCDKEntry(const char *value, int min, int max, bool Box GCC_UNUSED);
-	 char* getCDKEntryValue();
+	 const char* getCDKEntryValue();
 	 void setBKattrEntry(chtype attrib);
 	 void setBKattrObj(chtype);
 	 void setCDKEntryHighlight(chtype highlight, bool cursor);

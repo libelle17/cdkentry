@@ -639,10 +639,19 @@ int main(int argc, char **argv)
 		//		 erg.push_back(hk[aktent].eingabef&&hk[aktent].eingabef->info?hk[aktent].eingabef->info:"");
 		const char *ueb=
 			hk[aktent].obalph==auswfld?
-			((SAlphalist*)hk[aktent].eingabef)->entryField->info:
+#ifdef ineu
+			((SAlphalist*)hk[aktent].eingabef)->entryField->efld.c_str():
+#else
+			((SAlphalist*)hk[aktent].eingabef)->entryField->efld:
+#endif
 			hk[aktent].obalph==dteifld?
-			((SFSelect*)hk[aktent].eingabef)->entryField->info:
-			((SEntry*)hk[aktent].eingabef)->info;
+#ifdef ineu
+			((SFSelect*)hk[aktent].eingabef)->entryField->efld.c_str():
+			((SEntry*)hk[aktent].eingabef)->efld.c_str();
+#else
+			((SFSelect*)hk[aktent].eingabef)->entryField->efld:
+			((SEntry*)hk[aktent].eingabef)->efld;
+#endif
 		erg.push_back(ueb);
 	}
 	/*
