@@ -121,10 +121,10 @@ extern einbauart akteinbart;
 #define STDC_HEADERS 1
 #define SYSTEM_NAME "linux-gnu"
 #define TYPE_CHTYPE_IS_SCALAR 1
-#define setbegyx(win,y,x) ((win)->_begy = (y), (win)->_begx = (x), OK)
+#define setbegyx(win,y,x)((win)->_begy =(y),(win)->_begx =(x), OK)
 
-#define freeChecked(p)          if ((p) != 0) free (p)
-#define freeAndNull(p)          if ((p) != 0) { free (p); p = 0; }
+#define freeChecked(p)          if ((p) != 0) free(p)
+#define freeAndNull(p)          if ((p) != 0) { free(p); p = 0; }
 /*
  * Declare miscellaneous defines.
  */
@@ -145,12 +145,12 @@ extern einbauart akteinbart;
 #define MAX_ITEMS	2000	/* unused by widgets */
 #define MAX_BUTTONS	200	/* unused by widgets */
 
-#define	MAXIMUM(a,b)	((a) > (b) ? (a) : (b))
-#define	MINIMUM(a,b)	((a) < (b) ? (a) : (b))
+#define	MAXIMUM(a,b)	((a) >(b) ?(a) :(b))
+#define	MINIMUM(a,b)	((a) <(b) ?(a) :(b))
 #define	HALF(a)		((a) >> 1)
 
 #define NUMBER_FMT      "%4d. %s"
-#define NUMBER_LEN(s)   (8 + strlen (s))
+#define NUMBER_LEN(s)  (8 + strlen(s))
 
 #ifndef COLOR_PAIR
 #define	COLOR_PAIR(a)	A_NORMAL
@@ -223,7 +223,7 @@ extern einbauart akteinbart;
 #undef  KEY_F12
 #define KEY_F12		KEY_F(12)
 
-#define KEY_ERROR       ((chtype)ERR)
+#define KEY_ERROR      ((chtype)ERR)
 
 
 //#define ObjOf(ptr)              (&(ptr)->obj)
@@ -268,14 +268,14 @@ extern einbauart akteinbart;
 /*
  * Position within the data area of a widget, accounting for border and title.
  */
-#define SCREEN_XPOS(w,n) ((n) + BorderOf(w))
-#define SCREEN_YPOS(w,n) ((n) + BorderOf(w) + TitleLinesOf(w))
+#define SCREEN_XPOS(w,n)((n) + BorderOf(w))
+#define SCREEN_YPOS(w,n)((n) + BorderOf(w) + TitleLinesOf(w))
 
 /* The cast is needed because traverse.c wants to use CDKOBJS pointers */
-#define ObjPtr(p)           ((CDKOBJS*)(p))
+#define ObjPtr(p)          ((CDKOBJS*)(p))
 
-//#define MethodPtr(p,m)      ((ObjPtr(p))->fn->m)
-//#define MethodPtr(p,m)      ((ObjPtr(p))->m)
+//#define MethodPtr(p,m)     ((ObjPtr(p))->fn->m)
+//#define MethodPtr(p,m)     ((ObjPtr(p))->m)
 
 /* Use these when we're certain it is a CDKOBJS pointer */
 /*
@@ -302,13 +302,13 @@ extern einbauart akteinbart;
 #define typeCallocN(type,n)     (type*)calloc((size_t)(n), sizeof(type))
 #define typeCalloc(type)        typeCallocN(type,1)
 
-#define typeReallocN(type,p,n)  (type*)realloc(p, (size_t)(n) * sizeof(type))
+#define typeReallocN(type,p,n)  (type*)realloc(p,(size_t)(n) * sizeof(type))
 
 #define typeMallocN(type,n)     (type*)malloc((size_t)(n) * sizeof(type))
 #define typeMalloc(type)        typeMallocN(type,1)
 
-#define freeChecked(p)          if ((p) != 0) free (p)
-#define freeAndNull(p)          if ((p) != 0) { free (p); p = 0; }
+#define freeChecked(p)          if ((p) != 0) free(p)
+#define freeAndNull(p)          if ((p) != 0) { free(p); p = 0; }
 
 #define isChar(c)               ((int)(c) >= 0 && (int)(c) < KEY_MIN)
 // #define CharOf(c)               ((unsigned char)(c))
@@ -325,7 +325,7 @@ extern einbauart akteinbart;
 /*
  * Hide details of modifying widget->exitType
  */
-#define storeExitType(d)	ObjOf(d)->exitType = (d)->exitType
+#define storeExitType(d)	ObjOf(d)->exitType =(d)->exitType
 #define initExitType(d)		storeExitType(d) = vNEVER_ACTIVATED
 // #define setExitType(w,c)	setCdkExitType(ObjOf(w), &((w)->exitType), c)
 #define copyExitType(d,s)	storeExitType(d) = ExitTypeOf(s)
@@ -340,7 +340,7 @@ extern einbauart akteinbart;
  * Macros to check if caller is attempting to make the widget as high (or wide)
  * as the screen.
  */
-#define isFullWidth(n)		((n) == FULL || (COLS != 0 && ((n) >= COLS)))
+#define isFullWidth(n)		((n) == FULL || (COLS != 0 &&((n) >= COLS)))
 #define isFullHeight(n)		((n) == FULL || (LINES != 0 && ((n) >= LINES)))
 
 /*
@@ -458,7 +458,7 @@ enum EDisplayType
 /*
  * This is the prototype for the process callback functions.
  */
-typedef int (*PROCESSFN) (
+typedef int(*PROCESSFN)(
 		EObjectType	/* cdktype */,
 		void *		/* object */,
 		void *		/* clientData */,
@@ -476,7 +476,7 @@ typedef int (*PROCESSFN) (
 		chtype		/* input */)
 typedef BINDFN_PROTO(*BINDFN);
 #endif
-typedef int (*BINDFN) (EObjectType,void*,void*,chtype);
+typedef int (*BINDFN)(EObjectType,void*,void*,chtype);
 
 struct CDKBINDING {
    BINDFN       bindFunction;
@@ -491,7 +491,7 @@ bool isHiddenDisplayType (EDisplayType type);
 int filterByDisplayType (EDisplayType type, chtype input);
 
 // typedef struct _all_objects { struct _all_objects *link; CDKOBJS *object; } ALL_OBJECTS;
-typedef bool (*CHECK_KEYCODE)(int /* keyCode */, int /* functionKey */);
+typedef bool(*CHECK_KEYCODE)(int /* keyCode */, int /* functionKey */);
 /*
  * Define the CDK screen structure.
  */
@@ -528,14 +528,14 @@ struct SScreen
 	 void exitCancelCDKScreen(/*SScreen *screen*/);
 	 void traverseCDKOnce(/*SScreen *screen,*/ CDKOBJS *curobj, int keyCode, bool functionKey, CHECK_KEYCODE funcMenuKey);
 	 int traverseCDKScreen(/*SScreen *screen*/);
-	 void popupLabel (/*SScreen *screen, */
+	 void popupLabel(/*SScreen *screen, */
 #ifdef pneu
 			 std::vector<std::string> mesg
 #else
 			 CDK_CSTRING2 mesg, int count
 #endif
 			 );
-	 void popupLabelAttrib (/*SScreen *screen, */
+	 void popupLabelAttrib(/*SScreen *screen, */
 #ifdef pneu
 			 std::vector<std::string> mesg
 #else
@@ -562,8 +562,8 @@ int getmaxxf(WINDOW *win);
 int getmaxyf(WINDOW *win);
 
 void Beep();
-int floorCDK (double value);
-int ceilCDK (double value);
+int floorCDK(double value);
+int ceilCDK(double value);
 int setWidgetDimension(int parentDim, int proposedDim, int adjustment);
 static int encodeAttribute(const char *string, int from, chtype *mask);
 #ifdef pneu
@@ -585,7 +585,7 @@ void cleanChar(char *s, int len, char character);
 void writeChtype(WINDOW *window, int xpos, int ypos, const chtype *const string, int align, int start, int end);
 void writeChtypeAttrib(WINDOW *window, int xpos, int ypos, const chtype *const string, chtype attr, int align, int start, int end);
 void attrbox(WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtype horz, chtype vert, chtype attr);
-void drawShadow (WINDOW *shadowWin);
+void drawShadow(WINDOW *shadowWin);
 int getcCDKBind(EObjectType cdktype GCC_UNUSED, void *object GCC_UNUSED, void *clientData GCC_UNUSED, chtype input GCC_UNUSED);
 void refreshCDKWindow(WINDOW *win);
 #ifdef pneu
@@ -608,7 +608,7 @@ static int completeWordCB(EObjectType objectType GCC_UNUSED, void *object GCC_UN
 			   chtype key GCC_UNUSED);
 #ifdef pneu
 #else
-char *chtype2Char (const chtype *string);
+char *chtype2Char(const chtype *string);
 #endif
 int searchList(
 //#define pneu
@@ -618,7 +618,7 @@ int searchList(
 		CDK_CSTRING2 list, int listSize, 
 #endif
 		const char *pattern);
-// unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned used);
+// unsigned CDKallocStrings(char ***list, char *item, unsigned length, unsigned used);
 #ifdef pneu
 void
 #else
@@ -643,15 +643,15 @@ static bool checkMenuKey(int keyCode, int functionKey);
 CDKOBJS* switchFocus(CDKOBJS *newobj, CDKOBJS *oldobj);
 #ifdef pneu
 #else
-char **copyCharList (const char **list);
+char **copyCharList(const char **list);
 #endif
 int lenCharList(const char **list);
 void initCDKColor(void);
 void endCDK(void);
-static char *errorMessage (const char *format);
-void freeCharList (char **list, unsigned size);
-static int displayFileInfoCB (EObjectType objectType GCC_UNUSED, void *object, void *clientData, chtype key GCC_UNUSED);
-int mode2Char (char *string, mode_t mode);
+static char *errorMessage(const char *format);
+void freeCharList(char **list, unsigned size);
+static int displayFileInfoCB(EObjectType objectType GCC_UNUSED, void *object, void *clientData, chtype key GCC_UNUSED);
+int mode2Char(char *string, mode_t mode);
 
 //typedef struct SScreen CDKSCREEN;
 
@@ -772,8 +772,8 @@ struct CDKOBJS
 	 bool isCDKObjectBind(chtype key);
 	 //	 void setCdkExitType(chtype ch);
 	 void setExitType(chtype ch);
-	 void setCDKObjectPreProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data);
-	 void setCDKObjectPostProcess (/*CDKOBJS *obj, */PROCESSFN fn, void *data);
+	 void setCDKObjectPreProcess(/*CDKOBJS *obj, */PROCESSFN fn, void *data);
+	 void setCDKObjectPostProcess(/*CDKOBJS *obj, */PROCESSFN fn, void *data);
 	 CDKOBJS();
 	 ~CDKOBJS();
 	 void unregisterCDKObject(EObjectType cdktype/*, void *object*/);
@@ -798,7 +798,7 @@ struct CDKOBJS
 	 void exitOKCDKScreenOf(/*CDKOBJS *obj*/);
 	 void exitCancelCDKScreenOf(/*CDKOBJS *obj*/);
 	 void resetCDKScreenOf(/*CDKOBJS *obj*/);
-	 void setCDKObjectBackgroundColor (/*CDKOBJS *obj, */const char *color);
+	 void setCDKObjectBackgroundColor(/*CDKOBJS *obj, */const char *color);
 }; // struct CDKOBJS
 
 /*
@@ -1049,7 +1049,7 @@ struct SScroll:SScroll_basis
 	 void resequence(/*SScroll *scrollp*/);
 #ifdef pneu
 #else
-	 bool insertListItem (/*SScroll *scrollp, */int item);
+	 bool insertListItem(/*SScroll *scrollp, */int item);
 #endif
 	 void addCDKScrollItem(/*SScroll *scrollp,*/ const char *item);
 	 void insertCDKScrollItem(/*SScroll *scrollp, */const char *item);
@@ -1063,11 +1063,11 @@ struct SScroll:SScroll_basis
 
 
 int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED, void *clientData, chtype key);
-static char *format1String (const char *format, const char *string);
-static char *format1StrVal (const char *format, const char *string, int value);
-static char *format1Number (const char *format, long value);
-static char *format1Date (const char *format, time_t value);
-static char *expandTilde (const char *filename);
+static char *format1String(const char *format, const char *string);
+static char *format1StrVal(const char *format, const char *string, int value);
+static char *format1Number(const char *format, long value);
+static char *format1Date(const char *format, time_t value);
+static const char *expandTilde(const char *filename);
 #ifdef pneu
 std::string dirName(std::string path);
 std::string dirName(const char* pfad);
@@ -1075,8 +1075,11 @@ std::string dirName(const char* pfad);
 char *dirName(const char *pathname);
 #endif
 static char *trim1Char(char *source);
-static char *make_pathname (const char *directory, const char *filename);
+static char *make_pathname(const char *directory, const char *filename);
+#ifdef pneu
+#else
 char *format3String(const char *format, const char *s1, const char *s2, const char *s3);
+#endif
 int mode2Filetype(mode_t mode);
 int CDKgetDirectoryContents(const char *directory, char ***list);
 static int preProcessEntryField(EObjectType cdktype GCC_UNUSED, void
@@ -1132,7 +1135,7 @@ struct SFSelect:CDKOBJS
 /*
  * This creates a new CDK file selector widget.
  */
-// SFSelect *newCDKFselect (
+// SFSelect *newCDKFselect(
 	SFSelect(
 		SScreen*	/* cdkscreen */,
 		int		/* xpos */,
@@ -1166,7 +1169,7 @@ struct SFSelect:CDKOBJS
 	 int injectObj(chtype ch){return injectCDKFselect(ch);}
 	 void injectMyScroller(chtype key);
 	 void setCDKFselect(/*SFSelect *fselect, */const char *directory, chtype fieldAttrib, chtype filler, chtype highlight, const char *dirAttribute, const char *fileAttribute, const char *linkAttribute, const char *sockAttribute, bool Box GCC_UNUSED);
-	 char *contentToPath (/*SFSelect *fselect, */const char *content);
+	 const char *contentToPath(/*SFSelect *fselect, */const char *content);
 	 void focusCDKFileSelector();
 	 void focusObj(){focusCDKFileSelector();}
 	 void unfocusCDKFileSelector();
@@ -1354,7 +1357,7 @@ struct SLabel:CDKOBJS {
 			 CDK_CSTRING2 mesg, int lines
 #endif
 			 , bool Box);
-	 void setCDKLabelMessage (/*SLabel *label, */
+	 void setCDKLabelMessage(/*SLabel *label, */
 #ifdef pneu
 			 std::vector<std::string> s_info
 #else

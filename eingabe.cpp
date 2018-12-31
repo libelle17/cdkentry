@@ -44,7 +44,7 @@ struct UNDO
 static UNDO *myUndoList;
 static int undoSize;
 
-// static BINDFN_PROTO (XXXCB);
+// static BINDFN_PROTO(XXXCB);
 static int XXXCB(EObjectType cdktype GCC_UNUSED,
 		void *object GCC_UNUSED,
 		void *clientData GCC_UNUSED,
@@ -79,7 +79,7 @@ static int getUserList(
 		)
 {
 	int x = 0;
-#if defined (HAVE_PWD_H)
+#if defined(HAVE_PWD_H)
 #ifdef pneu
 #else
 	unsigned used = 0;
@@ -141,7 +141,7 @@ static void fill_undo(SAlphalist *widget,int deleted
 static int do_delete(CB_PARAMS)
 {
 	int result{FALSE};
-	SAlphalist *widget = (SAlphalist *)clientdata;
+	SAlphalist *widget =(SAlphalist *)clientdata;
 #ifdef pneu
 //	vector<string> *list = widget->getCDKAlphalistContents();
 #else
@@ -251,7 +251,7 @@ static int do_reload(CB_PARAMS)
 {
 	int result = FALSE;
 	if (userSize) {
-		SAlphalist *widget = (SAlphalist *)clientdata;
+		SAlphalist *widget =(SAlphalist *)clientdata;
 		widget->setCDKAlphalistContents(
 #ifdef pneu
                           					&myUserList
@@ -662,7 +662,7 @@ mesg[0] = "<C>Sie schlügen escape. No information passed back.";
 mesg[1] = temp;
 mesg[2] = "<C>Press any key to continue.";
 for(t aktent=0;aktent<sizeof hk/sizeof *hk;aktent++) destroyCDKObject(hk[aktent].eingabef);
-popupLabel(cdkscreen, (CDK_CSTRING2) mesg, 3);
+popupLabel(cdkscreen,(CDK_CSTRING2) mesg, 3);
 } else if (exitType == vNORMAL) {
 mesg[0] = "<C>Sie gaben folgendes ein";
 sprintf(temp, "<C>(%.*s|%i)", (int)(sizeof(temp) - 10), info,Zweitzeichen);

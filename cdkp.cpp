@@ -6553,6 +6553,8 @@ int mode2Filetype(mode_t mode)
 	return filetype;
 }
 
+#ifdef pneu
+#else
 char *format3String(const char *format, const char *s1, const char *s2, const char *s3)
 {
 	char *result;
@@ -6563,6 +6565,7 @@ char *format3String(const char *format, const char *s1, const char *s2, const ch
 		sprintf(result, format, s1, s2, s3);
 	return result;
 }
+#endif
 
 /*
  * This creates a list of the files in the current directory.
@@ -6667,27 +6670,31 @@ int SFSelect::setCDKFselectdirContents(/*CDKFSELECT *fselect*/)
 				break;
 		}
 #ifdef pneu
+		this->dirContents[x]=attr+dirList[x]+mode;
 #else
 		char *oldItem = dirList[x];
-#endif
-		this->dirContents[x] = format3String("%s%s%s", attr, dirList[x]
-#ifdef pneu
-				.c_str()
-#else
-#endif
-				, mode);
-#ifdef pneu
-#else
+		this->dirContents[x] = format3String("%s%s%s", attr, dirList[x], mode);
 		free(oldItem);
 #endif
 	}
 	return 1;
 }
-
+#ifdef pneu
+string make_pathname(const string& dir,const char* file)
+{
+	if (dir=="/") return dir+file;
+	else return dir+"/"+file;
+}
+string make_pathname(const char *dir,const string& file)
+{
+	if (!strcmp(dir, "/")) return dir+file;
+	else return dir+("/"+file);
+}
+#else
 static char *make_pathname(const char *directory, const char *filename)
 {
 	size_t need = strlen(filename) + 2;
-	bool root =(strcmp(directory, "/") == 0);
+	bool root =(!strcmp(directory, "/"));
 	char *result;
 
 	if (!root)
@@ -6700,6 +6707,7 @@ static char *make_pathname(const char *directory, const char *filename)
 	}
 	return result;
 }
+#endif
 
 /*
  * trim the 'mode' from a copy of a dirContents[] entry.
@@ -6726,7 +6734,6 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 	SEntry *entry      =(SEntry *)fselect->entryField;
 	if (scrollp->listSize > 0) {
 		char *current;
-		char *temp;
 		/* Move the scrolling list. */
 		fselect->injectMyScroller(key);
 		/* Get the currently highlighted filename. */
@@ -6736,20 +6743,20 @@ int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED,
 		current = chtype2Char(scrollp->sitem[scrollp->currentItem]);
 #endif
 		trim1Char(current);
-		temp = make_pathname(fselect->pwd
 #ifdef pneu
-				.c_str()
+		/* Set the value in the entry field. */
+		entry->setCDKEntryValue(make_pathname(fselect->pwd, current).c_str());
 #else
-#endif
-				, current);
+		char *temp = make_pathname(fselect->pwd, current);
 		/* Set the value in the entry field. */
 		entry->setCDKEntryValue(temp);
+#endif
 		entry->drawCDKEntry(/*entry, ObjOf(entry)->*/entry->obbox);
 #ifdef pneu
 #else
 		freeChecked(current);
-#endif
 		freeChecked(temp);
+#endif
 		return (TRUE);
 	}
 	Beep();
@@ -6798,9 +6805,9 @@ char *dirName(const char *pathname)
 /*
  * This takes a ~ type account name and returns the full pathname.
  */
-static char *expandTilde(const char *filename)
+static const char *expandTilde(const char *filename)
 {
-	char *result = 0;
+	const char *result = 0;
 #ifdef pneu
 	std::string account,pathname;
 #else
@@ -6871,7 +6878,7 @@ static char *expandTilde(const char *filename)
 		 * and we want to keep it.
 		 */
 #ifdef pneu
-		result = make_pathname(home, pathname.c_str());
+		result = make_pathname(home, pathname).c_str();
 #else
 		result = make_pathname(home, pathname);
 #endif
@@ -6932,6 +6939,8 @@ static char *format1Date(const char *format, time_t value)
 
 
 
+#ifdef pneu
+#else
 /*
  * Corresponding list freeing (does not free the list pointer).
  */
@@ -6944,6 +6953,7 @@ void freeCharList(char **list, unsigned size)
 		}
 	}
 }
+#endif
 
 /*
  * This erases the file selector from the screen.
@@ -6975,7 +6985,7 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 	/* *INDENT-EQLS* */
 	SScroll *fscroll   = this->scrollField;
 	SEntry *fentry     = this->entryField;
-	char *tempDir        = 0;
+	const char *tempDir        = 0;
 	/* Keep the info sent to us. */
 	this->fieldAttribute = fieldAttrib;
 	this->fillerCharacter = pfiller;
@@ -6991,7 +7001,7 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 #ifdef pneu
 		string newDirectory;
 #else
-		char *newDirectory;
+		const char *newDirectory;
 #endif
 
 		/* Try to expand the directory if it starts with a ~ */
@@ -7051,13 +7061,13 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 			drawCDKFselect(/*this, ObjOf(this)->*/obbox);
 #ifdef pneu
 #else
-			freeChecked(newDirectory);
+			freeChecked((void*)newDirectory);
 #endif
 			return;
 		}
 #ifdef pneu
 #else
-		freeChecked(newDirectory);
+		freeChecked((void*)newDirectory);
 #endif
 	}
 
@@ -7125,10 +7135,9 @@ void SFSelect::setCDKFselect(/*SFSelect *fselect,*/
 /*
  * Return the plain string that corresponds to an item in dirContents[].
  */
-char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
+const char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
 {
    char *tempChar;
-   char *result;
    int j, j2;
 
 //   chtype *tempChtype = char2Chtypeh(content, &j, &j2);
@@ -7141,12 +7150,12 @@ char *SFSelect::contentToPath(/*SFSelect *fselect, */const char *content)
    trim1Char(tempChar);	/* trim the 'mode' stored on the end */
 
    /* Create the pathname. */
-   result = make_pathname(this->pwd
+   const char *result = make_pathname(this->pwd,tempChar)
 #ifdef pneu
 			 .c_str()
 #else
 #endif
-			 , tempChar);
+			 ;
 
    /* Clean up. */
 //   freeChtype(tempChtype);
@@ -7174,11 +7183,11 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 	string filename(entry->efld);
 	string mydirname      = dirName(filename);
 #else
-	char *filename       = copyChar(entry->efld);
+	const char *filename       = copyChar(entry->efld);
 	char *mydirname      = dirName(filename);
 	size_t filenameLen   = 0;
 #endif
-	char *newFilename    = 0;
+	const char *newFilename    = 0;
 	int isDirectory;
 #ifdef pneu
 	vector<string> plist;
@@ -7196,7 +7205,7 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		Beep();
 #ifdef pneu
 #else
-		freeChecked(filename);
+		freeChecked((void*)filename);
 		freeChecked(mydirname);
 #endif
 		return (TRUE);
@@ -7207,7 +7216,7 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 	if ((newFilename = expandTilde(filename.c_str()))) {
 #else
 	if ((newFilename = expandTilde(filename))) {
-		freeChecked(filename);
+		freeChecked((void*)filename);
 #endif
 		filename = newFilename;
 #ifdef pneu
@@ -7225,7 +7234,7 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 #else
 	isDirectory = chdir(filename);
 	if (chdir(fselect->pwd)) {
-		freeChecked(filename);
+		freeChecked((void*)filename);
 		freeChecked(mydirname);
 #endif
 		return FALSE;
@@ -7292,7 +7301,7 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 #else
 	if ((list = typeMallocN(char *, fselect->fileCounter))) {
 		for (x = 0; x < fselect->fileCounter; x++) {
-			list[x] = fselect->contentToPath(/*fselect, */fselect->dirContents[x]);
+			list[x] = (char*)fselect->contentToPath(/*fselect, */fselect->dirContents[x]);
 #endif
 		}
 
@@ -7402,7 +7411,7 @@ static int completeFilenameCB(EObjectType objectType GCC_UNUSED,
 		freeCharList(list,(unsigned)fselect->fileCounter);
 		free(list);
 	}
-	freeChecked(filename);
+	freeChecked((void*)filename);
 #endif
 	return(TRUE);
 }
@@ -7494,22 +7503,31 @@ static int displayFileInfoCB(EObjectType objectType GCC_UNUSED,
 	struct passwd *pwEnt;
 	struct group *grEnt;
 #endif
-	const char *filename;
 	const char *filetype;
 #ifdef pneu
+	string filename;
 	vector<string> mesg(9);
 #else
+	const char *filename;
 	char *mesg[9];
 #endif
 	char stringMode[15];
 	int intMode;
 	bool functionKey;
 #ifdef ineu
+#ifdef pneu
+	filename = fselect->entryField->efld;
+#else
 	filename = fselect->entryField->efld.c_str();
+#endif
 #else
 	filename = fselect->entryField->efld;
 #endif
-	if (lstat(filename, &fileStat) == 0) {
+#ifdef pneu
+	if (!lstat(filename.c_str(), &fileStat)) {
+#else
+	if (!lstat(filename, &fileStat)) {
+#endif
 		switch (mode2Filetype(fileStat.st_mode)) {
 			case 'l':
 				filetype = "Symbolic Link";
@@ -7553,7 +7571,12 @@ static int displayFileInfoCB(EObjectType objectType GCC_UNUSED,
 #else
 #endif
 			);
-	mesg[1] = format1String("Filename   : </U>%s", filename);
+	mesg[1] = format1String("Filename   : </U>%s", filename
+#ifdef pneu
+	.c_str()
+#else
+#endif
+	 );
 #ifdef HAVE_PWD_H
 	mesg[2] = format1StrVal("Owner      : </U>%s<!U> (%d)",
 			pwEnt->pw_name,
