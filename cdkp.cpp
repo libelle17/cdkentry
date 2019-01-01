@@ -6892,25 +6892,50 @@ static const char *expandTilde(const char *filename)
 	return result;
 }
 
-static char *format1String(const char *format, const char *string)
+#ifdef pneu
+string format1String(const char* format, const char *stri)
+{
+	string ziel;
+	ziel.resize(strlen(format)+strlen(stri));
+	sprintf(&ziel[0],format,stri);
+	ziel.resize(ziel.find((char)0));
+	return ziel;
+}
+#else
+static char *format1String(const char *format, const char *stri)
 {
    char *result;
-   if ((result = (char *)malloc(strlen(format) + strlen(string))))
-      sprintf(result, format, string);
+   if ((result = (char *)malloc(strlen(format) + strlen(stri))))
+      sprintf(result, format, stri);
    return result;
 }
-
-static char *errorMessage(const char *format)
-{
-   char *message;
-#ifdef HAVE_STRERROR
-   message = strerror(errno);
-#else
-   message = "Unknown reason.";
 #endif
-   return format1String(format, message);
+
+#ifdef pneu
+string errorMessage(const char *format)
+#else
+static char *errorMessage(const char *format)
+#endif
+{
+	char *message;
+#ifdef HAVE_STRERROR
+	message = strerror(errno);
+#else
+	message = "Unknown reason.";
+#endif
+	return format1String(format, message);
 }
 
+#ifdef pneu
+string format1StrVal(const char* format, const char *stri, int value)
+{
+	string ziel;
+	ziel.resize(strlen(format)+strlen(stri)+20);
+	sprintf(&ziel[0],format,stri,value);
+	ziel.resize(ziel.find((char)0));
+	return ziel;
+}
+#else
 static char *format1StrVal(const char *format, const char *string, int value)
 {
    char *result;
@@ -6918,7 +6943,18 @@ static char *format1StrVal(const char *format, const char *string, int value)
       sprintf(result, format, string, value);
    return result;
 }
+#endif
 
+#ifdef pneu
+string format1Number(const char* format, long value)
+{
+	string ziel;
+	ziel.resize(strlen(format)+20);
+	sprintf(&ziel[0],format,value);
+	ziel.resize(ziel.find((char)0));
+	return ziel;
+}
+#else
 static char *format1Number(const char *format, long value)
 {
    char *result;
@@ -6926,7 +6962,19 @@ static char *format1Number(const char *format, long value)
       sprintf(result, format, value);
    return result;
 }
+#endif
 
+#ifdef pneu
+string format1Date(const char* format, time_t value)
+{
+	string ziel;
+	char *temp=ctime(&value);
+	ziel.resize(strlen(format)+strlen(temp)+1);
+	sprintf(&ziel[0],format,trim1Char(temp));
+	ziel.resize(ziel.find((char)0));
+	return ziel;
+}
+#else
 static char *format1Date(const char *format, time_t value)
 {
    char *result;
@@ -6936,6 +6984,7 @@ static char *format1Date(const char *format, time_t value)
    }
    return result;
 }
+#endif
 
 
 

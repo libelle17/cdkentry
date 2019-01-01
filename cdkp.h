@@ -648,7 +648,11 @@ char **copyCharList(const char **list);
 int lenCharList(const char **list);
 void initCDKColor(void);
 void endCDK(void);
+#ifdef pneu
+std::string errorMessage(const char *format);
+#else
 static char *errorMessage(const char *format);
+#endif
 void freeCharList(char **list, unsigned size);
 static int displayFileInfoCB(EObjectType objectType GCC_UNUSED, void *object, void *clientData, chtype key GCC_UNUSED);
 int mode2Char(char *string, mode_t mode);
@@ -1063,10 +1067,17 @@ struct SScroll:SScroll_basis
 
 
 int fselectAdjustScrollCB(EObjectType objectType GCC_UNUSED, void *object GCC_UNUSED, void *clientData, chtype key);
+#ifdef pneu
+std::string format1String(const char* format, const char *string);
+std::string format1StrVal(const char* format, const char *string, int value);
+std::string format1Number(const char* format, long value);
+std::string format1Date(const char* format, time_t value);
+#else
 static char *format1String(const char *format, const char *string);
 static char *format1StrVal(const char *format, const char *string, int value);
 static char *format1Number(const char *format, long value);
 static char *format1Date(const char *format, time_t value);
+#endif
 static const char *expandTilde(const char *filename);
 #ifdef pneu
 std::string dirName(std::string path);
